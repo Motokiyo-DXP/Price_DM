@@ -4,6 +4,7 @@ import {
   FormEvent,
   KeyboardEvent,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import type { Database, Json } from "@/lib/database.types";
@@ -98,6 +99,8 @@ export default function RegisterPage() {
   const [pinExpiresAt, setPinExpiresAt] = useState<string | null>(null);
   const [salePriceInput, setSalePriceInput] = useState("");
   const [buyPriceInput, setBuyPriceInput] = useState("");
+  const salePriceIsComposing = useRef(false);
+  const buyPriceIsComposing = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -603,7 +606,20 @@ export default function RegisterPage() {
               pattern="[0-9]*"
               maxLength={9}
               value={salePriceInput}
-              onChange={(event) => setSalePriceInput(normalizePriceInput(event.target.value))}
+              onCompositionStart={() => {
+                salePriceIsComposing.current = true;
+              }}
+              onCompositionEnd={(event) => {
+                salePriceIsComposing.current = false;
+                setSalePriceInput(normalizePriceInput(event.currentTarget.value));
+              }}
+              onChange={(event) => {
+                setSalePriceInput(
+                  salePriceIsComposing.current
+                    ? event.target.value
+                    : normalizePriceInput(event.target.value),
+                );
+              }}
               placeholder="半角・全角どちらでも入力できます"
             />
           </label>
@@ -618,7 +634,20 @@ export default function RegisterPage() {
               pattern="[0-9]*"
               maxLength={9}
               value={buyPriceInput}
-              onChange={(event) => setBuyPriceInput(normalizePriceInput(event.target.value))}
+              onCompositionStart={() => {
+                buyPriceIsComposing.current = true;
+              }}
+              onCompositionEnd={(event) => {
+                buyPriceIsComposing.current = false;
+                setBuyPriceInput(normalizePriceInput(event.currentTarget.value));
+              }}
+              onChange={(event) => {
+                setBuyPriceInput(
+                  buyPriceIsComposing.current
+                    ? event.target.value
+                    : normalizePriceInput(event.target.value),
+                );
+              }}
               placeholder="半角・全角どちらでも入力できます"
             />
           </label>
