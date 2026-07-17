@@ -16,6 +16,8 @@ export type CardSummary = {
   id: string;
   game: string;
   name: string;
+  nameKana?: string;
+  aliases: string[];
   setCode?: string;
   productName?: string;
   salePrice: number | null;

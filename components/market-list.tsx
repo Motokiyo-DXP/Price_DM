@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CardSummary, Trend } from "@/lib/types";
+import {
+  SearchMode,
+  searchTextMatches,
+} from "@/lib/search-normalization";
 
 type MarketListProps = {
   initialCards: CardSummary[];
@@ -26,6 +30,7 @@ const formatObservedDate = (value: string) =>
 
 export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [query, setQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
 
@@ -53,23 +58,28 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   };
 
   const cards = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("ja-JP");
     return initialCards.filter((card) => {
-      const searchable = [card.name, card.setCode, card.productName]
-        .filter(Boolean)
-        .join(" ")
-        .toLocaleLowerCase("ja-JP");
       return (
-        searchable.includes(normalizedQuery) &&
+        searchTextMatches(
+          query,
+          [
+            card.name,
+            card.nameKana,
+            ...card.aliases,
+            card.setCode,
+            card.productName,
+          ],
+          searchMode,
+        ) &&
         (!onlyFavorites || favorites.includes(card.id))
       );
     });
-  }, [favorites, initialCards, onlyFavorites, query]);
+  }, [favorites, initialCards, onlyFavorites, query, searchMode]);
 
   return (
     <>
       <section className="hero">
-        <p className="eyebrow">みんなで共有するカード相場</p>
+        <p className="eyebrow">みんなで共有 カード相場</p>
         <h1>価格の動きを、ひと目で。</h1>
         <p>カード名を検索し、販売・買取価格と在庫状況を確認できます。</p>
       </section>
@@ -87,6 +97,14 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
+        <select
+          aria-label="検索の厳しさ"
+          value={searchMode}
+          onChange={(event) => setSearchMode(event.target.value as SearchMode)}
+        >
+          <option value="broad">ざっくり検索（60%）</option>
+          <option value="precise">完璧検索（90%）</option>
+        </select>
         <button
           className={onlyFavorites ? "active" : ""}
           type="button"

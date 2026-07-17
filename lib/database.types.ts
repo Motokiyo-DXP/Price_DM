@@ -34,6 +34,8 @@ export type Database = {
       }
       cards: {
         Row: {
+          aliases: string[]
+          aliases_kana: string[]
           card_number: string | null
           created_at: string
           game_id: number
@@ -44,6 +46,8 @@ export type Database = {
           product_name: string | null
         }
         Insert: {
+          aliases?: string[]
+          aliases_kana?: string[]
           card_number?: string | null
           created_at?: string
           game_id: number
@@ -54,6 +58,8 @@ export type Database = {
           product_name?: string | null
         }
         Update: {
+          aliases?: string[]
+          aliases_kana?: string[]
           card_number?: string | null
           created_at?: string
           game_id?: number
@@ -265,6 +271,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_registration_session: {
+        Args: { p_pin: string }
+        Returns: Json
+      }
       get_card_price_history: {
         Args: { p_card_id: number; p_days?: number }
         Returns: {
@@ -279,8 +289,17 @@ export type Database = {
           stock_status: Database["public"]["Enums"]["stock_status"]
         }[]
       }
+      normalize_card_search: {
+        Args: { p_value: string }
+        Returns: string
+      }
       search_cards: {
-        Args: { p_game_slug?: string; p_limit?: number; p_query?: string }
+        Args: {
+          p_game_slug?: string
+          p_limit?: number
+          p_mode?: string
+          p_query?: string
+        }
         Returns: {
           card_number: string
           game_name: string
@@ -311,6 +330,24 @@ export type Database = {
           p_stock_status?: Database["public"]["Enums"]["stock_status"]
         }
         Returns: number
+      }
+      submit_price_record_session: {
+        Args: {
+          p_buy_price?: number
+          p_card_id: number
+          p_contributor_name?: string
+          p_note?: string
+          p_observed_on?: string
+          p_sale_price?: number
+          p_session_token: string
+          p_shop_name: string
+          p_stock_status?: Database["public"]["Enums"]["stock_status"]
+        }
+        Returns: number
+      }
+      validate_registration_session: {
+        Args: { p_session_token: string }
+        Returns: string
       }
     }
     Enums: {
@@ -459,4 +496,3 @@ export const Constants = {
     },
   },
 } as const
-

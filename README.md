@@ -2,7 +2,8 @@
 
 TCGカードの販売価格・買取価格・在庫状況を共有する Next.js アプリです。
 データは Supabase の `card_price_summary` ビューから取得し、価格登録は
-`submit_price_record` RPC を通して行います。
+短時間だけ有効な登録セッションを通して行います。登録PINやセッショントークンの
+平文はデータベースへ保存しません。
 
 ## ローカル起動
 
@@ -23,6 +24,10 @@ npm run dev
 - `tcg_games` と `cards` に表示・検索対象のカードマスタが登録されていること
 - `app_config.registration_pin_hash` に登録 PIN のハッシュが設定されていること
 - 公開読み取り用 RLS と `submit_price_record` の実行権限が有効であること
+
+カード検索では、カタカナをひらがなへ統一し、空白と中点を除いて照合します。
+`name_kana` は通常の読み、`aliases` と `aliases_kana` は《理想と平和の決断》／
+《パーフェクト・アルカディア》のような別名・特殊な読みを保持します。
 
 ## 登録 PIN の初回設定
 
@@ -68,3 +73,36 @@ npm run import:dm:sample
 
 確認結果はGit管理されない `.local/dm-cards-sample.json` に保存されます。
 この試験ではSupabaseへ書き込みません。
+
+## デュエル・マスターズ公式カードの全件取得
+
+全件取得も画像・カード本文・価格を対象外とし、カード名、通常の読み、確認済みの
+別名、収録番号、商品名、公式URLだけを保存します。1件ずつ1秒間隔で確認するため
+数時間かかりますが、進捗は `.local/dm-cards-full-checkpoint.json` に保存され、同じ
+コマンドを再実行すれば続きから再開できます。
+
+```bash
+npm run import:dm:full
+```
+
+取得結果はGit管理されない `.local/dm-cards-full.jsonl` に保存されます。この工程も
+Supabaseへ直接書き込みません。全件取得完了後に内容と件数を検証し、管理者権限で
+分割投入します。
+
+特殊な公式読みは、最初に相談されたDECK MAKERの公開カード検索を補助データとして
+使い、カード名と特殊ルビだけを取得します。公開検索用の認証情報は保存せず、その
+時点のWebアプリから毎回検出します。
+
+```bash
+npm run import:dm:aliases
+npm run build:dm:import
+```
+
+後者は公式一覧の取得完了を確認してから、100件単位の検証用SQLを `.local` に生成
+します。生成物はGitHubへ含めません。
+
+## 登録PINの保持
+
+正しいPINを確認すると、ランダムな認証情報へ交換して `HttpOnly` Cookieに保存し、
+同じ端末では12時間PIN入力を省略します。CookieからPINを復元することはできません。
+認証情報はブラウザのJavaScriptから読み取れず、登録画面から手動で解除できます。

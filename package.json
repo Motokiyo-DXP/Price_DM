@@ -9,7 +9,10 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "import:dm:sample": "node scripts/import-dm-cards-sample.mjs",
-    "test:import:dm": "node --test --test-isolation=none scripts/import-dm-cards-sample.test.mjs"
+    "import:dm:full": "node scripts/import-dm-cards-full.mjs",
+    "import:dm:aliases": "node scripts/fetch-dm-card-aliases.mjs",
+    "build:dm:import": "node scripts/build-dm-card-import.mjs",
+    "test:import:dm": "node --test --test-isolation=none scripts/import-dm-cards-sample.test.mjs scripts/import-dm-cards-full.test.mjs scripts/fetch-dm-card-aliases.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
@@ -23,6 +26,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "cheerio": "1.0.0",
+    "kuromoji": "0.1.2",
     "typescript": "^5.8.2"
   },
   "overrides": {

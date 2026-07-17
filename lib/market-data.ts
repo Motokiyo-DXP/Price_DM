@@ -31,9 +31,11 @@ export async function loadMarketCards(): Promise<{
     supabase
       .from("card_price_summary")
       .select(
-        "card_id, game_id, name, card_number, product_name, sale_price, buy_price, sale_trend, buy_trend, stock_status, last_observed_on, is_stale, shop_name",
+        "card_id, game_id, name, name_kana, card_number, product_name, sale_price, buy_price, sale_trend, buy_trend, stock_status, last_observed_on, is_stale, shop_name",
       )
-      .order("name"),
+      .not("last_observed_on", "is", null)
+      .order("last_observed_on", { ascending: false })
+      .limit(100),
     supabase.from("tcg_games").select("id, name"),
   ]);
 
@@ -51,6 +53,25 @@ export async function loadMarketCards(): Promise<{
   const gameNames = new Map(
     (gamesResult.data ?? []).map((game) => [game.id, game.name]),
   );
+  const cardIds = (summaryResult.data ?? [])
+    .map((row) => row.card_id)
+    .filter((id): id is number => id !== null);
+  const aliasesResult = cardIds.length
+    ? await supabase
+        .from("cards")
+        .select("id, aliases, aliases_kana")
+        .in("id", cardIds)
+    : { data: [], error: null };
+
+  if (aliasesResult.error) {
+    console.error("Failed to load card aliases", aliasesResult.error);
+  }
+  const aliasesByCard = new Map(
+    (aliasesResult.data ?? []).map((card) => [
+      card.id,
+      [...card.aliases, ...card.aliases_kana],
+    ]),
+  );
 
   const cards = (summaryResult.data ?? [])
     .filter(
@@ -63,6 +84,8 @@ export async function loadMarketCards(): Promise<{
         (row.game_id === null ? undefined : gameNames.get(row.game_id)) ??
         "TCG 未設定",
       name: row.name,
+      nameKana: row.name_kana ?? undefined,
+      aliases: aliasesByCard.get(row.card_id) ?? [],
       setCode: row.card_number ?? undefined,
       productName: row.product_name ?? undefined,
       salePrice: row.sale_price,
