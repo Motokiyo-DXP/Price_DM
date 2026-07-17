@@ -5,6 +5,14 @@ TCGカードの販売価格・買取価格・在庫状況を共有する Next.js
 短時間だけ有効な登録セッションを通して行います。登録PINやセッショントークンの
 平文はデータベースへ保存しません。
 
+## 開発への参加・引き継ぎ
+
+- [引き継ぎガイド](docs/HANDOFF.md)
+- [現在の実装状況](docs/PROJECT_STATUS.md)
+- [共同開発ルール](CONTRIBUTING.md)
+
+友人との共同開発では、GitHubの機能ブランチとPull Requestを使い、本番Vercel・Supabaseの管理権限は必要になるまで共有しない運用を推奨します。
+
 ## ローカル起動
 
 1. `.env.example` を `.env.local` としてコピーし、既存 Supabase プロジェクトの
