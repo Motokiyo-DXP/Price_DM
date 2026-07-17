@@ -45,7 +45,26 @@ function registrationErrorMessage(message: string) {
   if (message.includes("price_must_be_nonnegative")) {
     return "価格には0以上の数値を入力してください。";
   }
+  if (message.includes("too_long")) {
+    return "入力内容が長すぎます。文字数を減らしてください。";
+  }
   return "登録できませんでした。入力内容を確認して再度お試しください。";
+}
+
+function registrationResultMessage(recordId: number | null) {
+  if (recordId === -1) {
+    return "登録PINが違います。入力内容を確認してください。";
+  }
+  if (recordId === -2) {
+    return "登録回数の上限に達しました。時間をおいて再度お試しください。";
+  }
+  if (recordId === -3) {
+    return "登録PINがまだ設定されていません。Supabaseの管理者へ確認してください。";
+  }
+  if (recordId === null || recordId <= 0) {
+    return "登録結果を確認できませんでした。時間をおいて再度お試しください。";
+  }
+  return null;
 }
 
 export default function RegisterPage() {
@@ -186,7 +205,10 @@ export default function RegisterPage() {
     if (note) args.p_note = note;
 
     setSubmitting(true);
-    const { error } = await supabase.rpc("submit_price_record", args);
+    const { data: recordId, error } = await supabase.rpc(
+      "submit_price_record",
+      args,
+    );
     setSubmitting(false);
 
     if (error) {
@@ -194,6 +216,12 @@ export default function RegisterPage() {
         kind: "error",
         text: registrationErrorMessage(error.message),
       });
+      return;
+    }
+
+    const resultMessage = registrationResultMessage(recordId);
+    if (resultMessage) {
+      setFeedback({ kind: "error", text: resultMessage });
       return;
     }
 
