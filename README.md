@@ -54,3 +54,17 @@ select registration_pin_hash is not null as configured
 from public.app_config
 where id = true;
 ```
+
+## デュエル・マスターズ公式カードの試験取得
+
+本番データを登録する前に、公式カード検索から最新20件のカード名・収録番号・
+商品名・公式URLだけを確認できます。画像、カード本文、価格は取得しません。
+公式サイトへのアクセスは1件ずつ1秒間隔で行い、robots.txtで許可されている
+ことを先に確認します。
+
+```bash
+npm run import:dm:sample
+```
+
+確認結果はGit管理されない `.local/dm-cards-sample.json` に保存されます。
+この試験ではSupabaseへ書き込みません。
