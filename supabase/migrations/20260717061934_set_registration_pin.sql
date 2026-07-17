@@ -1,4 +1,4 @@
--- Shared-PIN registration security.
+-- Historical migration slot. The live project used this version to set the PIN.\n-- Fresh environments install the secure registration foundation here, but the\n-- PIN itself remains an administrator-only, out-of-band setting.\n\n-- Shared-PIN registration security.
 -- PIN values and hashes are intentionally excluded from migrations. Configure
 -- the PIN once through an administrator-only operation after deployment.
 
@@ -639,3 +639,4 @@ comment on function public.submit_price_record(
   text
 ) is
   'Shared-PIN registration. Returns a positive record ID, -1 for invalid PIN, -2 for rate limit, or -3 when PIN is not configured.';
+

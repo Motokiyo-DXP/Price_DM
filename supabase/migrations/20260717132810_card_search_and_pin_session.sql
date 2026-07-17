@@ -665,3 +665,4 @@ comment on function public.submit_price_record_session(
   text, bigint, text, integer, integer, public.stock_status, date, text, text
 ) is
   'Registers a price using a short-lived opaque session token. Returns -2 for rate limit and -4 for an invalid or expired session.';
+

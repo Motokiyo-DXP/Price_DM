@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 type StockStatus = Database["public"]["Enums"]["stock_status"];
 type SessionSubmitArgs =
-  Database["public"]["Functions"]["submit_price_record_session"]["Args"];
+  Database["public"]["Functions"]["submit_price_record_session_v2"]["Args"];
 
 const STOCK_STATUSES = new Set<StockStatus>([
   "in_stock",
@@ -45,7 +45,8 @@ export async function POST(request: Request) {
     return json({ error: "invalid_request" }, 400);
   }
 
-  const cardId = body.cardId;
+  const canonicalCardId = body.canonicalCardId;
+  const cardPrintId = optionalInteger(body.cardPrintId);
   const shopName = typeof body.shopName === "string" ? body.shopName.trim() : "";
   const salePrice = optionalInteger(body.salePrice);
   const buyPrice = optionalInteger(body.buyPrice);
@@ -54,9 +55,22 @@ export async function POST(request: Request) {
   const contributorName =
     typeof body.contributorName === "string" ? body.contributorName.trim() : "";
   const note = typeof body.note === "string" ? body.note.trim() : "";
+  const attributeSlugs = Array.isArray(body.attributeSlugs)
+    ? body.attributeSlugs.filter(
+        (value): value is string =>
+          typeof value === "string" && /^[a-z0-9_]{1,50}$/.test(value),
+      )
+    : [];
 
-  if (typeof cardId !== "number" || !Number.isSafeInteger(cardId) || cardId <= 0) {
+  if (
+    typeof canonicalCardId !== "number" ||
+    !Number.isSafeInteger(canonicalCardId) ||
+    canonicalCardId <= 0
+  ) {
     return json({ error: "card_required" }, 400);
+  }
+  if (cardPrintId === undefined || (cardPrintId !== null && cardPrintId <= 0)) {
+    return json({ error: "invalid_request" }, 400);
   }
   if (!shopName || shopName.length > 200) {
     return json({ error: "invalid_shop" }, 400);
@@ -76,14 +90,23 @@ export async function POST(request: Request) {
   if (contributorName.length > 100 || note.length > 2000) {
     return json({ error: "too_long" }, 400);
   }
+  if (
+    attributeSlugs.length > 10 ||
+    (Array.isArray(body.attributeSlugs) &&
+      attributeSlugs.length !== body.attributeSlugs.length)
+  ) {
+    return json({ error: "invalid_request" }, 400);
+  }
 
   const args: SessionSubmitArgs = {
-    p_card_id: Number(cardId),
+    p_attribute_slugs: [...new Set(attributeSlugs)],
+    p_canonical_card_id: Number(canonicalCardId),
     p_observed_on: observedOn,
     p_session_token: sessionToken,
     p_shop_name: shopName,
     p_stock_status: stockStatus as StockStatus,
   };
+  if (cardPrintId !== null) args.p_card_print_id = cardPrintId;
   if (salePrice !== null) args.p_sale_price = salePrice;
   if (buyPrice !== null) args.p_buy_price = buyPrice;
   if (contributorName) args.p_contributor_name = contributorName;
@@ -93,7 +116,7 @@ export async function POST(request: Request) {
   if (!supabase) return json({ error: "service_unavailable" }, 503);
 
   const { data: recordId, error } = await supabase.rpc(
-    "submit_price_record_session",
+    "submit_price_record_session_v2",
     args,
   );
   if (error) {

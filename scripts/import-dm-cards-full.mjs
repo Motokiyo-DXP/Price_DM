@@ -17,6 +17,7 @@ const DEFAULT_DELAY_MS = 1_000;
 const MIN_DELAY_MS = 750;
 const OUTPUT_PATH = ".local/dm-cards-full.jsonl";
 const CHECKPOINT_PATH = ".local/dm-cards-full-checkpoint.json";
+const FAILURES_PATH = ".local/dm-cards-full-failures.json";
 
 function positiveInteger(value, label) {
   const parsed = Number.parseInt(value, 10);
@@ -105,6 +106,91 @@ async function loadKnownUrls() {
   }
 }
 
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+async function loadFailureRecords() {
+  const source = await readJson(FAILURES_PATH, { failures: [] });
+  const records = Array.isArray(source?.failures) ? source.failures : [];
+
+  return new Map(
+    records
+      .filter(
+        (record) =>
+          record &&
+          typeof record === "object" &&
+          typeof record.official_url === "string" &&
+          record.official_url.length > 0,
+      )
+      .map((record) => [record.official_url, record]),
+  );
+}
+
+async function saveFailureRecords(failures) {
+  const records = [...failures.values()].sort((left, right) =>
+    left.official_url.localeCompare(right.official_url),
+  );
+  await writeFile(
+    FAILURES_PATH,
+    `${JSON.stringify(
+      {
+        failures: records,
+        updated_at: new Date().toISOString(),
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+}
+
+export async function processFetchedCard({
+  detailHtml,
+  detailUrl,
+  page,
+  knownUrls,
+  failures,
+  appendRecord,
+  persistFailures,
+  parseDetail = parseCardDetail,
+  buildMetadata = buildCardSearchMetadata,
+  now = () => new Date(),
+}) {
+  if (knownUrls.has(detailUrl)) {
+    if (failures.delete(detailUrl)) await persistFailures(failures);
+    return { status: "known" };
+  }
+
+  let completeCard;
+  try {
+    const card = parseDetail(detailHtml, detailUrl);
+    const searchMetadata = await buildMetadata(card.name);
+    completeCard = { ...card, ...searchMetadata };
+  } catch (error) {
+    const previous = failures.get(detailUrl);
+    const failedAt = now().toISOString();
+    failures.set(detailUrl, {
+      official_url: detailUrl,
+      page,
+      attempts: (previous?.attempts ?? 0) + 1,
+      first_failed_at: previous?.first_failed_at ?? failedAt,
+      last_failed_at: failedAt,
+      last_error: errorMessage(error),
+    });
+    await persistFailures(failures);
+    return { status: "failed", error: errorMessage(error) };
+  }
+
+  // Output failures must still stop the importer. Swallowing an append error
+  // could make the checkpoint advance past a card that was never persisted.
+  await appendRecord(completeCard);
+  knownUrls.add(detailUrl);
+  if (failures.delete(detailUrl)) await persistFailures(failures);
+  return { status: "saved", card: completeCard };
+}
+
 async function saveCheckpoint(checkpoint) {
   await writeFile(CHECKPOINT_PATH, `${JSON.stringify(checkpoint, null, 2)}\n`, "utf8");
 }
@@ -124,11 +210,14 @@ async function main() {
   }
 
   const knownUrls = await loadKnownUrls();
+  const failures = await loadFailureRecords();
   const previous = await readJson(CHECKPOINT_PATH, {});
   let page = options.startPage ?? previous.page ?? 1;
   let pagesProcessed = 0;
   let totalAvailable = previous.total_available ?? null;
+  let reachedEnd = Boolean(previous.crawl_complete ?? previous.complete);
   let stopping = false;
+  const attemptedUrls = new Set();
   process.once("SIGINT", () => {
     stopping = true;
     console.log("\nStopping after the current card. Progress will be preserved.");
@@ -136,6 +225,44 @@ async function main() {
   process.once("SIGTERM", () => {
     stopping = true;
   });
+
+  const persistFailures = () => saveFailureRecords(failures);
+  const appendRecord = (card) =>
+    appendFile(OUTPUT_PATH, `${JSON.stringify(card)}\n`, "utf8");
+
+  async function importDetailUrl(detailUrl, sourcePage) {
+    if (knownUrls.has(detailUrl)) {
+      if (failures.delete(detailUrl)) await persistFailures();
+      return { status: "known" };
+    }
+
+    attemptedUrls.add(detailUrl);
+    // Network or filesystem failures still stop the importer. Only a failure
+    // to parse/enrich one card is isolated so that the crawl remains polite
+    // and does not skip a wider outage.
+    const detailHtml = await fetchText(detailUrl);
+    const result = await processFetchedCard({
+      appendRecord,
+      detailHtml,
+      detailUrl,
+      failures,
+      knownUrls,
+      page: sourcePage,
+      persistFailures,
+    });
+    if (result.status === "failed") {
+      console.warn(`\nSkipped ${detailUrl}: ${result.error}`);
+    }
+    return result;
+  }
+
+  if (failures.size > 0) {
+    console.log(`Retrying ${failures.size} previously failed card(s) before page ${page}.`);
+    for (const failure of [...failures.values()]) {
+      if (stopping) break;
+      await importDetailUrl(failure.official_url, failure.page ?? page);
+    }
+  }
 
   while (!stopping && (!options.maxPages || pagesProcessed < options.maxPages)) {
     const searchHtml = await fetchText(CARD_SEARCH_URL, {
@@ -149,21 +276,22 @@ async function main() {
     });
     const list = parseCardList(searchHtml);
     totalAvailable ??= list.totalAvailable;
-    if (list.detailUrls.length === 0) break;
+    if (list.detailUrls.length === 0) {
+      reachedEnd = true;
+      break;
+    }
+    reachedEnd = false;
 
     for (const detailUrl of list.detailUrls) {
       if (stopping) break;
-      if (knownUrls.has(detailUrl)) continue;
+      if (knownUrls.has(detailUrl) || attemptedUrls.has(detailUrl)) continue;
 
-      const detailHtml = await fetchText(detailUrl);
-      const card = parseCardDetail(detailHtml, detailUrl);
-      const searchMetadata = await buildCardSearchMetadata(card.name);
-      const completeCard = { ...card, ...searchMetadata };
-      await appendFile(OUTPUT_PATH, `${JSON.stringify(completeCard)}\n`, "utf8");
-      knownUrls.add(detailUrl);
+      await importDetailUrl(detailUrl, page);
       await saveCheckpoint({
         cards_checked: knownUrls.size,
         complete: false,
+        crawl_complete: false,
+        failures_pending: failures.size,
         page,
         total_available: totalAvailable,
         updated_at: new Date().toISOString(),
@@ -179,16 +307,20 @@ async function main() {
     await saveCheckpoint({
       cards_checked: knownUrls.size,
       complete: false,
+      crawl_complete: false,
+      failures_pending: failures.size,
       page,
       total_available: totalAvailable,
       updated_at: new Date().toISOString(),
     });
   }
 
-  const complete = !stopping && !options.maxPages;
+  const complete = !stopping && reachedEnd && failures.size === 0;
   await saveCheckpoint({
     cards_checked: knownUrls.size,
     complete,
+    crawl_complete: reachedEnd,
+    failures_pending: failures.size,
     page,
     total_available: totalAvailable,
     updated_at: new Date().toISOString(),
@@ -198,6 +330,11 @@ async function main() {
       complete ? "Catalog crawl is complete." : "Run the same command to resume."
     }`,
   );
+  if (failures.size > 0) {
+    console.log(
+      `${failures.size} card(s) remain in ${FAILURES_PATH}; they will be retried first on the next run.`,
+    );
+  }
 }
 
 const entryPoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

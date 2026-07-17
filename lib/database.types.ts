@@ -289,9 +289,34 @@ export type Database = {
           stock_status: Database["public"]["Enums"]["stock_status"]
         }[]
       }
+      list_card_prints: {
+        Args: { p_canonical_card_id: number }
+        Returns: {
+          card_number: string | null
+          id: number
+          official_url: string | null
+          product_name: string | null
+        }[]
+      }
       normalize_card_search: {
         Args: { p_value: string }
         Returns: string
+      }
+      search_canonical_cards: {
+        Args: {
+          p_game_slug?: string
+          p_limit?: number
+          p_mode?: string
+          p_query?: string
+        }
+        Returns: {
+          game_name: string
+          game_slug: string
+          id: number
+          name: string
+          name_kana: string | null
+          print_count: number
+        }[]
       }
       search_cards: {
         Args: {
@@ -335,6 +360,22 @@ export type Database = {
         Args: {
           p_buy_price?: number
           p_card_id: number
+          p_contributor_name?: string
+          p_note?: string
+          p_observed_on?: string
+          p_sale_price?: number
+          p_session_token: string
+          p_shop_name: string
+          p_stock_status?: Database["public"]["Enums"]["stock_status"]
+        }
+        Returns: number
+      }
+      submit_price_record_session_v2: {
+        Args: {
+          p_attribute_slugs?: string[]
+          p_buy_price?: number
+          p_canonical_card_id: number
+          p_card_print_id?: number
           p_contributor_name?: string
           p_note?: string
           p_observed_on?: string

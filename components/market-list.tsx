@@ -32,6 +32,9 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [query, setQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draftSearchMode, setDraftSearchMode] = useState<SearchMode>("broad");
+  const [draftOnlyFavorites, setDraftOnlyFavorites] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
@@ -76,6 +79,28 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     });
   }, [favorites, initialCards, onlyFavorites, query, searchMode]);
 
+  const activeFilterCount =
+    (searchMode === "precise" ? 1 : 0) + (onlyFavorites ? 1 : 0);
+
+  const openFilters = () => {
+    setDraftSearchMode(searchMode);
+    setDraftOnlyFavorites(onlyFavorites);
+    setFiltersOpen((current) => !current);
+  };
+
+  const applyFilters = () => {
+    setSearchMode(draftSearchMode);
+    setOnlyFavorites(draftOnlyFavorites);
+    setFiltersOpen(false);
+  };
+
+  const resetFilters = () => {
+    setDraftSearchMode("broad");
+    setDraftOnlyFavorites(false);
+    setSearchMode("broad");
+    setOnlyFavorites(false);
+  };
+
   return (
     <>
       <section className="hero">
@@ -91,29 +116,82 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       )}
 
       <section className="toolbar" aria-label="相場の絞り込み">
-        <input
-          aria-label="カード検索"
-          placeholder="カード名・収録番号で検索"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <select
-          aria-label="検索の厳しさ"
-          value={searchMode}
-          onChange={(event) => setSearchMode(event.target.value as SearchMode)}
-        >
-          <option value="broad">ざっくり検索（60%）</option>
-          <option value="precise">完璧検索（90%）</option>
-        </select>
+        <div className="search-box">
+          <input
+            aria-label="カード検索"
+            placeholder="カード名を入力"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {query && (
+            <button type="button" aria-label="カード名を消去" onClick={() => setQuery("")}>
+              ×
+            </button>
+          )}
+        </div>
         <button
-          className={onlyFavorites ? "active" : ""}
+          className={filtersOpen || activeFilterCount > 0 ? "active" : ""}
           type="button"
-          aria-pressed={onlyFavorites}
-          onClick={() => setOnlyFavorites((current) => !current)}
+          aria-expanded={filtersOpen}
+          aria-controls="market-filters"
+          onClick={openFilters}
         >
-          ★ 気になる
+          絞り込み{activeFilterCount > 0 ? `（${activeFilterCount}）` : ""}
         </button>
       </section>
+
+      {filtersOpen && (
+        <section className="filter-panel" id="market-filters" aria-label="絞り込み条件">
+          <fieldset className="search-mode">
+            <legend>検索モード</legend>
+            <label>
+              <input
+                type="radio"
+                name="marketSearchMode"
+                value="broad"
+                checked={draftSearchMode === "broad"}
+                onChange={() => setDraftSearchMode("broad")}
+              />
+              ざっくり <small>目安60%</small>
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="marketSearchMode"
+                value="precise"
+                checked={draftSearchMode === "precise"}
+                onChange={() => setDraftSearchMode("precise")}
+              />
+              パーペキ <small>目安90%</small>
+            </label>
+          </fieldset>
+
+          <label className="filter-check">
+            <input
+              type="checkbox"
+              checked={draftOnlyFavorites}
+              onChange={(event) => setDraftOnlyFavorites(event.target.checked)}
+            />
+            気になるカードだけ表示
+          </label>
+
+          <div className="filter-actions">
+            <button type="button" className="secondary-button" onClick={resetFilters}>
+              条件リセット
+            </button>
+            <button type="button" className="button" onClick={applyFilters}>
+              この条件で検索
+            </button>
+          </div>
+        </section>
+      )}
+
+      {activeFilterCount > 0 && (
+        <div className="active-filters" aria-label="適用中の条件">
+          {searchMode === "precise" && <span>パーペキ検索</span>}
+          {onlyFavorites && <span>★ 気になる</span>}
+        </div>
+      )}
 
       <div className="grid">
         {cards.map((card) => (

@@ -43,3 +43,4 @@ set name_kana = excluded.name_kana,
     aliases_kana = excluded.aliases_kana,
     product_name = excluded.product_name,
     official_url = excluded.official_url;
+

@@ -12,7 +12,9 @@ import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 
 type Game = Database["public"]["Tables"]["tcg_games"]["Row"];
 type CardOption =
-  Database["public"]["Functions"]["search_cards"]["Returns"][number];
+  Database["public"]["Functions"]["search_canonical_cards"]["Returns"][number];
+type CardPrintOption =
+  Database["public"]["Functions"]["list_card_prints"]["Returns"][number];
 type SearchMode = "broad" | "precise";
 type PinSessionState = "checking" | "required" | "authenticated";
 
@@ -32,12 +34,24 @@ const stockStatuses = Object.entries(STOCK_STATUS_LABELS) as [
   string,
 ][];
 
+const priceAttributes = [
+  { slug: "normal", name: "通常価格" },
+  { slug: "damaged", name: "傷あり" },
+  { slug: "special_price", name: "特価" },
+  { slug: "storage", name: "ストレージ" },
+  { slug: "special_storage", name: "特価ストレージ" },
+] as const;
+
 function todayForDateInput() {
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function normalizePriceInput(value: string) {
+  return value.normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 9);
 }
 
 function isSessionResult(value: Json): value is RegistrationSessionResult {
@@ -72,6 +86,9 @@ export default function RegisterPage() {
   const [cardQuery, setCardQuery] = useState("");
   const [cardOptions, setCardOptions] = useState<CardOption[]>([]);
   const [selectedCard, setSelectedCard] = useState<CardOption | null>(null);
+  const [cardPrints, setCardPrints] = useState<CardPrintOption[]>([]);
+  const [selectedPrintId, setSelectedPrintId] = useState("");
+  const [loadingPrints, setLoadingPrints] = useState(false);
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [searchingCards, setSearchingCards] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -79,6 +96,8 @@ export default function RegisterPage() {
   const [pinSessionState, setPinSessionState] =
     useState<PinSessionState>("checking");
   const [pinExpiresAt, setPinExpiresAt] = useState<string | null>(null);
+  const [salePriceInput, setSalePriceInput] = useState("");
+  const [buyPriceInput, setBuyPriceInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -158,7 +177,7 @@ export default function RegisterPage() {
         return;
       }
 
-      const { data, error } = await supabase.rpc("search_cards", {
+      const { data, error } = await supabase.rpc("search_canonical_cards", {
         p_game_slug: gameSlug,
         p_limit: 30,
         p_mode: searchMode,
@@ -182,6 +201,40 @@ export default function RegisterPage() {
       window.clearTimeout(timer);
     };
   }, [cardQuery, gameSlug, searchMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!selectedCard) {
+      setCardPrints([]);
+      setSelectedPrintId("");
+      setLoadingPrints(false);
+      return;
+    }
+
+    setLoadingPrints(true);
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setLoadingPrints(false);
+      return;
+    }
+
+    void supabase
+      .rpc("list_card_prints", { p_canonical_card_id: selectedCard.id })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setLoadingPrints(false);
+        if (error) {
+          setSystemError("収録版を読み込めませんでした。");
+          return;
+        }
+        setCardPrints(data ?? []);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCard]);
 
   function chooseCard(card: CardOption) {
     setSelectedCard(card);
@@ -268,8 +321,8 @@ export default function RegisterPage() {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const salePrice = String(formData.get("salePrice") ?? "").trim();
-    const buyPrice = String(formData.get("buyPrice") ?? "").trim();
+    const salePrice = normalizePriceInput(salePriceInput);
+    const buyPrice = normalizePriceInput(buyPriceInput);
 
     setFeedback(null);
     if (!selectedCard) {
@@ -304,8 +357,10 @@ export default function RegisterPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        attributeSlugs: formData.getAll("attributeSlug").map(String),
         buyPrice: buyPrice ? Number(buyPrice) : null,
-        cardId: selectedCard.id,
+        canonicalCardId: selectedCard.id,
+        cardPrintId: selectedPrintId ? Number(selectedPrintId) : null,
         contributorName: String(formData.get("contributorName") ?? ""),
         note: String(formData.get("note") ?? ""),
         observedOn: String(formData.get("observedOn") ?? ""),
@@ -333,7 +388,11 @@ export default function RegisterPage() {
     setCardQuery("");
     setCardOptions([]);
     setSelectedCard(null);
+    setCardPrints([]);
+    setSelectedPrintId("");
     setSuggestionsOpen(false);
+    setSalePriceInput("");
+    setBuyPriceInput("");
     setFeedback({ kind: "success", text: "価格情報を登録しました。" });
   }
 
@@ -403,7 +462,7 @@ export default function RegisterPage() {
                 setSelectedCard(null);
               }}
             />
-            完璧検索 <small>目安90%</small>
+            パーペキ検索 <small>目安90%</small>
           </label>
         </fieldset>
 
@@ -461,11 +520,7 @@ export default function RegisterPage() {
                     }}
                   >
                     <strong>{card.name}</strong>
-                    <small>
-                      {[card.card_number, card.product_name]
-                        .filter(Boolean)
-                        .join("・") || "収録情報なし"}
-                    </small>
+                    <small>{card.print_count}件の収録版</small>
                   </li>
                 ))}
             </ul>
@@ -473,13 +528,58 @@ export default function RegisterPage() {
           {selectedCard && (
             <p className="selected-card" role="status">
               選択中：{selectedCard.name}
-              {selectedCard.card_number ? `（${selectedCard.card_number}）` : ""}
             </p>
           )}
           <p className="form-help">
             ひらがな・カタカナ・漢字、中点「・」の有無、登録済みの別名で検索できます。
           </p>
         </div>
+
+        {selectedCard && (
+          <label htmlFor="cardPrintId">
+            収録版
+            <select
+              id="cardPrintId"
+              name="cardPrintId"
+              value={selectedPrintId}
+              onChange={(event) => setSelectedPrintId(event.target.value)}
+              disabled={loadingPrints}
+            >
+              <option value="">
+                {loadingPrints ? "収録版を読み込み中…" : "収録版を定めない（推奨）"}
+              </option>
+              {cardPrints.map((cardPrint) => (
+                <option key={cardPrint.id} value={cardPrint.id}>
+                  {[cardPrint.card_number, cardPrint.product_name]
+                    .filter(Boolean)
+                    .join("｜") || `収録版 #${cardPrint.id}`}
+                </option>
+              ))}
+            </select>
+            <small className="form-help">
+              通常は「収録版を定めない」のままで登録できます。版を区別したい場合だけ選択してください。
+            </small>
+          </label>
+        )}
+
+        <fieldset className="attribute-options">
+          <legend>価格の属性（指定しないが標準）</legend>
+          <p className="form-help">
+            傷あり・特価・ストレージなど、注意が必要な場合だけ選択してください。
+          </p>
+          <div className="attribute-grid">
+            {priceAttributes.map((attribute) => (
+              <label key={attribute.slug}>
+                <input
+                  type="checkbox"
+                  name="attributeSlug"
+                  value={attribute.slug}
+                />
+                {attribute.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <label htmlFor="shopName">
           ショップ名
@@ -494,11 +594,33 @@ export default function RegisterPage() {
         <div className="two">
           <label htmlFor="salePrice">
             販売価格
-            <input id="salePrice" name="salePrice" type="number" min="0" step="1" inputMode="numeric" />
+            <input
+              id="salePrice"
+              name="salePrice"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              pattern="[0-9]*"
+              maxLength={9}
+              value={salePriceInput}
+              onChange={(event) => setSalePriceInput(normalizePriceInput(event.target.value))}
+              placeholder="半角・全角どちらでも入力できます"
+            />
           </label>
           <label htmlFor="buyPrice">
             買取価格
-            <input id="buyPrice" name="buyPrice" type="number" min="0" step="1" inputMode="numeric" />
+            <input
+              id="buyPrice"
+              name="buyPrice"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              pattern="[0-9]*"
+              maxLength={9}
+              value={buyPriceInput}
+              onChange={(event) => setBuyPriceInput(normalizePriceInput(event.target.value))}
+              placeholder="半角・全角どちらでも入力できます"
+            />
           </label>
         </div>
 
@@ -507,7 +629,7 @@ export default function RegisterPage() {
           <select id="stockStatus" name="stockStatus" defaultValue="unknown">
             {stockStatuses.map(([value, label]) => (
               <option key={value} value={value}>
-                {label}
+                {value === "unknown" ? "指定しない" : label}
               </option>
             ))}
           </select>
@@ -536,11 +658,13 @@ export default function RegisterPage() {
             <span>
               登録PINは認証済みです
               {pinExpiresAt
-                ? `（${new Date(pinExpiresAt).toLocaleTimeString("ja-JP", {
+                ? `（${new Date(pinExpiresAt).toLocaleString("ja-JP", {
+                    month: "numeric",
+                    day: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
                   })}まで）`
-                : "（12時間有効）"}
+                : "（14日間有効）"}
             </span>
             <button type="button" onClick={() => void clearPinSession()}>
               認証を解除
@@ -570,7 +694,7 @@ export default function RegisterPage() {
                 autoComplete="current-password"
                 required
               />
-              <small className="form-help">一度認証すると、この端末では12時間入力を省略できます。</small>
+              <small className="form-help">一度認証すると、この端末では14日間入力を省略できます。</small>
             </label>
           </>
         )}

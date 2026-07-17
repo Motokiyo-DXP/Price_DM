@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parseFullImportArguments } from "./import-dm-cards-full.mjs";
+import {
+  parseFullImportArguments,
+  processFetchedCard,
+} from "./import-dm-cards-full.mjs";
 import { buildCardSearchMetadata } from "./lib/dm-card-readings.mjs";
 
 test("full import arguments enforce a respectful delay", () => {
@@ -22,3 +25,106 @@ test("Japanese readings and verified alternate names are generated", async () =>
   assert.deepEqual(perfect.aliases_kana, ["パーフェクト・アルカディア"]);
 });
 
+test("one malformed card is isolated, recorded, and succeeds on a later retry", async () => {
+  const detailUrl = "https://dm.takaratomy.co.jp/card/detail/?id=broken";
+  const knownUrls = new Set();
+  const failures = new Map();
+  const appended = [];
+  let persistedFailures = 0;
+  const persistFailures = async (current) => {
+    assert.equal(current, failures);
+    persistedFailures += 1;
+  };
+
+  const failed = await processFetchedCard({
+    appendRecord: async (card) => appended.push(card),
+    buildMetadata: async () => ({ name_kana: "てすと", aliases: [], aliases_kana: [] }),
+    detailHtml: "<html>broken</html>",
+    detailUrl,
+    failures,
+    knownUrls,
+    now: () => new Date("2026-07-18T00:00:00.000Z"),
+    page: 200,
+    parseDetail: () => {
+      throw new Error("card name was missing");
+    },
+    persistFailures,
+  });
+
+  assert.deepEqual(failed, {
+    status: "failed",
+    error: "card name was missing",
+  });
+  assert.equal(knownUrls.size, 0);
+  assert.equal(appended.length, 0);
+  assert.deepEqual(failures.get(detailUrl), {
+    official_url: detailUrl,
+    page: 200,
+    attempts: 1,
+    first_failed_at: "2026-07-18T00:00:00.000Z",
+    last_failed_at: "2026-07-18T00:00:00.000Z",
+    last_error: "card name was missing",
+  });
+
+  const saved = await processFetchedCard({
+    appendRecord: async (card) => appended.push(card),
+    buildMetadata: async () => ({
+      aliases: [],
+      aliases_kana: [],
+      name_kana: "てすとかーど",
+    }),
+    detailHtml: "<html>fixed</html>",
+    detailUrl,
+    failures,
+    knownUrls,
+    page: 200,
+    parseDetail: () => ({
+      name: "テストカード",
+      official_url: detailUrl,
+    }),
+    persistFailures,
+  });
+
+  assert.equal(saved.status, "saved");
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].name, "テストカード");
+  assert.equal(appended[0].name_kana, "てすとかーど");
+  assert.equal(knownUrls.has(detailUrl), true);
+  assert.equal(failures.size, 0);
+  assert.equal(persistedFailures, 2);
+});
+
+test("a URL already present in output is not parsed or appended twice", async () => {
+  const detailUrl = "https://dm.takaratomy.co.jp/card/detail/?id=known";
+  const knownUrls = new Set([detailUrl]);
+  const failures = new Map([
+    [detailUrl, { official_url: detailUrl, attempts: 1 }],
+  ]);
+  let parsed = false;
+  let appended = false;
+  let persisted = false;
+
+  const result = await processFetchedCard({
+    appendRecord: async () => {
+      appended = true;
+    },
+    detailHtml: "",
+    detailUrl,
+    failures,
+    knownUrls,
+    page: 1,
+    parseDetail: () => {
+      parsed = true;
+      return { name: "duplicate" };
+    },
+    persistFailures: async () => {
+      persisted = true;
+    },
+  });
+
+  assert.deepEqual(result, { status: "known" });
+  assert.equal(parsed, false);
+  assert.equal(appended, false);
+  assert.equal(failures.size, 0);
+  assert.equal(persisted, true);
+});
