@@ -30,3 +30,11 @@ export type CardSummary = {
   isStale: boolean;
   usesPrintFallback: boolean;
 };
+
+export type CardPriceHistoryPoint = {
+  observedOn: string;
+  salePrice: number | null;
+  buyPrice: number | null;
+  saleRecordCount: number;
+  buyRecordCount: number;
+};
