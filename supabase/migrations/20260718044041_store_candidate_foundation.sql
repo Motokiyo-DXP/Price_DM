@@ -426,4 +426,5 @@ comment on function private.approve_shop_candidate(bigint, text) is
 comment on function private.reject_shop_candidate(bigint, text) is
   'Administrator-only review operation. Rejects a pending store candidate.';
 
-reset role;
+-- Keep postgres active so Supabase CLI can record this migration after the
+-- file finishes. The CLI connection is discarded after the push completes.
