@@ -27,22 +27,19 @@ export async function loadMarketCards(): Promise<{
     };
   }
 
-  const [summaryResult, gamesResult] = await Promise.all([
-    supabase
-      .from("card_price_summary")
-      .select(
-        "card_id, game_id, name, name_kana, card_number, product_name, sale_price, buy_price, sale_trend, buy_trend, stock_status, last_observed_on, is_stale, shop_name",
-      )
-      .not("last_observed_on", "is", null)
-      .order("last_observed_on", { ascending: false })
-      .limit(100),
-    supabase.from("tcg_games").select("id, name"),
-  ]);
+  const summaryResult = await supabase
+    .from("canonical_card_market_summary")
+    .select(
+      "canonical_card_id, game_name, name, name_kana, aliases, aliases_kana, print_count, sale_price, buy_price, sale_record_count, buy_record_count, sale_trend, buy_trend, stock_status, last_observed_on, is_stale, uses_print_fallback",
+    )
+    .not("last_observed_on", "is", null)
+    .order("last_observed_on", { ascending: false })
+    .limit(100);
 
-  if (summaryResult.error || gamesResult.error) {
+  if (summaryResult.error) {
     console.error(
       "Failed to load market data from Supabase",
-      summaryResult.error ?? gamesResult.error,
+      summaryResult.error,
     );
     return {
       cards: [],
@@ -50,46 +47,22 @@ export async function loadMarketCards(): Promise<{
     };
   }
 
-  const gameNames = new Map(
-    (gamesResult.data ?? []).map((game) => [game.id, game.name]),
-  );
-  const cardIds = (summaryResult.data ?? [])
-    .map((row) => row.card_id)
-    .filter((id): id is number => id !== null);
-  const aliasesResult = cardIds.length
-    ? await supabase
-        .from("cards")
-        .select("id, aliases, aliases_kana")
-        .in("id", cardIds)
-    : { data: [], error: null };
-
-  if (aliasesResult.error) {
-    console.error("Failed to load card aliases", aliasesResult.error);
-  }
-  const aliasesByCard = new Map(
-    (aliasesResult.data ?? []).map((card) => [
-      card.id,
-      [...card.aliases, ...card.aliases_kana],
-    ]),
-  );
-
   const cards = (summaryResult.data ?? [])
     .filter(
-      (row): row is typeof row & { card_id: number; name: string } =>
-        row.card_id !== null && row.name !== null,
+      (row): row is typeof row & { canonical_card_id: number; name: string } =>
+        row.canonical_card_id !== null && row.name !== null,
     )
     .map<CardSummary>((row) => ({
-      id: String(row.card_id),
-      game:
-        (row.game_id === null ? undefined : gameNames.get(row.game_id)) ??
-        "TCG 未設定",
+      id: String(row.canonical_card_id),
+      game: row.game_name ?? "TCG 未設定",
       name: row.name,
       nameKana: row.name_kana ?? undefined,
-      aliases: aliasesByCard.get(row.card_id) ?? [],
-      setCode: row.card_number ?? undefined,
-      productName: row.product_name ?? undefined,
+      aliases: [...(row.aliases ?? []), ...(row.aliases_kana ?? [])],
+      printCount: row.print_count ?? 0,
       salePrice: row.sale_price,
       buyPrice: row.buy_price,
+      saleRecordCount: row.sale_record_count ?? 0,
+      buyRecordCount: row.buy_record_count ?? 0,
       saleTrend: toTrend(row.sale_trend),
       buyTrend: toTrend(row.buy_trend),
       stock: row.stock_status
@@ -97,7 +70,7 @@ export async function loadMarketCards(): Promise<{
         : STOCK_STATUS_LABELS.unknown,
       updatedAt: row.last_observed_on,
       isStale: row.is_stale ?? false,
-      shopName: row.shop_name ?? undefined,
+      usesPrintFallback: row.uses_print_fallback ?? false,
     }));
 
   return { cards, error: null };
