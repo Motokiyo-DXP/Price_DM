@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 type StockStatus = Database["public"]["Enums"]["stock_status"];
 type SessionSubmitArgs =
-  Database["public"]["Functions"]["submit_price_record_session_v2"]["Args"];
+  Database["public"]["Functions"]["submit_price_record_session_v3"]["Args"];
 
 const STOCK_STATUSES = new Set<StockStatus>([
   "in_stock",
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     p_canonical_card_id: Number(canonicalCardId),
     p_observed_on: observedOn,
     p_session_token: sessionToken,
-    p_shop_name: "",
+    p_shop_id: shopId,
     p_stock_status: stockStatus as StockStatus,
   };
   if (cardPrintId !== null) args.p_card_print_id = cardPrintId;
@@ -119,19 +119,8 @@ export async function POST(request: Request) {
   const supabase = createServerSupabaseClient();
   if (!supabase) return json({ error: "service_unavailable" }, 503);
 
-  const { data: shop, error: shopError } = await supabase
-    .from("shops")
-    .select("id, name")
-    .eq("id", shopId)
-    .maybeSingle();
-  if (shopError || !shop) {
-    return json({ error: "invalid_shop" }, 400);
-  }
-
-  args.p_shop_name = shop.name;
-
   const { data: recordId, error } = await supabase.rpc(
-    "submit_price_record_session_v2",
+    "submit_price_record_session_v3",
     args,
   );
   if (error) {
@@ -143,6 +132,7 @@ export async function POST(request: Request) {
     response.cookies.delete(REGISTRATION_SESSION_COOKIE);
     return response;
   }
+  if (recordId === -5) return json({ error: "invalid_shop" }, 400);
   if (recordId === -2) return json({ error: "rate_limited" }, 429);
   if (recordId === null || recordId <= 0) {
     return json({ error: "registration_failed" }, 400);
