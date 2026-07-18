@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
   const canonicalCardId = body.canonicalCardId;
   const cardPrintId = optionalInteger(body.cardPrintId);
-  const shopName = typeof body.shopName === "string" ? body.shopName.trim() : "";
+  const shopId = body.shopId;
   const salePrice = optionalInteger(body.salePrice);
   const buyPrice = optionalInteger(body.buyPrice);
   const stockStatus = body.stockStatus;
@@ -72,7 +72,11 @@ export async function POST(request: Request) {
   if (cardPrintId === undefined || (cardPrintId !== null && cardPrintId <= 0)) {
     return json({ error: "invalid_request" }, 400);
   }
-  if (!shopName || shopName.length > 200) {
+  if (
+    typeof shopId !== "number" ||
+    !Number.isSafeInteger(shopId) ||
+    shopId <= 0
+  ) {
     return json({ error: "invalid_shop" }, 400);
   }
   if (salePrice === undefined || buyPrice === undefined) {
@@ -103,7 +107,7 @@ export async function POST(request: Request) {
     p_canonical_card_id: Number(canonicalCardId),
     p_observed_on: observedOn,
     p_session_token: sessionToken,
-    p_shop_name: shopName,
+    p_shop_name: "",
     p_stock_status: stockStatus as StockStatus,
   };
   if (cardPrintId !== null) args.p_card_print_id = cardPrintId;
@@ -114,6 +118,17 @@ export async function POST(request: Request) {
 
   const supabase = createServerSupabaseClient();
   if (!supabase) return json({ error: "service_unavailable" }, 503);
+
+  const { data: shop, error: shopError } = await supabase
+    .from("shops")
+    .select("id, name")
+    .eq("id", shopId)
+    .maybeSingle();
+  if (shopError || !shop) {
+    return json({ error: "invalid_shop" }, 400);
+  }
+
+  args.p_shop_name = shop.name;
 
   const { data: recordId, error } = await supabase.rpc(
     "submit_price_record_session_v2",
