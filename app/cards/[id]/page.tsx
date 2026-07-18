@@ -50,17 +50,24 @@ function BestPricePanel({
 
 export default async function CardDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ excludeCaution?: string | string[] }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const canonicalCardId = Number(id);
+  const excludeCautionAttributes = query.excludeCaution === "1";
 
   if (!Number.isSafeInteger(canonicalCardId) || canonicalCardId <= 0) {
     notFound();
   }
 
-  const { card, error } = await loadCardDetail(canonicalCardId);
+  const { card, error } = await loadCardDetail(
+    canonicalCardId,
+    excludeCautionAttributes,
+  );
 
   if (!card && !error) {
     notFound();
@@ -120,6 +127,38 @@ export default async function CardDetailPage({
 
       <section aria-labelledby="best-heading">
         <h2 id="best-heading">注目価格</h2>
+        <form
+          className="best-price-filter"
+          action={`/cards/${card.id}`}
+          method="get"
+        >
+          <label>
+            <input
+              key={excludeCautionAttributes ? "exclude" : "include"}
+              type="checkbox"
+              name="excludeCaution"
+              value="1"
+              defaultChecked={excludeCautionAttributes}
+            />
+            傷あり・特価・ストレージを最安値・最高値から除外
+          </label>
+          <p>
+            平均相場・価格推移・最近の価格登録は変更せず、注目価格だけを絞り込みます。
+          </p>
+          <div className="best-price-filter-actions">
+            {excludeCautionAttributes && (
+              <Link href={`/cards/${card.id}`}>条件を解除</Link>
+            )}
+            <button type="submit" className="button">
+              注目価格を再計算
+            </button>
+          </div>
+        </form>
+        {excludeCautionAttributes && (
+          <p className="active-filter-note" role="status">
+            注意属性を除外した価格を表示しています。
+          </p>
+        )}
         <div className="best-price-grid">
           <BestPricePanel title="販売最安" value={card.bestSale} />
           <BestPricePanel title="買取最高" value={card.bestBuy} />
