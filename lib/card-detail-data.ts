@@ -3,6 +3,7 @@ import "server-only";
 import { createServerSupabaseClient } from "./supabase";
 import {
   STOCK_STATUS_LABELS,
+  type CardPriceHistoryPoint,
   type CardSummary,
   type StockStatus,
   type Trend,
@@ -40,6 +41,7 @@ export type CardRecentRecord = {
 export type CardDetail = CardSummary & {
   bestSale: CardBestPrice | null;
   bestBuy: CardBestPrice | null;
+  priceHistory: CardPriceHistoryPoint[];
   recentRecords: CardRecentRecord[];
 };
 
@@ -66,7 +68,12 @@ export async function loadCardDetail(canonicalCardId: number): Promise<{
     };
   }
 
-  const [summaryResult, bestPricesResult, recentRecordsResult] =
+  const [
+    summaryResult,
+    bestPricesResult,
+    priceHistoryResult,
+    recentRecordsResult,
+  ] =
     await Promise.all([
       supabase
         .from("canonical_card_market_summary")
@@ -76,6 +83,10 @@ export async function loadCardDetail(canonicalCardId: number): Promise<{
       supabase.rpc("get_canonical_card_best_prices", {
         p_canonical_card_id: canonicalCardId,
         p_exclude_caution_attributes: false,
+      }),
+      supabase.rpc("get_canonical_card_price_history", {
+        p_canonical_card_id: canonicalCardId,
+        p_days: 180,
       }),
       supabase.rpc("get_canonical_card_recent_records", {
         p_canonical_card_id: canonicalCardId,
@@ -96,9 +107,11 @@ export async function loadCardDetail(canonicalCardId: number): Promise<{
     return { card: null, error: null };
   }
 
-  const detailErrors = [bestPricesResult.error, recentRecordsResult.error].filter(
-    Boolean,
-  );
+  const detailErrors = [
+    bestPricesResult.error,
+    priceHistoryResult.error,
+    recentRecordsResult.error,
+  ].filter(Boolean);
   if (detailErrors.length > 0) {
     console.error("Failed to load canonical card details", detailErrors);
   }
@@ -137,6 +150,16 @@ export async function loadCardDetail(canonicalCardId: number): Promise<{
     }),
   );
 
+  const priceHistory = (priceHistoryResult.data ?? []).map<CardPriceHistoryPoint>(
+    (row) => ({
+      observedOn: row.observed_on,
+      salePrice: row.sale_price ?? null,
+      buyPrice: row.buy_price ?? null,
+      saleRecordCount: row.sale_record_count ?? 0,
+      buyRecordCount: row.buy_record_count ?? 0,
+    }),
+  );
+
   const card: CardDetail = {
     id: String(summary.canonical_card_id),
     game: summary.game_name ?? "TCG 未設定",
@@ -156,6 +179,7 @@ export async function loadCardDetail(canonicalCardId: number): Promise<{
     usesPrintFallback: summary.uses_print_fallback ?? false,
     bestSale: bestPrices.find((price) => price.kind === "sale") ?? null,
     bestBuy: bestPrices.find((price) => price.kind === "buy") ?? null,
+    priceHistory,
     recentRecords,
   };
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PriceHistoryChart } from "@/components/price-history-chart";
 import { loadCardDetail, type CardBestPrice } from "@/lib/card-detail-data";
 
 export const dynamic = "force-dynamic";
@@ -123,6 +124,17 @@ export default async function CardDetailPage({
           <BestPricePanel title="販売最安" value={card.bestSale} />
           <BestPricePanel title="買取最高" value={card.bestBuy} />
         </div>
+      </section>
+
+      <section aria-labelledby="history-heading">
+        <div className="section-heading-row">
+          <h2 id="history-heading">価格推移</h2>
+          <span>直近180日</span>
+        </div>
+        <PriceHistoryChart points={card.priceHistory} />
+        <p className="detail-meta history-help">
+          収録版を指定しない価格登録を日ごとに平均しています。
+        </p>
       </section>
 
       <section aria-labelledby="recent-heading">
