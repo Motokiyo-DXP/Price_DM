@@ -275,7 +275,6 @@ grant execute on function private.submit_shop_candidate_session_impl(
 
 set role postgres;
 revoke price_registration_executor from postgres granted by postgres;
-reset role;
 
 create or replace function public.submit_shop_candidate_session(
   p_session_token text,
@@ -426,3 +425,5 @@ comment on function private.approve_shop_candidate(bigint, text) is
   'Administrator-only review operation. Creates or reuses an approved shop and closes the candidate.';
 comment on function private.reject_shop_candidate(bigint, text) is
   'Administrator-only review operation. Rejects a pending store candidate.';
+
+reset role;
