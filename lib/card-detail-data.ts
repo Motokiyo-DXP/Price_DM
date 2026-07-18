@@ -55,7 +55,10 @@ function stockLabel(value: StockStatus | null): string {
   return value ? STOCK_STATUS_LABELS[value] : STOCK_STATUS_LABELS.unknown;
 }
 
-export async function loadCardDetail(canonicalCardId: number): Promise<{
+export async function loadCardDetail(
+  canonicalCardId: number,
+  excludeCautionAttributes = false,
+): Promise<{
   card: CardDetail | null;
   error: string | null;
 }> {
@@ -82,7 +85,7 @@ export async function loadCardDetail(canonicalCardId: number): Promise<{
         .maybeSingle(),
       supabase.rpc("get_canonical_card_best_prices", {
         p_canonical_card_id: canonicalCardId,
-        p_exclude_caution_attributes: false,
+        p_exclude_caution_attributes: excludeCautionAttributes,
       }),
       supabase.rpc("get_canonical_card_price_history", {
         p_canonical_card_id: canonicalCardId,
