@@ -9,7 +9,7 @@
 本番Supabaseには `canonical_market_details` マイグレーションを適用済みです。ローカルの対応ファイルは次です。
 
 ```text
-supabase/migrations/20260717181720_canonical_market_details.sql
+supabase/migrations/20260717182317_canonical_market_details.sql
 ```
 
 このマイグレーションで追加したDB機能はまだ画面から利用していません。再開時は、Supabase型の再生成とカード詳細画面の実装から始めます。
