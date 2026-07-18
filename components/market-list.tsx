@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CardSummary, Trend } from "@/lib/types";
 import {
@@ -69,8 +70,6 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             card.name,
             card.nameKana,
             ...card.aliases,
-            card.setCode,
-            card.productName,
           ],
           searchMode,
         ) &&
@@ -199,8 +198,10 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             <div className="card-head">
               <div>
                 <span className="tag">{card.game}</span>
-                <h2>{card.name}</h2>
-                <small>{card.setCode ?? "収録番号未登録"}</small>
+                <h2>
+                  <Link href={`/cards/${card.id}`}>{card.name}</Link>
+                </h2>
+                <small>収録バリエーション {card.printCount}件</small>
               </div>
               <button
                 className="star"
@@ -214,18 +215,21 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             </div>
             <div className="prices">
               <div>
-                <small>販売価格</small>
+                <small>販売平均（{card.saleRecordCount}件）</small>
                 <strong className={trendClass(card.saleTrend, card.isStale)}>
                   {yen(card.salePrice)}
                 </strong>
               </div>
               <div>
-                <small>買取価格</small>
+                <small>買取平均（{card.buyRecordCount}件）</small>
                 <strong className={trendClass(card.buyTrend, card.isStale)}>
                   {yen(card.buyPrice)}
                 </strong>
               </div>
             </div>
+            {card.usesPrintFallback && (
+              <p className="fallback-note">収録違いの価格を参考表示中</p>
+            )}
             <footer>
               <span>{card.stock}</span>
               <span>
@@ -233,9 +237,12 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
                   ? "価格未登録"
                   : card.isStale
                     ? "30日以上更新なし"
-                    : `${formatObservedDate(card.updatedAt)} 更新${card.shopName ? `・${card.shopName}` : ""}`}
+                    : `${formatObservedDate(card.updatedAt)} 更新`}
               </span>
             </footer>
+            <Link className="detail-link" href={`/cards/${card.id}`}>
+              詳細を見る →
+            </Link>
           </article>
         ))}
       </div>

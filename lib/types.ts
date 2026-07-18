@@ -18,14 +18,15 @@ export type CardSummary = {
   name: string;
   nameKana?: string;
   aliases: string[];
-  setCode?: string;
-  productName?: string;
+  printCount: number;
   salePrice: number | null;
   buyPrice: number | null;
+  saleRecordCount: number;
+  buyRecordCount: number;
   saleTrend: Trend;
   buyTrend: Trend;
   stock: string;
   updatedAt: string | null;
   isStale: boolean;
-  shopName?: string;
+  usesPrintFallback: boolean;
 };
