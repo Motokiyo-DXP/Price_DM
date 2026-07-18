@@ -881,6 +881,22 @@ export type Database = {
         }
         Returns: number
       }
+      submit_price_record_session_v3: {
+        Args: {
+          p_attribute_slugs?: string[]
+          p_buy_price?: number
+          p_canonical_card_id: number
+          p_card_print_id?: number
+          p_contributor_name?: string
+          p_note?: string
+          p_observed_on?: string
+          p_sale_price?: number
+          p_session_token: string
+          p_shop_id: number
+          p_stock_status?: Database["public"]["Enums"]["stock_status"]
+        }
+        Returns: number
+      }
       submit_shop_candidate_session: {
         Args: {
           p_address_line?: string
