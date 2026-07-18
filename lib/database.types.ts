@@ -485,21 +485,111 @@ export type Database = {
           },
         ]
       }
-      shops: {
+      shop_candidates: {
         Row: {
-          created_at: string
+          address_line: string | null
+          approved_shop_id: number | null
           id: number
+          last_submitted_at: string
+          municipality: string | null
           name: string
+          name_key: string | null
+          prefecture: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          status: string
+          submission_count: number
+          submitted_at: string
+          website_url: string | null
         }
         Insert: {
-          created_at?: string
+          address_line?: string | null
+          approved_shop_id?: number | null
           id?: never
+          last_submitted_at?: string
+          municipality?: string | null
           name: string
+          name_key?: string | null
+          prefecture?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: string
+          submission_count?: number
+          submitted_at?: string
+          website_url?: string | null
         }
         Update: {
+          address_line?: string | null
+          approved_shop_id?: number | null
+          id?: never
+          last_submitted_at?: string
+          municipality?: string | null
+          name?: string
+          name_key?: string | null
+          prefecture?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: string
+          submission_count?: number
+          submitted_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_candidates_approved_shop_id_fkey"
+            columns: ["approved_shop_id"]
+            isOneToOne: false
+            referencedRelation: "card_market_summary"
+            referencedColumns: ["shop_id"]
+          },
+          {
+            foreignKeyName: "shop_candidates_approved_shop_id_fkey"
+            columns: ["approved_shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          address_line: string | null
+          created_at: string
+          id: number
+          latitude: number | null
+          longitude: number | null
+          municipality: string | null
+          name: string
+          name_key: string | null
+          prefecture: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address_line?: string | null
           created_at?: string
           id?: never
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          name: string
+          name_key?: string | null
+          prefecture?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address_line?: string | null
+          created_at?: string
+          id?: never
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
           name?: string
+          name_key?: string | null
+          prefecture?: string | null
+          updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -790,6 +880,17 @@ export type Database = {
           p_stock_status?: Database["public"]["Enums"]["stock_status"]
         }
         Returns: number
+      }
+      submit_shop_candidate_session: {
+        Args: {
+          p_address_line?: string
+          p_municipality?: string
+          p_name: string
+          p_prefecture?: string
+          p_session_token: string
+          p_website_url?: string
+        }
+        Returns: Json
       }
       validate_registration_session: {
         Args: { p_session_token: string }

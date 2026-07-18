@@ -16,6 +16,8 @@ type CardOption =
   Database["public"]["Functions"]["search_canonical_cards"]["Returns"][number];
 type CardPrintOption =
   Database["public"]["Functions"]["list_card_prints"]["Returns"][number];
+type ShopOption =
+  Database["public"]["Functions"]["search_shops"]["Returns"][number];
 type SearchMode = "broad" | "precise";
 type PinSessionState = "checking" | "required" | "authenticated";
 
@@ -28,6 +30,12 @@ type RegistrationSessionResult = {
   status: "ok" | "invalid_pin" | "rate_limited" | "not_configured";
   session_token?: string;
   expires_at?: string;
+};
+
+type ShopCandidateResult = {
+  status: "pending" | "already_approved";
+  candidate_id?: number;
+  shop_id?: number;
 };
 
 const stockStatuses = Object.entries(STOCK_STATUS_LABELS) as [
@@ -70,6 +78,7 @@ function registrationErrorMessage(code: string) {
     invalid_price: "価格には0以上の整数を入力してください。",
     invalid_request: "入力内容を確認してください。",
     invalid_shop: "ショップ名を入力してください。",
+    invalid_website_url: "公式サイトは http:// または https:// から入力してください。",
     invalid_stock_status: "在庫状況を選び直してください。",
     price_required: "販売価格または買取価格のどちらかを入力してください。",
     rate_limited: "登録回数の上限に達しました。時間をおいて再度お試しください。",
@@ -90,6 +99,14 @@ export default function RegisterPage() {
   const [cardPrints, setCardPrints] = useState<CardPrintOption[]>([]);
   const [selectedPrintId, setSelectedPrintId] = useState("");
   const [loadingPrints, setLoadingPrints] = useState(false);
+  const [shopQuery, setShopQuery] = useState("");
+  const [shopOptions, setShopOptions] = useState<ShopOption[]>([]);
+  const [selectedShop, setSelectedShop] = useState<ShopOption | null>(null);
+  const [searchingShops, setSearchingShops] = useState(false);
+  const [shopSuggestionsOpen, setShopSuggestionsOpen] = useState(false);
+  const [activeShopOptionIndex, setActiveShopOptionIndex] = useState(-1);
+  const [candidateSubmitting, setCandidateSubmitting] = useState(false);
+  const [candidateFeedback, setCandidateFeedback] = useState<Feedback | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [searchingCards, setSearchingCards] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -207,6 +224,49 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const query = shopQuery.trim();
+
+    if (query.length === 0 || selectedShop) {
+      setShopOptions([]);
+      setSearchingShops(false);
+      setActiveShopOptionIndex(-1);
+      return;
+    }
+
+    setSearchingShops(true);
+    const timer = window.setTimeout(async () => {
+      const supabase = createBrowserSupabaseClient();
+      if (!supabase) {
+        setSystemError("Supabase の接続情報が設定されていません。");
+        setSearchingShops(false);
+        return;
+      }
+
+      const { data, error } = await supabase.rpc("search_shops", {
+        p_limit: 20,
+        p_query: query,
+      });
+
+      if (cancelled) return;
+      setSearchingShops(false);
+      if (error) {
+        setSystemError("承認済み店舗を読み込めませんでした。");
+        return;
+      }
+
+      setSystemError(null);
+      setShopOptions(data ?? []);
+      setActiveShopOptionIndex(-1);
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [selectedShop, shopQuery]);
+
+  useEffect(() => {
+    let cancelled = false;
 
     if (!selectedCard) {
       setCardPrints([]);
@@ -245,6 +305,12 @@ export default function RegisterPage() {
     setSuggestionsOpen(false);
   }
 
+  function chooseShop(shop: ShopOption) {
+    setSelectedShop(shop);
+    setShopQuery(shop.name);
+    setShopSuggestionsOpen(false);
+  }
+
   function handleCardKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
       setSuggestionsOpen(false);
@@ -270,6 +336,35 @@ export default function RegisterPage() {
     ) {
       event.preventDefault();
       chooseCard(cardOptions[activeOptionIndex]);
+    }
+  }
+
+  function handleShopKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape") {
+      setShopSuggestionsOpen(false);
+      return;
+    }
+    if (shopOptions.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setShopSuggestionsOpen(true);
+      setActiveShopOptionIndex(
+        (current) => (current + 1) % shopOptions.length,
+      );
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setShopSuggestionsOpen(true);
+      setActiveShopOptionIndex((current) =>
+        current <= 0 ? shopOptions.length - 1 : current - 1,
+      );
+    } else if (
+      event.key === "Enter" &&
+      shopSuggestionsOpen &&
+      activeShopOptionIndex >= 0
+    ) {
+      event.preventDefault();
+      chooseShop(shopOptions[activeShopOptionIndex]);
     }
   }
 
@@ -320,6 +415,81 @@ export default function RegisterPage() {
     setPinExpiresAt(null);
   }
 
+  async function ensureRegistrationSession(formData: FormData) {
+    if (pinSessionState === "authenticated") {
+      return { ok: true, message: "" };
+    }
+
+    const pin = String(formData.get("password") ?? "");
+    if (!pin) {
+      return { ok: false, message: "登録PINを入力してください。" };
+    }
+    return establishPinSession(pin);
+  }
+
+  async function submitShopCandidate(form: HTMLFormElement) {
+    const formData = new FormData(form);
+    const name = String(formData.get("candidateName") ?? "").trim();
+
+    setCandidateFeedback(null);
+    if (!name) {
+      setCandidateFeedback({ kind: "error", text: "候補の店舗名を入力してください。" });
+      return;
+    }
+
+    setCandidateSubmitting(true);
+    const sessionResult = await ensureRegistrationSession(formData);
+    if (!sessionResult.ok) {
+      setCandidateSubmitting(false);
+      setCandidateFeedback({ kind: "error", text: sessionResult.message });
+      return;
+    }
+
+    const response = await fetch("/api/shop-candidates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        addressLine: String(formData.get("candidateAddressLine") ?? ""),
+        municipality: String(formData.get("candidateMunicipality") ?? ""),
+        name,
+        prefecture: String(formData.get("candidatePrefecture") ?? ""),
+        websiteUrl: String(formData.get("candidateWebsiteUrl") ?? ""),
+      }),
+    });
+    const result = (await response.json()) as ShopCandidateResult & {
+      error?: string;
+    };
+    setCandidateSubmitting(false);
+
+    if (!response.ok) {
+      if (result.error === "session_required") {
+        setPinSessionState("required");
+        setPinExpiresAt(null);
+      }
+      setCandidateFeedback({
+        kind: "error",
+        text: registrationErrorMessage(result.error ?? "registration_failed"),
+      });
+      return;
+    }
+
+    if (result.status === "already_approved") {
+      setShopQuery(name);
+      setSelectedShop(null);
+      setShopSuggestionsOpen(true);
+      setCandidateFeedback({
+        kind: "success",
+        text: "この店舗は承認済みです。上の検索候補から選択してください。",
+      });
+      return;
+    }
+
+    setCandidateFeedback({
+      kind: "success",
+      text: "店舗候補を送信しました。承認後に価格登録で選択できるようになります。",
+    });
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -332,6 +502,13 @@ export default function RegisterPage() {
       setFeedback({ kind: "error", text: "候補からカードを選択してください。" });
       return;
     }
+    if (!selectedShop) {
+      setFeedback({
+        kind: "error",
+        text: "承認済み店舗を検索候補から選択してください。",
+      });
+      return;
+    }
     if (!salePrice && !buyPrice) {
       setFeedback({
         kind: "error",
@@ -341,19 +518,11 @@ export default function RegisterPage() {
     }
 
     setSubmitting(true);
-    if (pinSessionState !== "authenticated") {
-      const pin = String(formData.get("password") ?? "");
-      if (!pin) {
-        setSubmitting(false);
-        setFeedback({ kind: "error", text: "登録PINを入力してください。" });
-        return;
-      }
-      const sessionResult = await establishPinSession(pin);
-      if (!sessionResult.ok) {
-        setSubmitting(false);
-        setFeedback({ kind: "error", text: sessionResult.message });
-        return;
-      }
+    const sessionResult = await ensureRegistrationSession(formData);
+    if (!sessionResult.ok) {
+      setSubmitting(false);
+      setFeedback({ kind: "error", text: sessionResult.message });
+      return;
     }
 
     const response = await fetch("/api/price-records", {
@@ -368,7 +537,7 @@ export default function RegisterPage() {
         note: String(formData.get("note") ?? ""),
         observedOn: String(formData.get("observedOn") ?? ""),
         salePrice: salePrice ? Number(salePrice) : null,
-        shopName: String(formData.get("shopName") ?? ""),
+        shopId: selectedShop.id,
         stockStatus: String(formData.get("stockStatus") ?? "unknown"),
       }),
     });
@@ -394,6 +563,10 @@ export default function RegisterPage() {
     setCardPrints([]);
     setSelectedPrintId("");
     setSuggestionsOpen(false);
+    setShopQuery("");
+    setShopOptions([]);
+    setSelectedShop(null);
+    setShopSuggestionsOpen(false);
     setSalePriceInput("");
     setBuyPriceInput("");
     setFeedback({ kind: "success", text: "価格情報を登録しました。" });
@@ -402,6 +575,9 @@ export default function RegisterPage() {
   const showSuggestions =
     suggestionsOpen && cardQuery.trim().length > 0 && !selectedCard;
   const activeOption = cardOptions[activeOptionIndex];
+  const showShopSuggestions =
+    shopSuggestionsOpen && shopQuery.trim().length > 0 && !selectedShop;
+  const activeShopOption = shopOptions[activeShopOptionIndex];
 
   return (
     <section className="form-wrap">
@@ -584,15 +760,149 @@ export default function RegisterPage() {
           </div>
         </fieldset>
 
-        <label htmlFor="shopName">
-          ショップ名
+        <div
+          className="card-combobox shop-combobox"
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setShopSuggestionsOpen(false);
+            }
+          }}
+        >
+          <label htmlFor="shopQuery">承認済み店舗</label>
           <input
-            id="shopName"
-            name="shopName"
+            id="shopQuery"
+            type="search"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="shop-suggestions"
+            aria-expanded={showShopSuggestions}
+            aria-activedescendant={
+              showShopSuggestions && activeShopOption
+                ? `shop-option-${activeShopOption.id}`
+                : undefined
+            }
+            placeholder="店舗名を入力して候補から選択"
+            value={shopQuery}
+            onFocus={() => setShopSuggestionsOpen(true)}
+            onKeyDown={handleShopKeyDown}
+            onChange={(event) => {
+              setShopQuery(event.target.value);
+              setSelectedShop(null);
+              setShopSuggestionsOpen(true);
+            }}
             required
-            placeholder="例：カードショップ○○"
           />
-        </label>
+
+          {showShopSuggestions && (
+            <ul className="suggestions" id="shop-suggestions" role="listbox">
+              {searchingShops && <li className="suggestion-status">検索中…</li>}
+              {!searchingShops && shopOptions.length === 0 && (
+                <li className="suggestion-status">
+                  一致する承認済み店舗がありません
+                </li>
+              )}
+              {!searchingShops &&
+                shopOptions.map((shop, index) => (
+                  <li
+                    id={`shop-option-${shop.id}`}
+                    className={index === activeShopOptionIndex ? "active" : ""}
+                    key={shop.id}
+                    role="option"
+                    aria-selected={index === activeShopOptionIndex}
+                    onMouseEnter={() => setActiveShopOptionIndex(index)}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      chooseShop(shop);
+                    }}
+                  >
+                    <strong>{shop.name}</strong>
+                  </li>
+                ))}
+            </ul>
+          )}
+          {selectedShop && (
+            <p className="selected-card" role="status">
+              選択中：{selectedShop.name}
+            </p>
+          )}
+          <p className="form-help">
+            価格情報は、承認済み店舗を候補から選択した場合だけ登録できます。
+          </p>
+        </div>
+
+        <details className="shop-candidate-panel">
+          <summary>店舗が見つからない場合：候補を申請</summary>
+          <p className="form-help">
+            店舗情報を確認してから承認します。申請中は価格登録に使用できません。
+          </p>
+          <label htmlFor="candidateName">
+            店舗名
+            <input
+              id="candidateName"
+              name="candidateName"
+              maxLength={200}
+              placeholder="例：カードショップ○○"
+            />
+          </label>
+          <div className="two">
+            <label htmlFor="candidatePrefecture">
+              都道府県
+              <input
+                id="candidatePrefecture"
+                name="candidatePrefecture"
+                maxLength={20}
+                placeholder="例：東京都"
+              />
+            </label>
+            <label htmlFor="candidateMunicipality">
+              市区町村
+              <input
+                id="candidateMunicipality"
+                name="candidateMunicipality"
+                maxLength={100}
+                placeholder="例：千代田区"
+              />
+            </label>
+          </div>
+          <label htmlFor="candidateAddressLine">
+            住所の続き
+            <input
+              id="candidateAddressLine"
+              name="candidateAddressLine"
+              maxLength={300}
+              placeholder="町名・番地・建物名"
+            />
+          </label>
+          <label htmlFor="candidateWebsiteUrl">
+            公式サイト
+            <input
+              id="candidateWebsiteUrl"
+              name="candidateWebsiteUrl"
+              type="url"
+              maxLength={500}
+              placeholder="https://example.com/shop"
+            />
+          </label>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={candidateSubmitting || pinSessionState === "checking"}
+            onClick={(event) => {
+              const form = event.currentTarget.form;
+              if (form) void submitShopCandidate(form);
+            }}
+          >
+            {candidateSubmitting ? "候補を送信中…" : "店舗候補を送信"}
+          </button>
+          {candidateFeedback && (
+            <p
+              className={`notice ${candidateFeedback.kind}`}
+              role={candidateFeedback.kind === "error" ? "alert" : "status"}
+            >
+              {candidateFeedback.text}
+            </p>
+          )}
+        </details>
 
         <div className="two">
           <label htmlFor="salePrice">
@@ -731,7 +1041,12 @@ export default function RegisterPage() {
         <button
           className="button"
           type="submit"
-          disabled={submitting || pinSessionState === "checking" || !selectedCard}
+          disabled={
+            submitting ||
+            pinSessionState === "checking" ||
+            !selectedCard ||
+            !selectedShop
+          }
         >
           {submitting ? "登録中…" : "登録する"}
         </button>
