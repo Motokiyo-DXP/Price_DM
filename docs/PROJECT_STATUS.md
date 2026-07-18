@@ -17,6 +17,9 @@
 ```text
 supabase/migrations/20260717182317_canonical_market_details.sql
 supabase/migrations/20260718044041_store_candidate_foundation.sql
+supabase/migrations/20260718184128_approved_shop_price_registration.sql
+supabase/migrations/20260718185413_revoke_legacy_price_registration.sql
+supabase/migrations/20260718185820_revoke_legacy_private_price_registration.sql
 ```
 
 このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
@@ -46,6 +49,7 @@ supabase/migrations/20260718044041_store_candidate_foundation.sql
 - 承認済み店舗の検索・候補選択
 - PIN認証済みセッションからの店舗候補申請
 - 価格登録APIでの承認済み店舗ID確認
+- 店舗IDベースの価格登録RPCと旧店舗名RPCの公開権限停止
 
 ## DB実装済み・管理画面未実装
 
@@ -64,10 +68,9 @@ supabase/migrations/20260718044041_store_candidate_foundation.sql
 ## 次に着手する順番
 
 1. Previewで候補の重複送信、承認済み店舗の再送信、却下後の再申請を確認する
-2. 店舗IDを受け取る価格登録RPCへ切り替え、旧店舗名RPCの公開実行権限を外す
-3. 店舗候補の管理者向け一覧・承認画面を追加する
-4. 地域絞り込みと直線距離絞り込みを追加する
-5. 価格記録の修正申請・管理者承認を追加する
+2. 店舗候補の管理者向け一覧・承認画面を追加する
+3. 地域絞り込みと直線距離絞り込みを追加する
+4. 価格記録の修正申請・管理者承認を追加する
 
 ## 保留中
 
