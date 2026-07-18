@@ -19,6 +19,7 @@ supabase/migrations/20260717182317_canonical_market_details.sql
 supabase/migrations/20260718044041_store_candidate_foundation.sql
 supabase/migrations/20260718184128_approved_shop_price_registration.sql
 supabase/migrations/20260718185413_revoke_legacy_price_registration.sql
+supabase/migrations/20260718185820_revoke_legacy_private_price_registration.sql
 ```
 
 このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
