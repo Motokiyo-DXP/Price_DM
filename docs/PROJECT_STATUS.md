@@ -1,6 +1,6 @@
 # プロジェクト状況
 
-最終更新: 2026-07-18
+最終更新: 2026-07-19
 
 ## 現在の区切り
 
@@ -12,6 +12,8 @@
 
 承認済み店舗マスターと店舗追加候補を分離するDB基盤は `main` へマージし、本番Supabaseへ適用済みです。Security Advisorは0件で、匿名ロールから公開受付RPCを呼び出した際の無効セッション応答も確認済みです。
 
+店舗候補の管理者向け一覧・承認画面は `main` へマージし、本番反映済みです。Supabase Auth のMagic Linkと `private.admin_users` の許可リストを使い、管理者だけが `/admin` で候補の承認・却下を実行できます。本番で管理者ログインと候補一覧の表示も確認済みです。
+
 本番Supabaseに適用済みの直近マイグレーションとローカルの対応ファイルは次です。
 
 ```text
@@ -20,6 +22,9 @@ supabase/migrations/20260718044041_store_candidate_foundation.sql
 supabase/migrations/20260718184128_approved_shop_price_registration.sql
 supabase/migrations/20260718185413_revoke_legacy_price_registration.sql
 supabase/migrations/20260718185820_revoke_legacy_private_price_registration.sql
+supabase/migrations/20260719094138_add_admin_shop_candidate_review.sql
+supabase/migrations/20260719094411_tighten_admin_user_access.sql
+supabase/migrations/20260719094459_decouple_candidate_audit_actor.sql
 ```
 
 このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
@@ -50,27 +55,23 @@ supabase/migrations/20260718185820_revoke_legacy_private_price_registration.sql
 - PIN認証済みセッションからの店舗候補申請
 - 価格登録APIでの承認済み店舗ID確認
 - 店舗IDベースの価格登録RPCと旧店舗名RPCの公開権限停止
+- Supabase Auth Magic Linkを使う管理者ログイン
+- 管理画面での保留中店舗候補の一覧・承認・却下
+- 管理者許可リストによる管理操作の認可とレビュー監査情報
 
-## DB実装済み・管理画面未実装
+## 運用確認待ち
 
-- 承認済み店舗マスターの地域・住所・緯度経度の受け皿
-- 店舗候補の重複防止、管理者による承認・却下
-- 店舗候補の管理者向け一覧・承認画面
-
-対応する適用済みマイグレーションは次です。
-
-```text
-supabase/migrations/20260718044041_store_candidate_foundation.sql
-```
+- 店舗候補の重複送信、承認済み店舗の再送信、却下後の再申請は、実在する候補が発生した時にPreviewまたは本番相当環境で確認する。テスト目的で本番候補を作成しない。
+- 管理画面からの承認・却下は、候補の公式情報を別経路で確認した実在候補だけに対して実行する。
 
 現在の本番データは価格記録2件で、いずれも収録版指定ありです。そのため、指定なし価格による平均履歴はまだ空です。画面ではフォールバック価格として注意付きで表示します。
 
 ## 次に着手する順番
 
-1. Previewで候補の重複送信、承認済み店舗の再送信、却下後の再申請を確認する
-2. 店舗候補の管理者向け一覧・承認画面を追加する
-3. 地域絞り込みと直線距離絞り込みを追加する
-4. 価格記録の修正申請・管理者承認を追加する
+1. 実在する店舗候補が発生した時に、候補申請から管理画面での承認・却下までを確認する
+2. 地域絞り込みと直線距離絞り込みを追加する
+3. 価格記録の修正申請・管理者承認を追加する
+4. 本番運用に入る前に、費用と送信元ドメインを確認したうえでSupabase AuthのカスタムSMTP導入を判断する
 
 ## 保留中
 
@@ -84,4 +85,6 @@ supabase/migrations/20260718044041_store_candidate_foundation.sql
 ## 既知の開発環境上の注意
 
 一部の外付けSSD環境ではNext.jsの本番ビルド時に`EISDIR/readlink`が発生することがあります。型チェックはSSD上で行い、本番ビルドだけ内蔵NTFSドライブのCloneで確認するか、Vercelのビルド結果を確認してください。
+
+Supabase標準SMTPは開発用で、Magic Linkや招待メールの送信数が厳しく制限されます。管理ログインのメールが送信されない場合は連続送信せず、Authログのレート制限を確認してから時間を空けて再試行します。カスタムSMTPの設定には送信サービスの費用・認証情報・送信元ドメインの判断が必要です。
 

@@ -1,12 +1,12 @@
 # 店舗候補の承認運用
 
-店舗候補DBマイグレーション適用後の管理者向け手順です。公開画面や `anon` / `authenticated` ロールから承認・却下は実行できません。
+店舗候補を管理画面から確認・承認・却下するための管理者向け手順です。公開画面や一般の `authenticated` ユーザーは、候補の閲覧・承認・却下を実行できません。
 
 ## 前提
 
-- 本番DBへマイグレーションを適用する前に、もう一人がSQL差分を確認する
-- 承認操作はSupabase SQL Editorを管理者権限で使用する
-- PIN、セッショントークン、Service Role keyをSQLやGitへ記録しない
+- 管理者のSupabase AuthユーザーIDを `private.admin_users` の許可リストへ登録済みである
+- `/admin` にはMagic Linkでログインし、管理操作には価格登録用PINを使わない
+- PIN、セッショントークン、Service Role key、SMTP認証情報をGit・Issue・スクリーンショットへ記録しない
 - 最終構成では `shops` は承認済み店舗だけを保持し、未承認候補は `shop_candidates` に保持する
 
 ## 画面接続後の状態
@@ -15,66 +15,28 @@
 
 価格登録APIは店舗IDを受け取る `submit_price_record_session_v3` を使用します。旧店舗名ベースRPCとその内部実装は `anon` / `authenticated` から実行できないため、アプリ外から未承認店舗を価格登録と同時に作成することもできません。
 
-## 未承認候補を確認する
+## 保留中候補を確認する
 
-```sql
-select
-  id,
-  name,
-  prefecture,
-  municipality,
-  address_line,
-  website_url,
-  submission_count,
-  submitted_at,
-  last_submitted_at
-from public.shop_candidates
-where status = 'pending'
-order by submitted_at, id;
-```
+1. `/admin` を開く。未ログインの場合は `/admin/login` で許可済みメールアドレスへMagic Linkを送る。
+2. 「店舗候補の確認」に表示される保留中候補を確認する。候補がなければ空状態が表示される。
+3. 店舗名、住所、公式サイトを、候補に含まれるURL以外の経路でも確認する。
+
+Supabase標準SMTPは送信レートが低いため、Magic Linkが届かない場合は連続送信しない。時間を空けて再試行し、恒常運用に移る場合だけカスタムSMTPを別途検討する。
 
 ## 承認する
 
-候補の店舗名、住所、公式サイトを別経路で確認してから実行します。承認すると既存の同名店舗を再利用するか、新しい `shops` レコードを作り、承認済み店舗IDを返します。
+候補の公式情報を確認できた場合だけ、管理画面の「承認」を選ぶ。確認内容はレビュー注記へ簡潔に残す。
 
-```sql
-begin;
-
-select private.approve_shop_candidate(
-  p_candidate_id := 123,
-  p_review_note := '公式サイトで店舗情報を確認'
-);
-
-commit;
-```
-
-`123` は実際の候補IDへ置き換えます。実行前に同じトランザクション内で候補行を再確認してください。
+承認後は、同一の承認済み店舗があれば再利用し、なければ `shops` に新しい店舗が作成される。候補は承認済みになり、以後の価格登録で候補店舗を選択できる。
 
 ## 却下する
 
-```sql
-begin;
+既存店舗の表記違い、公式情報を確認できない場合などは、管理画面の「却下」を選ぶ。理由はレビュー注記へ残す。
 
-select private.reject_shop_candidate(
-  p_candidate_id := 123,
-  p_review_note := '既存店舗の表記違いのため却下'
-);
+## 操作後の確認
 
-commit;
-```
+- 管理画面から候補が消え、保留中一覧に残っていないことを確認する。
+- 承認した場合は、価格登録画面の店舗検索で承認済み店舗として選択できることを確認する。
+- 管理画面に入れない、候補を二重処理しようとした、または候補の公式情報を確認できない場合は処理を止める。
 
-## 適用後の確認
-
-```sql
-select id, name, prefecture, municipality, address_line
-from public.shops
-order by id desc
-limit 20;
-
-select id, name, status, approved_shop_id, reviewed_at, review_note
-from public.shop_candidates
-order by id desc
-limit 20;
-```
-
-承認・却下処理に公開API権限が付与されていないことも、SupabaseのSecurity Advisorと関数権限で確認します。
+承認・却下RPCには管理者チェックがあり、公開APIロールに候補の閲覧・操作権限は付与されていない。権限変更後はSupabase Security Advisorも確認する。
