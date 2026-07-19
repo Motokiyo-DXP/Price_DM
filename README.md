@@ -9,6 +9,7 @@ TCGカードの販売価格・買取価格・在庫状況を共有する Next.js
 
 - [引き継ぎガイド](docs/HANDOFF.md)
 - [現在の実装状況](docs/PROJECT_STATUS.md)
+- [価格修正申請の運用](docs/PRICE_CORRECTION.md)
 - [共同開発ルール](CONTRIBUTING.md)
 
 友人との共同開発では、GitHubの機能ブランチとPull Requestを使い、本番Vercel・Supabaseの管理権限は必要になるまで共有しない運用を推奨します。
