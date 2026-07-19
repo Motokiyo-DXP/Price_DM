@@ -13,7 +13,9 @@
     "import:dm:aliases": "node scripts/fetch-dm-card-aliases.mjs",
     "build:dm:import": "node scripts/build-dm-card-import.mjs",
     "test:import:dm": "node --test --test-isolation=none scripts/import-dm-cards-sample.test.mjs scripts/import-dm-cards-full.test.mjs scripts/fetch-dm-card-aliases.test.mjs",
-    "test:price-corrections": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/price-correction-validation.test.mjs"
+    "test:price-corrections": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/price-correction-validation.test.mjs",
+    "test:prices": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/price-input-validation.test.mjs lib/price-correction-validation.test.mjs",
+    "test": "npm run test:prices && npm run test:import:dm"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",

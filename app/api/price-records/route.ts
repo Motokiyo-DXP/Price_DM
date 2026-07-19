@@ -1,6 +1,11 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import {
+  isIsoCalendarDate,
+  optionalInteger,
+  STOCK_STATUSES,
+} from "@/lib/price-input-validation";
 import { REGISTRATION_SESSION_COOKIE } from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
@@ -10,27 +15,11 @@ type StockStatus = Database["public"]["Enums"]["stock_status"];
 type SessionSubmitArgs =
   Database["public"]["Functions"]["submit_price_record_session_v3"]["Args"];
 
-const STOCK_STATUSES = new Set<StockStatus>([
-  "in_stock",
-  "low_stock",
-  "out_of_stock",
-  "unknown",
-  "buying",
-  "buying_paused",
-]);
-
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, {
     status,
     headers: { "Cache-Control": "no-store" },
   });
-}
-
-function optionalInteger(value: unknown) {
-  if (value === null || value === undefined || value === "") return null;
-  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-    ? value
-    : undefined;
 }
 
 export async function POST(request: Request) {
@@ -88,7 +77,7 @@ export async function POST(request: Request) {
   if (typeof stockStatus !== "string" || !STOCK_STATUSES.has(stockStatus as StockStatus)) {
     return json({ error: "invalid_stock_status" }, 400);
   }
-  if (typeof observedOn !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(observedOn)) {
+  if (!isIsoCalendarDate(observedOn)) {
     return json({ error: "invalid_date" }, 400);
   }
   if (contributorName.length > 100 || note.length > 2000) {

@@ -31,10 +31,10 @@ npm install
 ```bash
 npm run typecheck
 npm run build
-npm run test:import:dm
+npm test
 ```
 
-変更箇所に関係する確認だけでなく、少なくとも型チェックと本番ビルドは毎回実行します。
+`npm test` は価格入力の境界値テストとDMインポートテストを実行します。変更箇所に関係する確認だけでなく、少なくとも型チェック、本番ビルド、全テストを毎回実行します。
 
 ## Supabase変更
 
