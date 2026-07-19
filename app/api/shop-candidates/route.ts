@@ -1,7 +1,11 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { Database, Json } from "@/lib/database.types";
-import { REGISTRATION_SESSION_COOKIE } from "@/lib/registration-session";
+import {
+  isRegistrationSessionToken,
+  REGISTRATION_SESSION_COOKIE,
+} from "@/lib/registration-session";
+import { validateShopCandidateBody } from "@/lib/shop-candidate-validation";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -22,10 +26,6 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function text(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
 function isSubmitResult(value: Json): value is SubmitResult {
   return (
     typeof value === "object" &&
@@ -40,35 +40,23 @@ function isSubmitResult(value: Json): value is SubmitResult {
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(REGISTRATION_SESSION_COOKIE)?.value;
-  if (!sessionToken) return json({ error: "session_required" }, 401);
+  if (!isRegistrationSessionToken(sessionToken)) {
+    const response = json({ error: "session_required" }, 401);
+    if (sessionToken) response.cookies.delete(REGISTRATION_SESSION_COOKIE);
+    return response;
+  }
 
-  let body: Record<string, unknown>;
+  let body: unknown;
   try {
-    body = (await request.json()) as Record<string, unknown>;
+    body = await request.json();
   } catch {
     return json({ error: "invalid_request" }, 400);
   }
 
-  const name = text(body.name);
-  const prefecture = text(body.prefecture);
-  const municipality = text(body.municipality);
-  const addressLine = text(body.addressLine);
-  const websiteUrl = text(body.websiteUrl);
-
-  if (!name || name.length > 200) {
-    return json({ error: "invalid_shop" }, 400);
-  }
-  if (
-    prefecture.length > 20 ||
-    municipality.length > 100 ||
-    addressLine.length > 300 ||
-    websiteUrl.length > 500
-  ) {
-    return json({ error: "too_long" }, 400);
-  }
-  if (websiteUrl && !/^https?:\/\//i.test(websiteUrl)) {
-    return json({ error: "invalid_website_url" }, 400);
-  }
+  const candidate = validateShopCandidateBody(body);
+  if (!candidate.ok) return json({ error: candidate.error }, 400);
+  const { name, prefecture, municipality, addressLine, websiteUrl } =
+    candidate.value;
 
   const args: SubmitArgs = {
     p_name: name,
