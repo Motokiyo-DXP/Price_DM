@@ -1,11 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
-import {
-  isIsoCalendarDate,
-  optionalInteger,
-  STOCK_STATUSES,
-} from "@/lib/price-input-validation";
+import { validatePriceRecordBody } from "@/lib/price-record-validation";
 import {
   isRegistrationSessionToken,
   REGISTRATION_SESSION_COOKIE,
@@ -14,7 +10,6 @@ import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-type StockStatus = Database["public"]["Enums"]["stock_status"];
 type SessionSubmitArgs =
   Database["public"]["Functions"]["submit_price_record_session_v3"]["Args"];
 
@@ -40,81 +35,27 @@ export async function POST(request: Request) {
   } catch {
     return json({ error: "invalid_request" }, 400);
   }
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    return json({ error: "invalid_request" }, 400);
-  }
-  const body = input as Record<string, unknown>;
-
-  const canonicalCardId = body.canonicalCardId;
-  const cardPrintId = optionalInteger(body.cardPrintId);
-  const shopId = body.shopId;
-  const salePrice = optionalInteger(body.salePrice);
-  const buyPrice = optionalInteger(body.buyPrice);
-  const stockStatus = body.stockStatus;
-  const observedOn = body.observedOn;
-  const contributorName =
-    typeof body.contributorName === "string" ? body.contributorName.trim() : "";
-  const note = typeof body.note === "string" ? body.note.trim() : "";
-  const attributeSlugs = Array.isArray(body.attributeSlugs)
-    ? body.attributeSlugs.filter(
-        (value): value is string =>
-          typeof value === "string" && /^[a-z0-9_]{1,50}$/.test(value),
-      )
-    : [];
-
-  if (
-    typeof canonicalCardId !== "number" ||
-    !Number.isSafeInteger(canonicalCardId) ||
-    canonicalCardId <= 0
-  ) {
-    return json({ error: "card_required" }, 400);
-  }
-  if (cardPrintId === undefined || (cardPrintId !== null && cardPrintId <= 0)) {
-    return json({ error: "invalid_request" }, 400);
-  }
-  if (
-    typeof shopId !== "number" ||
-    !Number.isSafeInteger(shopId) ||
-    shopId <= 0
-  ) {
-    return json({ error: "invalid_shop" }, 400);
-  }
-  if (salePrice === undefined || buyPrice === undefined) {
-    return json({ error: "invalid_price" }, 400);
-  }
-  if (salePrice === null && buyPrice === null) {
-    return json({ error: "price_required" }, 400);
-  }
-  if (typeof stockStatus !== "string" || !STOCK_STATUSES.has(stockStatus as StockStatus)) {
-    return json({ error: "invalid_stock_status" }, 400);
-  }
-  if (!isIsoCalendarDate(observedOn)) {
-    return json({ error: "invalid_date" }, 400);
-  }
-  if (contributorName.length > 100 || note.length > 2000) {
-    return json({ error: "too_long" }, 400);
-  }
-  if (
-    attributeSlugs.length > 10 ||
-    (Array.isArray(body.attributeSlugs) &&
-      attributeSlugs.length !== body.attributeSlugs.length)
-  ) {
-    return json({ error: "invalid_request" }, 400);
-  }
+  const validation = validatePriceRecordBody(input);
+  if (!validation.ok) return json({ error: validation.error }, 400);
+  const priceRecord = validation.value;
 
   const args: SessionSubmitArgs = {
-    p_attribute_slugs: [...new Set(attributeSlugs)],
-    p_canonical_card_id: Number(canonicalCardId),
-    p_observed_on: observedOn,
+    p_attribute_slugs: priceRecord.attributeSlugs,
+    p_canonical_card_id: priceRecord.canonicalCardId,
+    p_observed_on: priceRecord.observedOn,
     p_session_token: sessionToken,
-    p_shop_id: shopId,
-    p_stock_status: stockStatus as StockStatus,
+    p_shop_id: priceRecord.shopId,
+    p_stock_status: priceRecord.stockStatus,
   };
-  if (cardPrintId !== null) args.p_card_print_id = cardPrintId;
-  if (salePrice !== null) args.p_sale_price = salePrice;
-  if (buyPrice !== null) args.p_buy_price = buyPrice;
-  if (contributorName) args.p_contributor_name = contributorName;
-  if (note) args.p_note = note;
+  if (priceRecord.cardPrintId !== null) {
+    args.p_card_print_id = priceRecord.cardPrintId;
+  }
+  if (priceRecord.salePrice !== null) args.p_sale_price = priceRecord.salePrice;
+  if (priceRecord.buyPrice !== null) args.p_buy_price = priceRecord.buyPrice;
+  if (priceRecord.contributorName) {
+    args.p_contributor_name = priceRecord.contributorName;
+  }
+  if (priceRecord.note) args.p_note = priceRecord.note;
 
   const supabase = createServerSupabaseClient();
   if (!supabase) return json({ error: "service_unavailable" }, 503);
