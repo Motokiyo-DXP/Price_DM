@@ -866,6 +866,15 @@ export type Database = {
           name: string
         }[]
       }
+      search_shops_by_prefecture: {
+        Args: { p_limit?: number; p_prefecture?: string; p_query?: string }
+        Returns: {
+          id: number
+          municipality: string
+          name: string
+          prefecture: string
+        }[]
+      }
       submit_price_record: {
         Args: {
           p_buy_price?: number
