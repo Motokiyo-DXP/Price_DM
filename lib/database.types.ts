@@ -497,6 +497,7 @@ export type Database = {
           prefecture: string | null
           review_note: string | null
           reviewed_at: string | null
+          reviewed_by: string | null
           status: string
           submission_count: number
           submitted_at: string
@@ -513,6 +514,7 @@ export type Database = {
           prefecture?: string | null
           review_note?: string | null
           reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
           submission_count?: number
           submitted_at?: string
@@ -529,6 +531,7 @@ export type Database = {
           prefecture?: string | null
           review_note?: string | null
           reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
           submission_count?: number
           submitted_at?: string
@@ -796,7 +799,33 @@ export type Database = {
           product_name: string
         }[]
       }
+      list_pending_shop_candidates_for_admin: {
+        Args: { p_limit?: number }
+        Returns: {
+          address_line: string
+          id: number
+          last_submitted_at: string
+          municipality: string
+          name: string
+          prefecture: string
+          submission_count: number
+          submitted_at: string
+          website_url: string
+        }[]
+      }
       normalize_card_search: { Args: { p_value: string }; Returns: string }
+      review_shop_candidate_for_admin: {
+        Args: {
+          p_candidate_id: number
+          p_decision: string
+          p_review_note?: string
+        }
+        Returns: {
+          approved_shop_id: number
+          candidate_id: number
+          candidate_status: string
+        }[]
+      }
       search_canonical_cards: {
         Args: {
           p_game_slug?: string
