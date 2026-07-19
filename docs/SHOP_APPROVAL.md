@@ -11,7 +11,7 @@
 
 ## 画面接続後の状態
 
-価格登録画面は `search_shops` の候補から承認済み店舗を選択し、`/api/price-records` が店舗IDを `shops` で再確認してから価格登録RPCを呼び出します。未登録店舗は `/api/shop-candidates` から候補として送信し、承認されるまで価格登録には使用できません。
+価格登録画面は `search_shops_by_prefecture` の候補から承認済み店舗を選択します。店舗名に加え、任意の都道府県で候補を絞り込めます。`/api/price-records` は店舗IDを `shops` で再確認してから価格登録RPCを呼び出します。未登録店舗は `/api/shop-candidates` から候補として送信し、承認されるまで価格登録には使用できません。
 
 価格登録APIは店舗IDを受け取る `submit_price_record_session_v3` を使用します。旧店舗名ベースRPCとその内部実装は `anon` / `authenticated` から実行できないため、アプリ外から未承認店舗を価格登録と同時に作成することもできません。
 

@@ -25,6 +25,7 @@ supabase/migrations/20260718185820_revoke_legacy_private_price_registration.sql
 supabase/migrations/20260719094138_add_admin_shop_candidate_review.sql
 supabase/migrations/20260719094411_tighten_admin_user_access.sql
 supabase/migrations/20260719094459_decouple_candidate_audit_actor.sql
+supabase/migrations/20260719140529_add_prefecture_shop_search.sql
 ```
 
 このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
@@ -58,6 +59,7 @@ supabase/migrations/20260719094459_decouple_candidate_audit_actor.sql
 - Supabase Auth Magic Linkを使う管理者ログイン
 - 管理画面での保留中店舗候補の一覧・承認・却下
 - 管理者許可リストによる管理操作の認可とレビュー監査情報
+- 承認済み店舗を都道府県と店舗名で絞り込む価格登録画面
 
 ## 運用確認待ち
 
@@ -69,7 +71,7 @@ supabase/migrations/20260719094459_decouple_candidate_audit_actor.sql
 ## 次に着手する順番
 
 1. 実在する店舗候補が発生した時に、候補申請から管理画面での承認・却下までを確認する
-2. 地域絞り込みと直線距離絞り込みを追加する
+2. 位置情報・利用条件・費用を確認したうえで、直線距離絞り込みを検討する
 3. 価格記録の修正申請・管理者承認を追加する
 4. 本番運用に入る前に、費用と送信元ドメインを確認したうえでSupabase AuthのカスタムSMTP導入を判断する
 
