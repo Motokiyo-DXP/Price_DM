@@ -2,7 +2,10 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { validatePriceCorrectionBody } from "@/lib/price-correction-validation";
-import { REGISTRATION_SESSION_COOKIE } from "@/lib/registration-session";
+import {
+  isRegistrationSessionToken,
+  REGISTRATION_SESSION_COOKIE,
+} from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +22,11 @@ function json(body: unknown, status = 200) {
 
 export async function POST(request: Request) {
   const sessionToken = (await cookies()).get(REGISTRATION_SESSION_COOKIE)?.value;
-  if (!sessionToken) return json({ error: "session_required" }, 401);
+  if (!isRegistrationSessionToken(sessionToken)) {
+    const response = json({ error: "session_required" }, 401);
+    if (sessionToken) response.cookies.delete(REGISTRATION_SESSION_COOKIE);
+    return response;
+  }
 
   let body: Record<string, unknown>;
   try {

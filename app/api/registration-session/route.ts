@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
+  isRegistrationSessionToken,
   REGISTRATION_SESSION_COOKIE,
   REGISTRATION_SESSION_MAX_AGE,
 } from "@/lib/registration-session";
@@ -19,6 +20,11 @@ export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get(REGISTRATION_SESSION_COOKIE)?.value;
   if (!token) return json({ authenticated: false });
+  if (!isRegistrationSessionToken(token)) {
+    const response = json({ authenticated: false });
+    response.cookies.delete(REGISTRATION_SESSION_COOKIE);
+    return response;
+  }
 
   const supabase = createServerSupabaseClient();
   if (!supabase) return json({ authenticated: false }, 503);
@@ -45,7 +51,7 @@ export async function POST(request: Request) {
     return json({ error: "invalid_request" }, 400);
   }
 
-  if (typeof token !== "string" || token.length < 32 || token.length > 128) {
+  if (!isRegistrationSessionToken(token)) {
     return json({ error: "invalid_session" }, 400);
   }
 

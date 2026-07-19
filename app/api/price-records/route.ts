@@ -6,7 +6,10 @@ import {
   optionalInteger,
   STOCK_STATUSES,
 } from "@/lib/price-input-validation";
-import { REGISTRATION_SESSION_COOKIE } from "@/lib/registration-session";
+import {
+  isRegistrationSessionToken,
+  REGISTRATION_SESSION_COOKIE,
+} from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -25,14 +28,22 @@ function json(body: unknown, status = 200) {
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(REGISTRATION_SESSION_COOKIE)?.value;
-  if (!sessionToken) return json({ error: "session_required" }, 401);
+  if (!isRegistrationSessionToken(sessionToken)) {
+    const response = json({ error: "session_required" }, 401);
+    if (sessionToken) response.cookies.delete(REGISTRATION_SESSION_COOKIE);
+    return response;
+  }
 
-  let body: Record<string, unknown>;
+  let input: unknown;
   try {
-    body = (await request.json()) as Record<string, unknown>;
+    input = await request.json();
   } catch {
     return json({ error: "invalid_request" }, 400);
   }
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return json({ error: "invalid_request" }, 400);
+  }
+  const body = input as Record<string, unknown>;
 
   const canonicalCardId = body.canonicalCardId;
   const cardPrintId = optionalInteger(body.cardPrintId);
