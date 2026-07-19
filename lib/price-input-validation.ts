@@ -11,6 +11,10 @@ export const STOCK_STATUSES: ReadonlySet<StockStatus> = new Set([
   "buying_paused",
 ]);
 
+export function normalizePriceInput(value: string) {
+  return value.normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 9);
+}
+
 export function optionalInteger(value: unknown) {
   if (value === null || value === undefined || value === "") return null;
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import type { Database, Json } from "@/lib/database.types";
+import { normalizePriceInput } from "@/lib/price-input-validation";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 
@@ -67,10 +68,6 @@ function todayForDateInput() {
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-function normalizePriceInput(value: string) {
-  return value.normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 9);
 }
 
 function isSessionResult(value: Json): value is RegistrationSessionResult {
