@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PriceHistoryChart } from "@/components/price-history-chart";
+import { PriceCorrectionForm } from "@/components/price-correction-form";
 import { loadCardDetail, type CardBestPrice } from "@/lib/card-detail-data";
 
 export const dynamic = "force-dynamic";
@@ -213,6 +214,7 @@ export default async function CardDetailPage({
                   </div>
                 )}
                 {record.note && <p className="record-note">{record.note}</p>}
+                <PriceCorrectionForm record={record} />
               </article>
             ))}
           </div>

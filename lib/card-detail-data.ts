@@ -29,6 +29,7 @@ export type CardRecentRecord = {
   salePrice: number | null;
   buyPrice: number | null;
   stock: string;
+  stockStatus: StockStatus;
   observedOn: string;
   isStale: boolean;
   shopName: string;
@@ -131,6 +132,7 @@ export async function loadCardDetail(
       observedOn: row.observed_on,
       isStale: row.is_stale,
       stock: stockLabel(row.stock_status),
+      stockStatus: row.stock_status,
       cardNumber: row.card_number ?? undefined,
       productName: row.product_name ?? undefined,
       attributeNames: row.attribute_names ?? [],
@@ -143,6 +145,7 @@ export async function loadCardDetail(
       salePrice: row.sale_price ?? null,
       buyPrice: row.buy_price ?? null,
       stock: stockLabel(row.stock_status),
+      stockStatus: row.stock_status,
       observedOn: row.observed_on,
       isStale: row.is_stale,
       shopName: row.shop_name,

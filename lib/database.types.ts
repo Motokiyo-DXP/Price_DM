@@ -344,6 +344,72 @@ export type Database = {
           },
         ]
       }
+      price_correction_requests: {
+        Row: {
+          id: number
+          price_record_id: number
+          proposed_buy_price: number | null
+          proposed_note: string | null
+          proposed_observed_on: string
+          proposed_sale_price: number | null
+          proposed_stock_status: Database["public"]["Enums"]["stock_status"]
+          reason: string
+          replacement_price_record_id: number | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+        }
+        Insert: {
+          id?: never
+          price_record_id: number
+          proposed_buy_price?: number | null
+          proposed_note?: string | null
+          proposed_observed_on: string
+          proposed_sale_price?: number | null
+          proposed_stock_status: Database["public"]["Enums"]["stock_status"]
+          reason: string
+          replacement_price_record_id?: number | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+        }
+        Update: {
+          id?: never
+          price_record_id?: number
+          proposed_buy_price?: number | null
+          proposed_note?: string | null
+          proposed_observed_on?: string
+          proposed_sale_price?: number | null
+          proposed_stock_status?: Database["public"]["Enums"]["stock_status"]
+          reason?: string
+          replacement_price_record_id?: number | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_correction_requests_price_record_id_fkey"
+            columns: ["price_record_id"]
+            isOneToOne: false
+            referencedRelation: "price_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_correction_requests_replacement_price_record_id_fkey"
+            columns: ["replacement_price_record_id"]
+            isOneToOne: false
+            referencedRelation: "price_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_record_attributes: {
         Row: {
           attribute_id: number
@@ -799,6 +865,24 @@ export type Database = {
           product_name: string
         }[]
       }
+      list_pending_price_corrections_for_admin: {
+        Args: { p_limit?: number }
+        Returns: {
+          card_name: string
+          id: number
+          original_buy_price: number
+          original_sale_price: number
+          price_record_id: number
+          proposed_buy_price: number
+          proposed_note: string
+          proposed_observed_on: string
+          proposed_sale_price: number
+          proposed_stock_status: Database["public"]["Enums"]["stock_status"]
+          reason: string
+          shop_name: string
+          submitted_at: string
+        }[]
+      }
       list_pending_shop_candidates_for_admin: {
         Args: { p_limit?: number }
         Returns: {
@@ -814,6 +898,14 @@ export type Database = {
         }[]
       }
       normalize_card_search: { Args: { p_value: string }; Returns: string }
+      review_price_correction_for_admin: {
+        Args: {
+          p_decision: string
+          p_request_id: number
+          p_review_note?: string
+        }
+        Returns: undefined
+      }
       review_shop_candidate_for_admin: {
         Args: {
           p_candidate_id: number
@@ -874,6 +966,19 @@ export type Database = {
           name: string
           prefecture: string
         }[]
+      }
+      submit_price_correction_request: {
+        Args: {
+          p_buy_price: number
+          p_note: string
+          p_observed_on: string
+          p_price_record_id: number
+          p_reason: string
+          p_sale_price: number
+          p_session_token: string
+          p_stock_status: Database["public"]["Enums"]["stock_status"]
+        }
+        Returns: number
       }
       submit_price_record: {
         Args: {
