@@ -81,6 +81,8 @@ npm run dev
 - Supabase project ref: `fxhlobydispnbywxhirn`
 - 本番ブランチ: `main`
 
+価格修正申請の運用と監査上の注意は [PRICE_CORRECTION.md](PRICE_CORRECTION.md) を参照してください。適用済みの価格修正マイグレーションは編集せず、追加変更が必要な場合は新しいマイグレーションを作成します。
+
 URLやproject refは秘密情報ではありませんが、Publishable key以外の鍵やDBパスワードは文書へ記載しません。
 
 ## 引き継ぎ時の確認表
