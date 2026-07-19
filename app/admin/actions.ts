@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { reviewShopCandidate } from "@/lib/admin-shop-candidates";
 import { reviewPriceCorrection } from "@/lib/admin-price-corrections";
+import { validateAdminReviewInput } from "@/lib/admin-review-validation";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 
 export type ReviewActionState = {
@@ -15,23 +16,16 @@ export const initialReviewActionState: ReviewActionState = {
   message: "",
 };
 
-function formInteger(value: FormDataEntryValue | null) {
-  const parsed = typeof value === "string" ? Number(value) : Number.NaN;
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
 export async function reviewShopCandidateAction(
   _previousState: ReviewActionState,
   formData: FormData,
 ): Promise<ReviewActionState> {
-  const candidateId = formInteger(formData.get("candidateId"));
-  const decision = formData.get("decision");
-  const reviewNote = String(formData.get("reviewNote") ?? "").trim();
-  if (
-    candidateId === null ||
-    (decision !== "approved" && decision !== "rejected") ||
-    reviewNote.length > 2000
-  ) {
+  const review = validateAdminReviewInput(
+    formData.get("candidateId"),
+    formData.get("decision"),
+    formData.get("reviewNote"),
+  );
+  if (!review) {
     return { status: "error", message: "入力内容を確認してください。" };
   }
 
@@ -46,7 +40,11 @@ export async function reviewShopCandidateAction(
   }
 
   try {
-    await reviewShopCandidate(supabase, { candidateId, decision, reviewNote });
+    await reviewShopCandidate(supabase, {
+      candidateId: review.id,
+      decision: review.decision,
+      reviewNote: review.reviewNote,
+    });
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "";
     if (message === "42501") {
@@ -69,10 +67,12 @@ export async function reviewPriceCorrectionAction(
   _previousState: ReviewActionState,
   formData: FormData,
 ): Promise<ReviewActionState> {
-  const requestId = formInteger(formData.get("requestId"));
-  const decision = formData.get("decision");
-  const reviewNote = String(formData.get("reviewNote") ?? "").trim();
-  if (requestId === null || (decision !== "approved" && decision !== "rejected") || reviewNote.length > 2000) {
+  const review = validateAdminReviewInput(
+    formData.get("requestId"),
+    formData.get("decision"),
+    formData.get("reviewNote"),
+  );
+  if (!review) {
     return { status: "error", message: "入力内容を確認してください。" };
   }
   const supabase = await createAuthServerSupabaseClient();
@@ -82,7 +82,11 @@ export async function reviewPriceCorrectionAction(
     return { status: "error", message: "ログインし直してください。" };
   }
   try {
-    await reviewPriceCorrection(supabase, { requestId, decision, reviewNote });
+    await reviewPriceCorrection(supabase, {
+      requestId: review.id,
+      decision: review.decision,
+      reviewNote: review.reviewNote,
+    });
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "";
     if (message === "42501") return { status: "error", message: "管理者権限がありません。" };
