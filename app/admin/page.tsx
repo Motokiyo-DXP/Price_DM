@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { AdminCandidateList } from "@/components/admin-candidate-list";
+import { AdminPriceCorrectionList } from "@/components/admin-price-correction-list";
+import { loadPendingPriceCorrections } from "@/lib/admin-price-corrections";
 import { loadPendingShopCandidates } from "@/lib/admin-shop-candidates";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 
@@ -15,13 +17,19 @@ export default async function AdminPage() {
   if (error || typeof data?.claims?.sub !== "string") redirect("/admin/login");
 
   try {
-    const candidates = await loadPendingShopCandidates(supabase);
+    const [candidates, corrections] = await Promise.all([
+      loadPendingShopCandidates(supabase),
+      loadPendingPriceCorrections(supabase),
+    ]);
     return (
       <section>
         <p className="eyebrow">管理者専用</p>
         <h1>店舗候補の確認</h1>
         <p className="form-intro">候補の公式情報を別経路で確認してから処理してください。</p>
         <AdminCandidateList candidates={candidates} />
+        <h2>価格修正申請の確認</h2>
+        <p className="form-intro">承認すると元の価格記録を無効化し、修正版を新規作成します。</p>
+        <AdminPriceCorrectionList corrections={corrections} />
       </section>
     );
   } catch (caught) {
