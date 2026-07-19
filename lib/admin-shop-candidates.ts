@@ -27,8 +27,8 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function nullableString(value: unknown) {
-  return value === null || typeof value === "string" ? value : null;
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
 }
 
 function parseCandidate(value: unknown): AdminShopCandidate | null {
@@ -40,12 +40,24 @@ function parseCandidate(value: unknown): AdminShopCandidate | null {
   const submissionCount = row.submission_count;
   const submittedAt = row.submitted_at;
   const lastSubmittedAt = row.last_submitted_at;
+  const prefecture = row.prefecture;
+  const municipality = row.municipality;
+  const addressLine = row.address_line;
+  const websiteUrl = row.website_url;
   if (
     typeof id !== "number" ||
+    !Number.isSafeInteger(id) ||
+    id <= 0 ||
     typeof name !== "string" ||
     typeof submissionCount !== "number" ||
+    !Number.isSafeInteger(submissionCount) ||
+    submissionCount <= 0 ||
     typeof submittedAt !== "string" ||
-    typeof lastSubmittedAt !== "string"
+    typeof lastSubmittedAt !== "string" ||
+    !isNullableString(prefecture) ||
+    !isNullableString(municipality) ||
+    !isNullableString(addressLine) ||
+    !isNullableString(websiteUrl)
   ) {
     return null;
   }
@@ -53,10 +65,10 @@ function parseCandidate(value: unknown): AdminShopCandidate | null {
   return {
     id,
     name,
-    prefecture: nullableString(row.prefecture),
-    municipality: nullableString(row.municipality),
-    addressLine: nullableString(row.address_line),
-    websiteUrl: nullableString(row.website_url),
+    prefecture,
+    municipality,
+    addressLine,
+    websiteUrl,
     submissionCount,
     submittedAt,
     lastSubmittedAt,
