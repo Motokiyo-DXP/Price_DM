@@ -7,23 +7,10 @@ import { validateAdminShopRegistrationInput } from "@/lib/admin-shop-registratio
 import { reviewPriceCorrection } from "@/lib/admin-price-corrections";
 import { validateAdminReviewInput } from "@/lib/admin-review-validation";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
-
-export type ReviewActionState = {
-  status: "idle" | "success" | "error";
-  message: string;
-};
-
-export const initialReviewActionState: ReviewActionState = {
-  status: "idle",
-  message: "",
-};
-
-export type ShopRegistrationActionState = ReviewActionState;
-
-export const initialShopRegistrationActionState: ShopRegistrationActionState = {
-  status: "idle",
-  message: "",
-};
+import type {
+  ReviewActionState,
+  ShopRegistrationActionState,
+} from "./action-state";
 
 export async function createShopForAdminAction(
   _previousState: ShopRegistrationActionState,
