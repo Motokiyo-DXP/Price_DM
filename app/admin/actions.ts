@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { reviewShopCandidate } from "@/lib/admin-shop-candidates";
+import { createShopForAdmin } from "@/lib/admin-shop-registration";
+import { validateAdminShopRegistrationInput } from "@/lib/admin-shop-registration-validation";
 import { reviewPriceCorrection } from "@/lib/admin-price-corrections";
 import { validateAdminReviewInput } from "@/lib/admin-review-validation";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
@@ -15,6 +17,62 @@ export const initialReviewActionState: ReviewActionState = {
   status: "idle",
   message: "",
 };
+
+export type ShopRegistrationActionState = ReviewActionState;
+
+export const initialShopRegistrationActionState: ShopRegistrationActionState = {
+  status: "idle",
+  message: "",
+};
+
+export async function createShopForAdminAction(
+  _previousState: ShopRegistrationActionState,
+  formData: FormData,
+): Promise<ShopRegistrationActionState> {
+  const input = validateAdminShopRegistrationInput(
+    formData.get("name"),
+    formData.get("prefecture"),
+    formData.get("municipality"),
+    formData.get("addressLine"),
+    formData.get("websiteUrl"),
+    formData.get("reviewNote"),
+  );
+  if (!input) {
+    return { status: "error", message: "必須項目、文字数、URLを確認してください。" };
+  }
+
+  const supabase = await createAuthServerSupabaseClient();
+  if (!supabase) {
+    return { status: "error", message: "接続設定を確認してください。" };
+  }
+
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || typeof data?.claims?.sub !== "string") {
+    return { status: "error", message: "ログインし直してください。" };
+  }
+
+  try {
+    const shop = await createShopForAdmin(supabase, input);
+    revalidatePath("/admin");
+    revalidatePath("/register");
+    return {
+      status: "success",
+      message: `「${shop.name}」を登録しました。`,
+    };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "";
+    if (message === "42501") {
+      return { status: "error", message: "管理者権限がありません。" };
+    }
+    if (message === "shop_already_exists") {
+      return { status: "error", message: "同名の承認済み店舗が既に登録されています。" };
+    }
+    if (message === "shop_candidate_pending") {
+      return { status: "error", message: "同名の保留中候補があります。候補一覧から確認してください。" };
+    }
+    return { status: "error", message: "店舗を登録できませんでした。入力内容を再確認してください。" };
+  }
+}
 
 export async function reviewShopCandidateAction(
   _previousState: ReviewActionState,

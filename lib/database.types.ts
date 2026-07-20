@@ -793,6 +793,24 @@ export type Database = {
       }
     }
     Functions: {
+      create_shop_for_admin: {
+        Args: {
+          p_address_line?: string
+          p_municipality?: string
+          p_name: string
+          p_prefecture: string
+          p_review_note?: string
+          p_website_url?: string
+        }
+        Returns: {
+          address_line: string
+          municipality: string
+          prefecture: string
+          shop_id: number
+          shop_name: string
+          website_url: string
+        }[]
+      }
       create_registration_session: { Args: { p_pin: string }; Returns: Json }
       get_canonical_card_best_prices: {
         Args: {
