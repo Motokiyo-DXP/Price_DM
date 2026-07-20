@@ -7,8 +7,17 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Database } from "@/lib/database.types";
 import { normalizePriceInput } from "@/lib/price-input-validation";
+import {
+  mapRegistrationCardOptions,
+  mapRegistrationCardPrints,
+  mapRegistrationGames,
+  mapRegistrationShopOptions,
+  RegistrationCardOption,
+  RegistrationCardPrint,
+  RegistrationGame,
+  RegistrationShopOption,
+} from "@/lib/registration-lookup-mapping";
 import {
   parseApiErrorCode,
   parseRegistrationSessionRpcResult,
@@ -18,13 +27,6 @@ import {
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 
-type Game = Database["public"]["Tables"]["tcg_games"]["Row"];
-type CardOption =
-  Database["public"]["Functions"]["search_canonical_cards"]["Returns"][number];
-type CardPrintOption =
-  Database["public"]["Functions"]["list_card_prints"]["Returns"][number];
-type ShopOption =
-  Database["public"]["Functions"]["search_shops_by_prefecture"]["Returns"][number];
 type SearchMode = "broad" | "precise";
 type PinSessionState = "checking" | "required" | "authenticated";
 
@@ -84,18 +86,18 @@ function registrationErrorMessage(code: string) {
 }
 
 export default function RegisterPage() {
-  const [games, setGames] = useState<Game[]>([]);
+  const [games, setGames] = useState<RegistrationGame[]>([]);
   const [gameSlug, setGameSlug] = useState("duel-masters");
   const [cardQuery, setCardQuery] = useState("");
-  const [cardOptions, setCardOptions] = useState<CardOption[]>([]);
-  const [selectedCard, setSelectedCard] = useState<CardOption | null>(null);
-  const [cardPrints, setCardPrints] = useState<CardPrintOption[]>([]);
+  const [cardOptions, setCardOptions] = useState<RegistrationCardOption[]>([]);
+  const [selectedCard, setSelectedCard] = useState<RegistrationCardOption | null>(null);
+  const [cardPrints, setCardPrints] = useState<RegistrationCardPrint[]>([]);
   const [selectedPrintId, setSelectedPrintId] = useState("");
   const [loadingPrints, setLoadingPrints] = useState(false);
   const [shopQuery, setShopQuery] = useState("");
   const [shopPrefecture, setShopPrefecture] = useState("");
-  const [shopOptions, setShopOptions] = useState<ShopOption[]>([]);
-  const [selectedShop, setSelectedShop] = useState<ShopOption | null>(null);
+  const [shopOptions, setShopOptions] = useState<RegistrationShopOption[]>([]);
+  const [selectedShop, setSelectedShop] = useState<RegistrationShopOption | null>(null);
   const [searchingShops, setSearchingShops] = useState(false);
   const [shopSuggestionsOpen, setShopSuggestionsOpen] = useState(false);
   const [activeShopOptionIndex, setActiveShopOptionIndex] = useState(-1);
@@ -138,7 +140,7 @@ export default function RegisterPage() {
         return;
       }
 
-      const loadedGames = data ?? [];
+      const loadedGames = mapRegistrationGames(data);
       setGames(loadedGames);
       setGameSlug((current) =>
         loadedGames.some((game) => game.slug === current)
@@ -205,7 +207,7 @@ export default function RegisterPage() {
       }
 
       setSystemError(null);
-      setCardOptions(data ?? []);
+      setCardOptions(mapRegistrationCardOptions(data));
       setActiveOptionIndex(-1);
     }, 250);
 
@@ -249,7 +251,7 @@ export default function RegisterPage() {
       }
 
       setSystemError(null);
-      setShopOptions(data ?? []);
+      setShopOptions(mapRegistrationShopOptions(data));
       setActiveShopOptionIndex(-1);
     }, 250);
 
@@ -285,7 +287,7 @@ export default function RegisterPage() {
           setSystemError("収録版を読み込めませんでした。");
           return;
         }
-        setCardPrints(data ?? []);
+        setCardPrints(mapRegistrationCardPrints(data));
       });
 
     return () => {
@@ -293,13 +295,13 @@ export default function RegisterPage() {
     };
   }, [selectedCard]);
 
-  function chooseCard(card: CardOption) {
+  function chooseCard(card: RegistrationCardOption) {
     setSelectedCard(card);
     setCardQuery(card.name);
     setSuggestionsOpen(false);
   }
 
-  function chooseShop(shop: ShopOption) {
+  function chooseShop(shop: RegistrationShopOption) {
     setSelectedShop(shop);
     setShopQuery(shop.name);
     setShopSuggestionsOpen(false);
