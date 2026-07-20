@@ -7,8 +7,14 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Database, Json } from "@/lib/database.types";
+import type { Database } from "@/lib/database.types";
 import { normalizePriceInput } from "@/lib/price-input-validation";
+import {
+  parseApiErrorCode,
+  parseRegistrationSessionRpcResult,
+  parseRegistrationSessionStatusResponse,
+  parseShopCandidateResponse,
+} from "@/lib/registration-response-validation";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 
@@ -25,18 +31,6 @@ type PinSessionState = "checking" | "required" | "authenticated";
 type Feedback = {
   kind: "error" | "success";
   text: string;
-};
-
-type RegistrationSessionResult = {
-  status: "ok" | "invalid_pin" | "rate_limited" | "not_configured";
-  session_token?: string;
-  expires_at?: string;
-};
-
-type ShopCandidateResult = {
-  status: "pending" | "already_approved";
-  candidate_id?: number;
-  shop_id?: number;
 };
 
 const stockStatuses = Object.entries(STOCK_STATUS_LABELS) as [
@@ -70,14 +64,6 @@ function todayForDateInput() {
   return `${year}-${month}-${day}`;
 }
 
-function isSessionResult(value: Json): value is RegistrationSessionResult {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof value.status === "string"
-  );
-}
 function registrationErrorMessage(code: string) {
   const messages: Record<string, string> = {
     card_required: "カードを選択してください。",
@@ -166,13 +152,12 @@ export default function RegisterPage() {
         const response = await fetch("/api/registration-session", {
           cache: "no-store",
         });
-        const result = (await response.json()) as {
-          authenticated?: boolean;
-          expiresAt?: string;
-        };
+        const result = parseRegistrationSessionStatusResponse(
+          await response.json(),
+        );
         if (cancelled) return;
-        setPinSessionState(result.authenticated ? "authenticated" : "required");
-        setPinExpiresAt(result.expiresAt ?? null);
+        setPinSessionState(result?.authenticated ? "authenticated" : "required");
+        setPinExpiresAt(result?.expiresAt ?? null);
       } catch {
         if (!cancelled) setPinSessionState("required");
       }
@@ -384,37 +369,46 @@ export default function RegisterPage() {
     const { data, error } = await supabase.rpc("create_registration_session", {
       p_pin: pin,
     });
-    if (error || !isSessionResult(data)) {
+    const session = parseRegistrationSessionRpcResult(data);
+    if (error || !session) {
       return { ok: false, message: "登録PINを確認できませんでした。" };
     }
-    if (data.status === "invalid_pin") {
+    if (session.status === "invalid_pin") {
       return { ok: false, message: "登録PINが違います。入力内容を確認してください。" };
     }
-    if (data.status === "rate_limited") {
+    if (session.status === "rate_limited") {
       return {
         ok: false,
         message: "PINの確認回数が上限に達しました。15分ほど待ってください。",
       };
     }
-    if (data.status === "not_configured") {
+    if (session.status === "not_configured") {
       return { ok: false, message: "登録PINがまだ設定されていません。" };
     }
-    if (!data.session_token) {
+    if (session.status !== "ok") {
       return { ok: false, message: "登録PINを確認できませんでした。" };
     }
-
     const response = await fetch("/api/registration-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: data.session_token }),
+      body: JSON.stringify({ token: session.sessionToken }),
     });
     if (!response.ok) {
       return { ok: false, message: "登録PINの保持設定に失敗しました。" };
     }
 
-    const result = (await response.json()) as { expiresAt?: string };
+    let responseBody: unknown;
+    try {
+      responseBody = await response.json();
+    } catch {
+      responseBody = null;
+    }
+    const result = parseRegistrationSessionStatusResponse(responseBody);
+    if (!result?.authenticated) {
+      return { ok: false, message: "登録PINの保持設定に失敗しました。" };
+    }
     setPinSessionState("authenticated");
-    setPinExpiresAt(result.expiresAt ?? data.expires_at ?? null);
+    setPinExpiresAt(result.expiresAt);
     return { ok: true, message: "" };
   }
 
@@ -465,24 +459,37 @@ export default function RegisterPage() {
         websiteUrl: String(formData.get("candidateWebsiteUrl") ?? ""),
       }),
     });
-    const result = (await response.json()) as ShopCandidateResult & {
-      error?: string;
-    };
+    let result: unknown;
+    try {
+      result = await response.json();
+    } catch {
+      result = null;
+    }
     setCandidateSubmitting(false);
 
     if (!response.ok) {
-      if (result.error === "session_required") {
+      const errorCode = parseApiErrorCode(result) ?? "registration_failed";
+      if (errorCode === "session_required") {
         setPinSessionState("required");
         setPinExpiresAt(null);
       }
       setCandidateFeedback({
         kind: "error",
-        text: registrationErrorMessage(result.error ?? "registration_failed"),
+        text: registrationErrorMessage(errorCode),
       });
       return;
     }
 
-    if (result.status === "already_approved") {
+    const candidate = parseShopCandidateResponse(result);
+    if (!candidate) {
+      setCandidateFeedback({
+        kind: "error",
+        text: registrationErrorMessage("registration_failed"),
+      });
+      return;
+    }
+
+    if (candidate.status === "already_approved") {
       setShopQuery(name);
       setSelectedShop(null);
       setShopSuggestionsOpen(true);
@@ -550,17 +557,23 @@ export default function RegisterPage() {
         stockStatus: String(formData.get("stockStatus") ?? "unknown"),
       }),
     });
-    const result = (await response.json()) as { error?: string };
+    let result: unknown;
+    try {
+      result = await response.json();
+    } catch {
+      result = null;
+    }
     setSubmitting(false);
 
     if (!response.ok) {
-      if (result.error === "session_required") {
+      const errorCode = parseApiErrorCode(result) ?? "registration_failed";
+      if (errorCode === "session_required") {
         setPinSessionState("required");
         setPinExpiresAt(null);
       }
       setFeedback({
         kind: "error",
-        text: registrationErrorMessage(result.error ?? "registration_failed"),
+        text: registrationErrorMessage(errorCode),
       });
       return;
     }
