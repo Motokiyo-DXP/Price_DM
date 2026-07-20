@@ -3,10 +3,8 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminPriceCorrection } from "@/lib/admin-price-corrections";
-import {
-  initialReviewActionState,
-  reviewPriceCorrectionAction,
-} from "@/app/admin/actions";
+import { reviewPriceCorrectionAction } from "@/app/admin/actions";
+import { initialReviewActionState } from "@/app/admin/action-state";
 
 const yen = (value: number | null) =>
   value === null ? "―" : `${value.toLocaleString("ja-JP")}円`;

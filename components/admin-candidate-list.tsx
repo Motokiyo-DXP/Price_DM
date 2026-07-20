@@ -3,10 +3,8 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminShopCandidate } from "@/lib/admin-shop-candidates";
-import {
-  initialReviewActionState,
-  reviewShopCandidateAction,
-} from "@/app/admin/actions";
+import { reviewShopCandidateAction } from "@/app/admin/actions";
+import { initialReviewActionState } from "@/app/admin/action-state";
 
 function formatDate(value: string) {
   const date = new Date(value);

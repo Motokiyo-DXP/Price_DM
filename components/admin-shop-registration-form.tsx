@@ -1,10 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import {
-  createShopForAdminAction,
-  initialShopRegistrationActionState,
-} from "@/app/admin/actions";
+import { createShopForAdminAction } from "@/app/admin/actions";
+import { initialShopRegistrationActionState } from "@/app/admin/action-state";
 import { JAPAN_PREFECTURES } from "@/lib/prefectures";
 
 export function AdminShopRegistrationForm() {
