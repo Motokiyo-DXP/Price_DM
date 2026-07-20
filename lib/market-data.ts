@@ -1,18 +1,8 @@
 import "server-only";
 
+import { mapMarketSummaryRow } from "./market-data-mapping";
 import { createServerSupabaseClient } from "./supabase";
-import {
-  CardSummary,
-  STOCK_STATUS_LABELS,
-  StockStatus,
-  Trend,
-} from "./types";
-
-function toTrend(value: string | null): Trend {
-  return value === "up" || value === "down" || value === "same"
-    ? value
-    : "unknown";
-}
+import type { CardSummary } from "./types";
 
 export async function loadMarketCards(): Promise<{
   cards: CardSummary[];
@@ -48,30 +38,8 @@ export async function loadMarketCards(): Promise<{
   }
 
   const cards = (summaryResult.data ?? [])
-    .filter(
-      (row): row is typeof row & { canonical_card_id: number; name: string } =>
-        row.canonical_card_id !== null && row.name !== null,
-    )
-    .map<CardSummary>((row) => ({
-      id: String(row.canonical_card_id),
-      game: row.game_name ?? "TCG 未設定",
-      name: row.name,
-      nameKana: row.name_kana ?? undefined,
-      aliases: [...(row.aliases ?? []), ...(row.aliases_kana ?? [])],
-      printCount: row.print_count ?? 0,
-      salePrice: row.sale_price,
-      buyPrice: row.buy_price,
-      saleRecordCount: row.sale_record_count ?? 0,
-      buyRecordCount: row.buy_record_count ?? 0,
-      saleTrend: toTrend(row.sale_trend),
-      buyTrend: toTrend(row.buy_trend),
-      stock: row.stock_status
-        ? STOCK_STATUS_LABELS[row.stock_status as StockStatus]
-        : STOCK_STATUS_LABELS.unknown,
-      updatedAt: row.last_observed_on,
-      isStale: row.is_stale ?? false,
-      usesPrintFallback: row.uses_print_fallback ?? false,
-    }));
+    .map(mapMarketSummaryRow)
+    .filter((card): card is CardSummary => card !== null);
 
   return { cards, error: null };
 }
