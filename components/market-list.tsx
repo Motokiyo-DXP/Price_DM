@@ -98,6 +98,11 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         <p className="eyebrow">みんなで共有 カード相場</p>
         <h1>価格の動きを、ひと目で。</h1>
         <p>カード名を検索し、販売・買取価格と在庫状況を確認できます。</p>
+        <div className="hero-actions">
+          <Link className="secondary-button admin-link" href="/admin">
+            <span aria-hidden="true">🔒</span> 管理者ページ
+          </Link>
+        </div>
       </section>
 
       {loadError && (
