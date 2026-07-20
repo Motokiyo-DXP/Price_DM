@@ -17,9 +17,10 @@
     "test:prices": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/price-input-validation.test.mjs lib/price-record-validation.test.mjs lib/price-correction-validation.test.mjs",
     "test:api-validation": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/shop-candidate-validation.test.mjs lib/registration-session.test.mjs lib/admin-review-validation.test.mjs lib/admin-shop-candidates.test.mjs lib/admin-price-corrections.test.mjs",
     "test:market": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/market-data-mapping.test.mjs",
+    "test:card-detail": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/card-detail-data-mapping.test.mjs",
     "test:routes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/card-route-validation.test.mjs",
     "test:search": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/search-normalization.test.mjs",
-    "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:routes && npm run test:search && npm run test:import:dm"
+    "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:card-detail && npm run test:routes && npm run test:search && npm run test:import:dm"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",

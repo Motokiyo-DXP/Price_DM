@@ -1,60 +1,13 @@
 import "server-only";
 
-import { createServerSupabaseClient } from "./supabase";
 import {
-  STOCK_STATUS_LABELS,
-  type CardPriceHistoryPoint,
-  type CardSummary,
-  type StockStatus,
-  type Trend,
-} from "./types";
-
-type BestPriceKind = "sale" | "buy";
-
-export type CardBestPrice = {
-  kind: BestPriceKind;
-  price: number;
-  shopName: string;
-  observedOn: string;
-  isStale: boolean;
-  stock: string;
-  cardNumber?: string;
-  productName?: string;
-  attributeNames: string[];
-  hasCautionAttribute: boolean;
-};
-
-export type CardRecentRecord = {
-  id: string;
-  salePrice: number | null;
-  buyPrice: number | null;
-  stock: string;
-  stockStatus: StockStatus;
-  observedOn: string;
-  isStale: boolean;
-  shopName: string;
-  cardNumber?: string;
-  productName?: string;
-  attributeNames: string[];
-  note?: string;
-};
-
-export type CardDetail = CardSummary & {
-  bestSale: CardBestPrice | null;
-  bestBuy: CardBestPrice | null;
-  priceHistory: CardPriceHistoryPoint[];
-  recentRecords: CardRecentRecord[];
-};
-
-function toTrend(value: string | null): Trend {
-  return value === "up" || value === "down" || value === "same"
-    ? value
-    : "unknown";
-}
-
-function stockLabel(value: StockStatus | null): string {
-  return value ? STOCK_STATUS_LABELS[value] : STOCK_STATUS_LABELS.unknown;
-}
+  mapCardDetailRows,
+  type CardBestPrice,
+  type CardDetail,
+  type CardRecentRecord,
+} from "./card-detail-data-mapping";
+import { createServerSupabaseClient } from "./supabase";
+export type { CardBestPrice, CardDetail, CardRecentRecord };
 
 export async function loadCardDetail(
   canonicalCardId: number,
@@ -107,7 +60,7 @@ export async function loadCardDetail(
   }
 
   const summary = summaryResult.data;
-  if (!summary?.canonical_card_id || !summary.name) {
+  if (!summary) {
     return { card: null, error: null };
   }
 
@@ -120,74 +73,16 @@ export async function loadCardDetail(
     console.error("Failed to load canonical card details", detailErrors);
   }
 
-  const bestPrices = (bestPricesResult.data ?? [])
-    .filter(
-      (row): row is typeof row & { price_kind: BestPriceKind } =>
-        row.price_kind === "sale" || row.price_kind === "buy",
-    )
-    .map<CardBestPrice>((row) => ({
-      kind: row.price_kind,
-      price: row.price,
-      shopName: row.shop_name,
-      observedOn: row.observed_on,
-      isStale: row.is_stale,
-      stock: stockLabel(row.stock_status),
-      stockStatus: row.stock_status,
-      cardNumber: row.card_number ?? undefined,
-      productName: row.product_name ?? undefined,
-      attributeNames: row.attribute_names ?? [],
-      hasCautionAttribute: row.has_caution_attribute,
-    }));
-
-  const recentRecords = (recentRecordsResult.data ?? []).map<CardRecentRecord>(
-    (row) => ({
-      id: String(row.price_record_id),
-      salePrice: row.sale_price ?? null,
-      buyPrice: row.buy_price ?? null,
-      stock: stockLabel(row.stock_status),
-      stockStatus: row.stock_status,
-      observedOn: row.observed_on,
-      isStale: row.is_stale,
-      shopName: row.shop_name,
-      cardNumber: row.card_number ?? undefined,
-      productName: row.product_name ?? undefined,
-      attributeNames: row.attribute_names ?? [],
-      note: row.note ?? undefined,
-    }),
+  const card = mapCardDetailRows(
+    summary,
+    bestPricesResult.data ?? [],
+    priceHistoryResult.data ?? [],
+    recentRecordsResult.data ?? [],
   );
 
-  const priceHistory = (priceHistoryResult.data ?? []).map<CardPriceHistoryPoint>(
-    (row) => ({
-      observedOn: row.observed_on,
-      salePrice: row.sale_price ?? null,
-      buyPrice: row.buy_price ?? null,
-      saleRecordCount: row.sale_record_count ?? 0,
-      buyRecordCount: row.buy_record_count ?? 0,
-    }),
-  );
-
-  const card: CardDetail = {
-    id: String(summary.canonical_card_id),
-    game: summary.game_name ?? "TCG 未設定",
-    name: summary.name,
-    nameKana: summary.name_kana ?? undefined,
-    aliases: [...(summary.aliases ?? []), ...(summary.aliases_kana ?? [])],
-    printCount: summary.print_count ?? 0,
-    salePrice: summary.sale_price,
-    buyPrice: summary.buy_price,
-    saleRecordCount: summary.sale_record_count ?? 0,
-    buyRecordCount: summary.buy_record_count ?? 0,
-    saleTrend: toTrend(summary.sale_trend),
-    buyTrend: toTrend(summary.buy_trend),
-    stock: stockLabel(summary.stock_status),
-    updatedAt: summary.last_observed_on,
-    isStale: summary.is_stale ?? false,
-    usesPrintFallback: summary.uses_print_fallback ?? false,
-    bestSale: bestPrices.find((price) => price.kind === "sale") ?? null,
-    bestBuy: bestPrices.find((price) => price.kind === "buy") ?? null,
-    priceHistory,
-    recentRecords,
-  };
+  if (!card) {
+    return { card: null, error: null };
+  }
 
   return {
     card,
