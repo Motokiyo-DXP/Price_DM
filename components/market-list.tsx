@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import {
+  readFavoriteCardIds,
+  toggleFavoriteCardId,
+  writeFavoriteCardIds,
+} from "@/lib/favorite-cards";
 import { CardSummary, Trend } from "@/lib/types";
 import {
   SearchMode,
@@ -39,26 +44,13 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(
-        localStorage.getItem("tcg-favorites") ?? "[]",
-      );
-      if (Array.isArray(stored)) {
-        setFavorites(stored.filter((id): id is string => typeof id === "string"));
-      }
-    } catch {
-      localStorage.removeItem("tcg-favorites");
-    }
+    setFavorites(readFavoriteCardIds());
   }, []);
 
   const toggleFavorite = (id: string) => {
-    setFavorites((current) => {
-      const next = current.includes(id)
-        ? current.filter((favoriteId) => favoriteId !== id)
-        : [...current, id];
-      localStorage.setItem("tcg-favorites", JSON.stringify(next));
-      return next;
-    });
+    const next = toggleFavoriteCardId(favorites, id);
+    setFavorites(next);
+    writeFavoriteCardIds(next);
   };
 
   const cards = useMemo(() => {
