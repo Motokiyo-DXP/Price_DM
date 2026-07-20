@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PriceHistoryChart } from "@/components/price-history-chart";
 import { PriceCorrectionForm } from "@/components/price-correction-form";
 import { loadCardDetail, type CardBestPrice } from "@/lib/card-detail-data";
+import { parseCanonicalCardId } from "@/lib/card-route-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +59,10 @@ export default async function CardDetailPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const canonicalCardId = Number(id);
+  const canonicalCardId = parseCanonicalCardId(id);
   const excludeCautionAttributes = query.excludeCaution === "1";
 
-  if (!Number.isSafeInteger(canonicalCardId) || canonicalCardId <= 0) {
+  if (canonicalCardId === null) {
     notFound();
   }
 
