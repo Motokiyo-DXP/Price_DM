@@ -18,6 +18,8 @@ export async function createShopForAdminAction(
 ): Promise<ShopRegistrationActionState> {
   const input = validateAdminShopRegistrationInput(
     formData.get("name"),
+    formData.get("nameKana"),
+    formData.get("aliases"),
     formData.get("prefecture"),
     formData.get("municipality"),
     formData.get("addressLine"),

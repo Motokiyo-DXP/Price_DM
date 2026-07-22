@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
+import { normalizeShopSearch } from "@/lib/search-normalization";
 import {
   mapRegistrationCardOptions,
   mapRegistrationCardPrints,
@@ -240,7 +241,7 @@ export default function RegisterPage() {
       const { data, error } = await supabase.rpc("search_shops_by_prefecture", {
         p_limit: 20,
         p_prefecture: shopPrefecture || undefined,
-        p_query: query,
+        p_query: normalizeShopSearch(query),
       });
 
       if (cancelled) return;

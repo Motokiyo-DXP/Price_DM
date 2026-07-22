@@ -623,12 +623,14 @@ export type Database = {
       shops: {
         Row: {
           address_line: string | null
+          aliases: string[]
           created_at: string
           id: number
           latitude: number | null
           longitude: number | null
           municipality: string | null
           name: string
+          name_kana: string | null
           name_key: string | null
           prefecture: string | null
           updated_at: string
@@ -636,12 +638,14 @@ export type Database = {
         }
         Insert: {
           address_line?: string | null
+          aliases?: string[]
           created_at?: string
           id?: never
           latitude?: number | null
           longitude?: number | null
           municipality?: string | null
           name: string
+          name_kana?: string | null
           name_key?: string | null
           prefecture?: string | null
           updated_at?: string
@@ -649,12 +653,14 @@ export type Database = {
         }
         Update: {
           address_line?: string | null
+          aliases?: string[]
           created_at?: string
           id?: never
           latitude?: number | null
           longitude?: number | null
           municipality?: string | null
           name?: string
+          name_kana?: string | null
           name_key?: string | null
           prefecture?: string | null
           updated_at?: string
@@ -811,6 +817,26 @@ export type Database = {
           website_url: string
         }[]
       }
+      create_shop_for_admin_with_search: {
+        Args: {
+          p_address_line?: string
+          p_aliases?: string[]
+          p_municipality?: string
+          p_name: string
+          p_name_kana?: string
+          p_prefecture: string
+          p_review_note?: string
+          p_website_url?: string
+        }
+        Returns: {
+          address_line: string
+          municipality: string
+          prefecture: string
+          shop_id: number
+          shop_name: string
+          website_url: string
+        }[]
+      }
       create_registration_session: { Args: { p_pin: string }; Returns: Json }
       get_canonical_card_best_prices: {
         Args: {
@@ -916,6 +942,7 @@ export type Database = {
         }[]
       }
       normalize_card_search: { Args: { p_value: string }; Returns: string }
+      normalize_shop_search: { Args: { p_value: string }; Returns: string }
       review_price_correction_for_admin: {
         Args: {
           p_decision: string
