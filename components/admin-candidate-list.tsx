@@ -29,6 +29,7 @@ function CandidateReviewForm({ candidate }: { candidate: AdminShopCandidate }) {
     deletePendingShopCandidateAction,
     initialReviewActionState,
   );
+  const actionPending = pending || deletePending;
 
   useEffect(() => {
     if (state.status === "success" || deleteState.status === "success") {
@@ -70,12 +71,12 @@ function CandidateReviewForm({ candidate }: { candidate: AdminShopCandidate }) {
           </p>
         ) : null}
         <div className="admin-review-actions">
-          <button className="button" disabled={pending} name="decision" value="approved">
+          <button className="button" disabled={actionPending} name="decision" value="approved">
             承認
           </button>
           <button
             className="secondary-button danger-button"
-            disabled={pending}
+            disabled={actionPending}
             name="decision"
             value="rejected"
           >
@@ -109,7 +110,7 @@ function CandidateReviewForm({ candidate }: { candidate: AdminShopCandidate }) {
         ) : null}
         <button
           className="secondary-button danger-button"
-          disabled={deletePending || pending}
+          disabled={actionPending}
           type="submit"
         >
           {deletePending ? "削除中…" : "候補を削除"}
