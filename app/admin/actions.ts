@@ -5,8 +5,14 @@ import {
   deletePendingShopCandidate,
   reviewShopCandidate,
 } from "@/lib/admin-shop-candidates";
-import { updateAdminShopDetails } from "@/lib/admin-shop-details";
-import { validateAdminShopDetailsInput } from "@/lib/admin-shop-details-validation";
+import {
+  deleteRegisteredShop,
+  updateAdminShopDetails,
+} from "@/lib/admin-shop-details";
+import {
+  validateAdminShopDeletionInput,
+  validateAdminShopDetailsInput,
+} from "@/lib/admin-shop-details-validation";
 import { createShopForAdmin } from "@/lib/admin-shop-registration";
 import { updateShopSearchMetadata } from "@/lib/admin-shop-search-metadata";
 import { validateShopSearchMetadataInput } from "@/lib/admin-shop-search-metadata-validation";
@@ -138,6 +144,55 @@ export async function updateShopDetailsAction(
   revalidatePath("/admin");
   revalidatePath("/register");
   return { status: "success", message: `「${input.name}」の店舗情報を保存しました。` };
+}
+
+export async function deleteRegisteredShopAction(
+  _previousState: ShopRegistrationActionState,
+  formData: FormData,
+): Promise<ShopRegistrationActionState> {
+  const shopId = validateAdminShopDeletionInput(formData.get("shopId"));
+  if (!shopId) {
+    return { status: "error", message: "削除対象の店舗を確認してください。" };
+  }
+
+  const supabase = await createAuthServerSupabaseClient();
+  if (!supabase) {
+    return { status: "error", message: "接続設定を確認してください。" };
+  }
+
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || typeof data?.claims?.sub !== "string") {
+    return { status: "error", message: "ログインし直してください。" };
+  }
+
+  try {
+    const deletedName = await deleteRegisteredShop(supabase, shopId);
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath("/register");
+    return {
+      status: "success",
+      message: `「${deletedName}」を登録済み店舗から削除しました。`,
+    };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "";
+    if (message === "42501") {
+      return { status: "error", message: "管理者権限がありません。" };
+    }
+    if (message === "shop_not_found") {
+      return { status: "error", message: "対象の店舗が見つかりません。" };
+    }
+    if (message === "shop_has_price_records") {
+      return {
+        status: "error",
+        message: "価格履歴がある店舗は削除できません。店舗情報の修正を利用してください。",
+      };
+    }
+    return {
+      status: "error",
+      message: "店舗を削除できませんでした。一覧を更新して再確認してください。",
+    };
+  }
 }
 
 export async function reviewShopCandidateAction(

@@ -10,6 +10,16 @@ export type ValidatedAdminShopDetails = Omit<
   shopId: number;
 };
 
+export function validateAdminShopDeletionInput(
+  shopIdValue: unknown,
+): number | null {
+  if (typeof shopIdValue !== "string" || !/^[1-9][0-9]*$/u.test(shopIdValue)) {
+    return null;
+  }
+  const shopId = Number(shopIdValue);
+  return Number.isSafeInteger(shopId) && shopId > 0 ? shopId : null;
+}
+
 export function validateAdminShopDetailsInput(
   shopIdValue: unknown,
   nameValue: unknown,
@@ -20,15 +30,8 @@ export function validateAdminShopDetailsInput(
   addressLineValue: unknown,
   websiteUrlValue: unknown,
 ): ValidatedAdminShopDetails | null {
-  if (
-    typeof shopIdValue !== "string" ||
-    !/^[1-9][0-9]*$/u.test(shopIdValue)
-  ) {
-    return null;
-  }
-
-  const shopId = Number(shopIdValue);
-  if (!Number.isSafeInteger(shopId)) return null;
+  const shopId = validateAdminShopDeletionInput(shopIdValue);
+  if (!shopId) return null;
 
   const details = validateAdminShopRegistrationInput(
     nameValue,

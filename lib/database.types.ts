@@ -913,6 +913,10 @@ export type Database = {
         Args: { p_candidate_id: number }
         Returns: string
       }
+      delete_registered_shop_for_admin: {
+        Args: { p_shop_id: number }
+        Returns: string
+      }
       list_pending_price_corrections_for_admin: {
         Args: { p_limit?: number }
         Returns: {
