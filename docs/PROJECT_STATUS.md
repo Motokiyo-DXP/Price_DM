@@ -16,6 +16,8 @@
 
 価格記録の修正申請・管理者レビューは `main` へマージし、本番反映済みです。登録PINの有効なセッションから元の価格記録に対する修正を申請でき、管理者が承認すると元記録を論理削除して修正版を新規作成します。却下時は元記録を変更しません。Previewで申請フォームと管理画面の表示を確認済みです。
 
+価格修正の承認時に属性を修正版へコピーする既存関数の列名不整合は、追加マイグレーションで修正済みです。修正後の本番DB lintはエラー0件です。
+
 管理者による承認済み店舗の直接登録は `main` へマージし、本番反映済みです。直接登録時には店舗名の読みと検索用別名も任意で保存でき、登録時の監査候補レコードも残ります。
 
 管理者は既存店舗の店舗名、所在地、公式URL、読み・検索用別名を編集できます。対象店舗は店舗名・読み・別名・所在地から、表記差を許容して絞り込めます。変更前後の値と実行管理者は非公開の監査履歴へ保存されます。
@@ -43,6 +45,8 @@ supabase/migrations/20260720164042_tolerant_shop_search.sql
 supabase/migrations/20260722141114_shop_search_nfkc_folding.sql
 supabase/migrations/20260722143706_admin_shop_search_metadata.sql
 supabase/migrations/20260722163815_admin_shop_details_management.sql
+supabase/migrations/20260722164833_fix_price_correction_attribute_copy.sql
+supabase/migrations/20260722164956_deny_direct_shop_update_audit_access.sql
 ```
 
 このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。

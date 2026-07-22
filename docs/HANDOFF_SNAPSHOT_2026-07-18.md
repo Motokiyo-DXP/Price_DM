@@ -43,6 +43,8 @@
 20260722141114_shop_search_nfkc_folding.sql
 20260722143706_admin_shop_search_metadata.sql
 20260722163815_admin_shop_details_management.sql
+20260722164833_fix_price_correction_attribute_copy.sql
+20260722164956_deny_direct_shop_update_audit_access.sql
 ```
 
 これらを含む適用済みファイルは編集しません。追加変更は新しいタイムスタンプのマイグレーションで行います。
