@@ -12,6 +12,12 @@ export type AdminShopDetails = {
   priceRecordCount: number;
 };
 
+export function canDeleteRegisteredShop(
+  shop: Pick<AdminShopDetails, "priceRecordCount">,
+) {
+  return shop.priceRecordCount === 0;
+}
+
 type AdminRpcClient = {
   rpc(functionName: string, args?: Record<string, unknown>): Promise<{
     data: unknown;
