@@ -100,3 +100,17 @@ export async function updateAdminShopDetails(
     throw new Error(error.code === "42501" ? error.code : error.message);
   }
 }
+
+export async function deleteRegisteredShop(client: unknown, shopId: number) {
+  const { data, error } = await (client as AdminRpcClient).rpc(
+    "delete_registered_shop_for_admin",
+    { p_shop_id: shopId },
+  );
+  if (error) {
+    throw new Error(error.code === "42501" ? error.code : error.message);
+  }
+  if (typeof data !== "string" || data.length < 1 || data.length > 200) {
+    throw new Error("invalid_admin_shop_deletion_response");
+  }
+  return data;
+}

@@ -46,6 +46,7 @@
 20260722164833_fix_price_correction_attribute_copy.sql
 20260722164956_deny_direct_shop_update_audit_access.sql
 20260722171113_delete_pending_shop_candidate_for_admin.sql
+20260722182320_delete_registered_shop_for_admin.sql
 ```
 
 これらを含む適用済みファイルは編集しません。追加変更は新しいタイムスタンプのマイグレーションで行います。

@@ -1,17 +1,26 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { updateShopDetailsAction } from "@/app/admin/actions";
+import { useRouter } from "next/navigation";
+import {
+  deleteRegisteredShopAction,
+  updateShopDetailsAction,
+} from "@/app/admin/actions";
 import { initialShopRegistrationActionState } from "@/app/admin/action-state";
 import type { AdminShopDetails } from "@/lib/admin-shop-details";
 import { JAPAN_PREFECTURES } from "@/lib/prefectures";
 import { normalizeShopSearch } from "@/lib/search-normalization";
 
 export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
+  const router = useRouter();
   const [shopId, setShopId] = useState(shops[0]?.id ?? 0);
   const [filter, setFilter] = useState("");
   const [state, formAction, pending] = useActionState(
     updateShopDetailsAction,
+    initialShopRegistrationActionState,
+  );
+  const [deleteState, deleteFormAction, deletePending] = useActionState(
+    deleteRegisteredShopAction,
     initialShopRegistrationActionState,
   );
 
@@ -41,6 +50,10 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
       setShopId(selectedShop.id);
     }
   }, [selectedShop, shopId]);
+
+  useEffect(() => {
+    if (deleteState.status === "success") router.refresh();
+  }, [deleteState.status, router]);
 
   return (
     <section className="admin-registration-panel" aria-labelledby="admin-shop-details-heading">
@@ -143,9 +156,44 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
               {state.message}
             </p>
           ) : null}
-          <button className="secondary-button" disabled={pending} type="submit">
-            {pending ? "保存中…" : "店舗情報を保存"}
-          </button>
+          {deleteState.status !== "idle" ? (
+            <p
+              className={`notice ${deleteState.status === "error" ? "error" : "success"}`}
+              role="status"
+            >
+              {deleteState.message}
+            </p>
+          ) : null}
+          <div className="admin-shop-actions">
+            <button
+              className="secondary-button"
+              disabled={pending || deletePending}
+              type="submit"
+            >
+              {pending ? "保存中…" : "店舗情報を保存"}
+            </button>
+            <button
+              className="secondary-button danger-button"
+              disabled={pending || deletePending}
+              formAction={deleteFormAction}
+              formNoValidate
+              onClick={(event) => {
+                if (
+                  !window.confirm(
+                    `「${selectedShop.name}」を登録済み店舗から削除します。価格履歴がある場合は削除されません。よろしいですか？`,
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+              type="submit"
+            >
+              {deletePending ? "削除中…" : "登録済み店舗を削除"}
+            </button>
+          </div>
+          <p className="form-help">
+            価格履歴のない誤登録店舗だけ削除できます。削除内容は非公開の監査記録に保存されます。
+          </p>
         </form>
       ) : (
         <p className="history-empty">
