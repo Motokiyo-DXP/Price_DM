@@ -26,6 +26,10 @@
 
 店舗検索は、ひらがな・カタカナ、空白・中点・ハイフンの表記差、全角英字を許容します。既存の主要な店舗名に含まれる漢字読みを補助し、`flat工房` は「フラット工房」でも検索できます。本番DBで `あきはばら` と `ＦＬＡＴ－工房` の検索結果を確認済みです。
 
+監査テーブルと価格修正申請に残っていた外部キー4件の未索引指摘は、追加マイグレーションで解消済みです。本番適用後に4索引の存在を確認し、Supabase Performance Advisorで未索引外部キーの指摘が0件になったことを確認しました。
+
+本番依存関係は `sharp` を `0.35.3` に固定し、Node.jsの最低バージョンをNext.js 15の要件に合わせて `20.9.0` としました。更新後の `npm audit --omit=dev` は脆弱性0件で、Linux環境を含むVercel Preview・Productionビルドも成功しています。
+
 2026-07-20に本番公開画面の非破壊スモークテストを実施し、相場一覧、カード名検索、カード詳細、価格登録画面の読み込みを確認済みです。価格登録画面では、全角数字と通貨記号を含む10桁の入力が数字9桁へ正規化されることを確認しました。データの登録・修正・候補申請は行っていません。
 
 本番Supabaseに適用済みの直近マイグレーションとローカルの対応ファイルは次です。
@@ -51,9 +55,10 @@ supabase/migrations/20260722164833_fix_price_correction_attribute_copy.sql
 supabase/migrations/20260722164956_deny_direct_shop_update_audit_access.sql
 supabase/migrations/20260722171113_delete_pending_shop_candidate_for_admin.sql
 supabase/migrations/20260722182320_delete_registered_shop_for_admin.sql
+supabase/migrations/20260722184753_index_audit_foreign_keys.sql
 ```
 
-このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
+これらのマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
 
 ## 実装済み
 
@@ -71,6 +76,8 @@ supabase/migrations/20260722182320_delete_registered_shop_for_admin.sql
 - 上昇を赤、下落を青、30日超の情報を灰色で表示する基礎
 - 登録PINで保護した価格登録
 - 公開DB権限の最小化
+- 監査・価格修正テーブルの外部キー索引とPerformance Advisor確認
+- `sharp`のセキュリティ更新と本番依存関係の脆弱性監査
 - カード名単位の現在平均を使った相場一覧
 - `/cards/[id]`のカード詳細画面
 - 販売最安値、買取最高値、最近の価格記録の表示
