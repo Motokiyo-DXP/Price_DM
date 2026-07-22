@@ -959,6 +959,7 @@ export type Database = {
           name: string
           name_kana: string
           prefecture: string
+          price_record_count: number
           website_url: string
         }[]
       }

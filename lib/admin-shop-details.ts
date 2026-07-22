@@ -9,6 +9,7 @@ export type AdminShopDetails = {
   municipality: string | null;
   addressLine: string | null;
   websiteUrl: string | null;
+  priceRecordCount: number;
 };
 
 type AdminRpcClient = {
@@ -45,7 +46,10 @@ function parseShop(value: unknown): AdminShopDetails | null {
     !isOptionalText(row.prefecture, 20) ||
     !isOptionalText(row.municipality, 100) ||
     !isOptionalText(row.address_line, 300) ||
-    !isOptionalText(row.website_url, 500)
+    !isOptionalText(row.website_url, 500) ||
+    typeof row.price_record_count !== "number" ||
+    !Number.isSafeInteger(row.price_record_count) ||
+    row.price_record_count < 0
   ) {
     return null;
   }
@@ -59,6 +63,7 @@ function parseShop(value: unknown): AdminShopDetails | null {
     municipality: row.municipality,
     addressLine: row.address_line,
     websiteUrl: row.website_url,
+    priceRecordCount: row.price_record_count,
   };
 }
 
