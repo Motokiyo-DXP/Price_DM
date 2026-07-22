@@ -148,6 +148,12 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
               type="url"
             />
           </label>
+          <p className="form-help" role="status">
+            価格履歴: {selectedShop.priceRecordCount.toLocaleString("ja-JP")}件
+            {selectedShop.priceRecordCount > 0
+              ? "（価格履歴があるため、この店舗は削除できません）"
+              : "（削除可能）"}
+          </p>
           {state.status !== "idle" ? (
             <p
               className={`notice ${state.status === "error" ? "error" : "success"}`}
@@ -167,7 +173,7 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
           <div className="admin-shop-actions">
             <button
               className="secondary-button"
-              disabled={pending || deletePending}
+              disabled={pending || deletePending || selectedShop.priceRecordCount > 0}
               type="submit"
             >
               {pending ? "保存中…" : "店舗情報を保存"}
@@ -192,7 +198,7 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
             </button>
           </div>
           <p className="form-help">
-            価格履歴のない誤登録店舗だけ削除できます。削除内容は非公開の監査記録に保存されます。
+            価格履歴のない誤登録店舗だけ削除できます。価格履歴の有無は画面とDBの両方で確認し、削除内容は非公開の監査記録に保存されます。
           </p>
         </form>
       ) : (
