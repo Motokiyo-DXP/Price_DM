@@ -7,7 +7,10 @@ import {
   updateShopDetailsAction,
 } from "@/app/admin/actions";
 import { initialShopRegistrationActionState } from "@/app/admin/action-state";
-import type { AdminShopDetails } from "@/lib/admin-shop-details";
+import {
+  canDeleteRegisteredShop,
+  type AdminShopDetails,
+} from "@/lib/admin-shop-details";
 import { JAPAN_PREFECTURES } from "@/lib/prefectures";
 import { normalizeShopSearch } from "@/lib/search-normalization";
 
@@ -44,6 +47,9 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
     () => filteredShops.find((shop) => shop.id === shopId) ?? filteredShops[0] ?? null,
     [filteredShops, shopId],
   );
+  const selectedShopCanBeDeleted = selectedShop
+    ? canDeleteRegisteredShop(selectedShop)
+    : false;
 
   useEffect(() => {
     if (selectedShop && selectedShop.id !== shopId) {
@@ -173,14 +179,14 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
           <div className="admin-shop-actions">
             <button
               className="secondary-button"
-              disabled={pending || deletePending || selectedShop.priceRecordCount > 0}
+              disabled={pending || deletePending}
               type="submit"
             >
               {pending ? "保存中…" : "店舗情報を保存"}
             </button>
             <button
               className="secondary-button danger-button"
-              disabled={pending || deletePending}
+              disabled={pending || deletePending || !selectedShopCanBeDeleted}
               formAction={deleteFormAction}
               formNoValidate
               onClick={(event) => {
