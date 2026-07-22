@@ -55,6 +55,8 @@ export async function createShopForAdmin(
   client: unknown,
   input: {
     name: string;
+    nameKana: string;
+    aliases: string[];
     prefecture: string;
     municipality: string;
     addressLine: string;
@@ -63,9 +65,11 @@ export async function createShopForAdmin(
   },
 ) {
   const { data, error } = await (client as AdminRpcClient).rpc(
-    "create_shop_for_admin",
+    "create_shop_for_admin_with_search",
     {
       p_name: input.name,
+      p_name_kana: input.nameKana || null,
+      p_aliases: input.aliases,
       p_prefecture: input.prefecture,
       p_municipality: input.municipality || null,
       p_address_line: input.addressLine || null,

@@ -30,6 +30,26 @@ export function AdminShopRegistrationForm() {
           店舗名（必須）
           <input autoComplete="organization" maxLength={200} name="name" required />
         </label>
+        <label>
+          店舗名の読み（任意）
+          <input
+            autoComplete="off"
+            maxLength={200}
+            name="nameKana"
+            placeholder="例：ふらっとこうぼう あきはばらてん"
+          />
+          <span className="form-help">漢字をひらがな・カタカナで検索できるようにします。</span>
+        </label>
+        <label>
+          検索用の別名（任意）
+          <textarea
+            maxLength={2000}
+            name="aliases"
+            placeholder={"例：flat工房\nフラット工房"}
+            rows={3}
+          />
+          <span className="form-help">1行に1件（カンマ区切りも可）、最大20件です。</span>
+        </label>
         <div className="two">
           <label>
             都道府県（必須）

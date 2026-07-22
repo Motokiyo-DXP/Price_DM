@@ -1,5 +1,35 @@
 export type SearchMode = "broad" | "precise";
 
+const SHOP_SEARCH_READINGS = [
+  ["flat", "ふらっと"],
+  ["秋葉原", "あきはばら"],
+  ["秘密基地", "ひみつきち"],
+  ["らじお会館", "らじおかいかん"],
+  ["会館", "かいかん"],
+  ["買取センター", "かいとりせんたー"],
+  ["駅前", "えきまえ"],
+  ["本店", "ほんてん"],
+  ["別館", "べっかん"],
+  ["工房", "こうぼう"],
+  ["福福", "ふくふく"],
+  ["商会", "しょうかい"],
+  ["遊亜王", "ゆうあおう"],
+  ["竜星", "りゅうせい"],
+  ["無線", "むせん"],
+  ["晴れる屋", "はれるや"],
+  ["東京", "とうきょう"],
+  ["宮殿", "きゅうでん"],
+  ["大明神", "だいみょうじん"],
+  ["買賊王", "かいぞくおう"],
+  ["梟", "ふくろう"],
+  ["書庫", "しょこ"],
+  ["買取", "かいとり"],
+  ["号", "ごう"],
+  ["番", "ばん"],
+  ["店", "てん"],
+  ["館", "かん"],
+] as const;
+
 export function normalizeJapaneseSearch(value: string) {
   const normalized = value.normalize("NFKC");
   let folded = "";
@@ -18,6 +48,14 @@ export function normalizeJapaneseSearch(value: string) {
   }
 
   return folded.toLocaleLowerCase("ja-JP").replace(/[\s・･·]/gu, "");
+}
+
+export function normalizeShopSearch(value: string) {
+  let normalized = normalizeJapaneseSearch(value);
+  for (const [source, reading] of SHOP_SEARCH_READINGS) {
+    normalized = normalized.replaceAll(source, reading);
+  }
+  return normalized.replace(/[‐‑‒–—―−－ーｰ-]/gu, "");
 }
 
 function levenshteinDistance(left: string, right: string) {
