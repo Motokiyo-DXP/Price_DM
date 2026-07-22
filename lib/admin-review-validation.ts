@@ -6,6 +6,17 @@ export type ValidatedAdminReview = {
   reviewNote: string;
 };
 
+export function validateAdminCandidateDeletionInput(
+  idValue: unknown,
+): number | null {
+  if (typeof idValue !== "string" || !/^[1-9]\d*$/.test(idValue)) {
+    return null;
+  }
+
+  const id = Number(idValue);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 export function validateAdminReviewInput(
   idValue: unknown,
   decisionValue: unknown,

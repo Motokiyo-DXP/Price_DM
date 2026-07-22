@@ -3,7 +3,10 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminShopCandidate } from "@/lib/admin-shop-candidates";
-import { reviewShopCandidateAction } from "@/app/admin/actions";
+import {
+  deletePendingShopCandidateAction,
+  reviewShopCandidateAction,
+} from "@/app/admin/actions";
 import { initialReviewActionState } from "@/app/admin/action-state";
 
 function formatDate(value: string) {
@@ -22,10 +25,16 @@ function CandidateReviewForm({ candidate }: { candidate: AdminShopCandidate }) {
     reviewShopCandidateAction,
     initialReviewActionState,
   );
+  const [deleteState, deleteFormAction, deletePending] = useActionState(
+    deletePendingShopCandidateAction,
+    initialReviewActionState,
+  );
 
   useEffect(() => {
-    if (state.status === "success") router.refresh();
-  }, [router, state.status]);
+    if (state.status === "success" || deleteState.status === "success") {
+      router.refresh();
+    }
+  }, [deleteState.status, router, state.status]);
 
   return (
     <article className="admin-candidate">
@@ -73,6 +82,38 @@ function CandidateReviewForm({ candidate }: { candidate: AdminShopCandidate }) {
             却下
           </button>
         </div>
+      </form>
+      <form
+        action={deleteFormAction}
+        className="admin-delete-form"
+        onSubmit={(event) => {
+          if (
+            !window.confirm(
+              `「${candidate.name}」を保留中候補から削除します。元に戻せません。よろしいですか？`,
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <input name="candidateId" type="hidden" value={candidate.id} />
+        <p className="notice">
+          誤って登録した保留中候補だけを削除してください。承認済み店舗は削除されません。
+        </p>
+        {deleteState.status !== "idle" ? (
+          <p
+            className={`notice ${deleteState.status === "error" ? "error" : "success"}`}
+          >
+            {deleteState.message}
+          </p>
+        ) : null}
+        <button
+          className="secondary-button danger-button"
+          disabled={deletePending || pending}
+          type="submit"
+        >
+          {deletePending ? "削除中…" : "候補を削除"}
+        </button>
       </form>
     </article>
   );

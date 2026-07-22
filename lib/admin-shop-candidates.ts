@@ -107,3 +107,20 @@ export async function reviewShopCandidate(
     throw new Error("invalid_admin_review_response");
   }
 }
+
+export async function deletePendingShopCandidate(
+  client: unknown,
+  candidateId: number,
+) {
+  const { data, error } = await adminRpcClient(client).rpc(
+    "delete_pending_shop_candidate_for_admin",
+    { p_candidate_id: candidateId },
+  );
+  if (error) {
+    throw new Error(error.code === "42501" ? error.code : error.message);
+  }
+  if (typeof data !== "string" || data.length === 0 || data.length > 200) {
+    throw new Error("invalid_admin_candidate_deletion_response");
+  }
+  return data;
+}
