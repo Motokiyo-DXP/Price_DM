@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { AdminCandidateList } from "@/components/admin-candidate-list";
 import { AdminPriceCorrectionList } from "@/components/admin-price-correction-list";
 import { AdminShopRegistrationForm } from "@/components/admin-shop-registration-form";
+import { AdminShopSearchMetadataForm } from "@/components/admin-shop-search-metadata-form";
 import { loadPendingPriceCorrections } from "@/lib/admin-price-corrections";
 import { loadPendingShopCandidates } from "@/lib/admin-shop-candidates";
+import { loadShopSearchMetadata } from "@/lib/admin-shop-search-metadata";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 
 export const dynamic = "force-dynamic";
@@ -18,15 +20,17 @@ export default async function AdminPage() {
   if (error || typeof data?.claims?.sub !== "string") redirect("/admin/login");
 
   try {
-    const [candidates, corrections] = await Promise.all([
+    const [candidates, corrections, shops] = await Promise.all([
       loadPendingShopCandidates(supabase),
       loadPendingPriceCorrections(supabase),
+      loadShopSearchMetadata(supabase),
     ]);
     return (
       <section>
         <p className="eyebrow">管理者専用</p>
         <h1>店舗管理</h1>
         <AdminShopRegistrationForm />
+        <AdminShopSearchMetadataForm shops={shops} />
         <h2>店舗候補の確認</h2>
         <p className="form-intro">候補の公式情報を別経路で確認してから処理してください。</p>
         <AdminCandidateList candidates={candidates} />

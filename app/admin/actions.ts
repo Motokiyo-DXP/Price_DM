@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { reviewShopCandidate } from "@/lib/admin-shop-candidates";
 import { createShopForAdmin } from "@/lib/admin-shop-registration";
+import { updateShopSearchMetadata } from "@/lib/admin-shop-search-metadata";
+import { validateShopSearchMetadataInput } from "@/lib/admin-shop-search-metadata-validation";
 import { validateAdminShopRegistrationInput } from "@/lib/admin-shop-registration-validation";
 import { reviewPriceCorrection } from "@/lib/admin-price-corrections";
 import { validateAdminReviewInput } from "@/lib/admin-review-validation";
@@ -61,6 +63,26 @@ export async function createShopForAdminAction(
     }
     return { status: "error", message: "店舗を登録できませんでした。入力内容を再確認してください。" };
   }
+}
+
+export async function updateShopSearchMetadataAction(
+  _previousState: ShopRegistrationActionState,
+  formData: FormData,
+): Promise<ShopRegistrationActionState> {
+  const input = validateShopSearchMetadataInput(formData.get("shopId"), formData.get("nameKana"), formData.get("aliases"));
+  if (!input) return { status: "error", message: "読み・別名の内容を確認してください。" };
+  const supabase = await createAuthServerSupabaseClient();
+  if (!supabase) return { status: "error", message: "接続設定を確認してください。" };
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || typeof data?.claims?.sub !== "string") return { status: "error", message: "ログインし直してください。" };
+  try { await updateShopSearchMetadata(supabase, input); } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "";
+    if (message === "42501") return { status: "error", message: "管理者権限がありません。" };
+    if (message === "shop_not_found") return { status: "error", message: "対象店舗が見つかりません。" };
+    return { status: "error", message: "検索情報を保存できませんでした。" };
+  }
+  revalidatePath("/admin"); revalidatePath("/register");
+  return { status: "success", message: "検索情報を保存しました。" };
 }
 
 export async function reviewShopCandidateAction(
