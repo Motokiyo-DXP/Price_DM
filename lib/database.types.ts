@@ -941,6 +941,19 @@ export type Database = {
           website_url: string
         }[]
       }
+      list_shop_details_for_admin: {
+        Args: { p_limit?: number }
+        Returns: {
+          address_line: string
+          aliases: string[]
+          id: number
+          municipality: string
+          name: string
+          name_kana: string
+          prefecture: string
+          website_url: string
+        }[]
+      }
       list_shop_search_metadata_for_admin: {
         Args: { p_limit?: number }
         Returns: {
@@ -1036,6 +1049,19 @@ export type Database = {
       }
       update_shop_search_metadata_for_admin: {
         Args: { p_aliases?: string[]; p_name_kana?: string; p_shop_id: number }
+        Returns: undefined
+      }
+      update_shop_details_for_admin: {
+        Args: {
+          p_address_line?: string
+          p_aliases?: string[]
+          p_municipality?: string
+          p_name: string
+          p_name_kana?: string
+          p_prefecture?: string
+          p_shop_id: number
+          p_website_url?: string
+        }
         Returns: undefined
       }
       submit_price_record: {

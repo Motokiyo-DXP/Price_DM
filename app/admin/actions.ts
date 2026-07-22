@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { reviewShopCandidate } from "@/lib/admin-shop-candidates";
+import { updateAdminShopDetails } from "@/lib/admin-shop-details";
+import { validateAdminShopDetailsInput } from "@/lib/admin-shop-details-validation";
 import { createShopForAdmin } from "@/lib/admin-shop-registration";
 import { updateShopSearchMetadata } from "@/lib/admin-shop-search-metadata";
 import { validateShopSearchMetadataInput } from "@/lib/admin-shop-search-metadata-validation";
@@ -83,6 +85,53 @@ export async function updateShopSearchMetadataAction(
   }
   revalidatePath("/admin"); revalidatePath("/register");
   return { status: "success", message: "検索情報を保存しました。" };
+}
+
+export async function updateShopDetailsAction(
+  _previousState: ShopRegistrationActionState,
+  formData: FormData,
+): Promise<ShopRegistrationActionState> {
+  const input = validateAdminShopDetailsInput(
+    formData.get("shopId"),
+    formData.get("name"),
+    formData.get("nameKana"),
+    formData.get("aliases"),
+    formData.get("prefecture"),
+    formData.get("municipality"),
+    formData.get("addressLine"),
+    formData.get("websiteUrl"),
+  );
+  if (!input) {
+    return { status: "error", message: "必須項目、文字数、URLを確認してください。" };
+  }
+
+  const supabase = await createAuthServerSupabaseClient();
+  if (!supabase) return { status: "error", message: "接続設定を確認してください。" };
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || typeof data?.claims?.sub !== "string") {
+    return { status: "error", message: "ログインし直してください。" };
+  }
+
+  try {
+    await updateAdminShopDetails(supabase, input);
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "";
+    if (message === "42501") {
+      return { status: "error", message: "管理者権限がありません。" };
+    }
+    if (message === "shop_not_found") {
+      return { status: "error", message: "対象店舗が見つかりません。" };
+    }
+    if (message === "shop_already_exists" || message === "23505") {
+      return { status: "error", message: "同じ名前の店舗が既に登録されています。" };
+    }
+    return { status: "error", message: "店舗情報を保存できませんでした。" };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/register");
+  return { status: "success", message: `「${input.name}」の店舗情報を保存しました。` };
 }
 
 export async function reviewShopCandidateAction(

@@ -29,7 +29,7 @@
 - 日本語表記差を許容するカード・店舗検索
 - 承認済み店舗の選択と未登録店舗候補の申請
 - 管理者による候補承認・却下、店舗直接登録
-- 既存店舗の読み・別名編集と対象店舗の絞り込み
+- 既存店舗の基本情報・読み・別名編集、変更監査、対象店舗の絞り込み
 - 価格修正申請と管理者レビュー、監査情報の保持
 - 公開DB権限の最小化と入力・DB応答の実行時検証
 
@@ -42,6 +42,9 @@
 20260720164042_tolerant_shop_search.sql
 20260722141114_shop_search_nfkc_folding.sql
 20260722143706_admin_shop_search_metadata.sql
+20260722163815_admin_shop_details_management.sql
+20260722164833_fix_price_correction_attribute_copy.sql
+20260722164956_deny_direct_shop_update_audit_access.sql
 ```
 
 これらを含む適用済みファイルは編集しません。追加変更は新しいタイムスタンプのマイグレーションで行います。
