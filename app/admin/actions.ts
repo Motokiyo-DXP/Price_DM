@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { reviewShopCandidate } from "@/lib/admin-shop-candidates";
+import {
+  deletePendingShopCandidate,
+  reviewShopCandidate,
+} from "@/lib/admin-shop-candidates";
 import { updateAdminShopDetails } from "@/lib/admin-shop-details";
 import { validateAdminShopDetailsInput } from "@/lib/admin-shop-details-validation";
 import { createShopForAdmin } from "@/lib/admin-shop-registration";
@@ -9,7 +12,10 @@ import { updateShopSearchMetadata } from "@/lib/admin-shop-search-metadata";
 import { validateShopSearchMetadataInput } from "@/lib/admin-shop-search-metadata-validation";
 import { validateAdminShopRegistrationInput } from "@/lib/admin-shop-registration-validation";
 import { reviewPriceCorrection } from "@/lib/admin-price-corrections";
-import { validateAdminReviewInput } from "@/lib/admin-review-validation";
+import {
+  validateAdminCandidateDeletionInput,
+  validateAdminReviewInput,
+} from "@/lib/admin-review-validation";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 import type {
   ReviewActionState,
@@ -179,6 +185,55 @@ export async function reviewShopCandidateAction(
 
   revalidatePath("/admin");
   return { status: "success", message: "候補を処理しました。" };
+}
+
+export async function deletePendingShopCandidateAction(
+  _previousState: ReviewActionState,
+  formData: FormData,
+): Promise<ReviewActionState> {
+  const candidateId = validateAdminCandidateDeletionInput(
+    formData.get("candidateId"),
+  );
+  if (!candidateId) {
+    return { status: "error", message: "削除対象の候補を確認してください。" };
+  }
+
+  const supabase = await createAuthServerSupabaseClient();
+  if (!supabase) {
+    return { status: "error", message: "接続設定を確認してください。" };
+  }
+
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || typeof data?.claims?.sub !== "string") {
+    return { status: "error", message: "ログインし直してください。" };
+  }
+
+  try {
+    const deletedName = await deletePendingShopCandidate(supabase, candidateId);
+    revalidatePath("/admin");
+    return {
+      status: "success",
+      message: `「${deletedName}」を保留中候補から削除しました。`,
+    };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "";
+    if (message === "42501") {
+      return { status: "error", message: "管理者権限がありません。" };
+    }
+    if (message === "shop_candidate_not_found") {
+      return { status: "error", message: "対象の候補が見つかりません。" };
+    }
+    if (message === "shop_candidate_not_pending") {
+      return {
+        status: "error",
+        message: "この候補はすでに処理済みのため削除できません。",
+      };
+    }
+    return {
+      status: "error",
+      message: "候補を削除できませんでした。一覧を更新して再確認してください。",
+    };
+  }
 }
 
 export async function reviewPriceCorrectionAction(

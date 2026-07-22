@@ -909,6 +909,10 @@ export type Database = {
           product_name: string
         }[]
       }
+      delete_pending_shop_candidate_for_admin: {
+        Args: { p_candidate_id: number }
+        Returns: string
+      }
       list_pending_price_corrections_for_admin: {
         Args: { p_limit?: number }
         Returns: {

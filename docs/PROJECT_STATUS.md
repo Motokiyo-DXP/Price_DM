@@ -12,7 +12,7 @@
 
 承認済み店舗マスターと店舗追加候補を分離するDB基盤は `main` へマージし、本番Supabaseへ適用済みです。DatabaseのSecurity Advisor指摘は解消済みで、匿名ロールから公開受付RPCを呼び出した際の無効セッション応答も確認済みです。AuthにはFreeプランでは有効化できない漏えいパスワード保護の既知警告が残っています。
 
-店舗候補の管理者向け一覧・承認画面は `main` へマージし、本番反映済みです。Supabase Auth のMagic Linkと `private.admin_users` の許可リストを使い、管理者だけが `/admin` で候補の承認・却下を実行できます。本番で管理者ログインと候補一覧の表示も確認済みです。
+店舗候補の管理者向け一覧・承認画面は `main` へマージし、本番反映済みです。Supabase Auth のMagic Linkと `private.admin_users` の許可リストを使い、管理者だけが `/admin` で候補の承認・却下を実行できます。本番で管理者ログインと候補一覧の表示も確認済みです。誤登録した保留中候補だけを確認付きで削除し、削除前の内容を非公開監査記録へ残す機能も追加しています。
 
 価格記録の修正申請・管理者レビューは `main` へマージし、本番反映済みです。登録PINの有効なセッションから元の価格記録に対する修正を申請でき、管理者が承認すると元記録を論理削除して修正版を新規作成します。却下時は元記録を変更しません。Previewで申請フォームと管理画面の表示を確認済みです。
 
@@ -47,6 +47,7 @@ supabase/migrations/20260722143706_admin_shop_search_metadata.sql
 supabase/migrations/20260722163815_admin_shop_details_management.sql
 supabase/migrations/20260722164833_fix_price_correction_attribute_copy.sql
 supabase/migrations/20260722164956_deny_direct_shop_update_audit_access.sql
+supabase/migrations/20260722171113_delete_pending_shop_candidate_for_admin.sql
 ```
 
 このマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
@@ -79,6 +80,7 @@ supabase/migrations/20260722164956_deny_direct_shop_update_audit_access.sql
 - 店舗IDベースの価格登録RPCと旧店舗名RPCの公開権限停止
 - Supabase Auth Magic Linkを使う管理者ログイン
 - 管理画面での保留中店舗候補の一覧・承認・却下
+- 誤登録した保留中店舗候補だけを確認付きで削除し、非公開監査記録を残す管理機能
 - 管理者許可リストによる管理操作の認可とレビュー監査情報
 - 管理者による承認済み店舗の直接登録、店舗名の読み、検索用別名の登録
 - 管理者による既存店舗の基本情報・読み・別名編集、変更監査、編集対象店舗の寛容な絞り込み

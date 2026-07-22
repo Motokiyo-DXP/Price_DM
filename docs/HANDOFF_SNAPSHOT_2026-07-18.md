@@ -45,13 +45,14 @@
 20260722163815_admin_shop_details_management.sql
 20260722164833_fix_price_correction_attribute_copy.sql
 20260722164956_deny_direct_shop_update_audit_access.sql
+20260722171113_delete_pending_shop_candidate_for_admin.sql
 ```
 
 これらを含む適用済みファイルは編集しません。追加変更は新しいタイムスタンプのマイグレーションで行います。
 
 ## 未完了・運用待ち
 
-- 実在する店舗候補が発生した時の申請・承認・却下の一連確認
+- 実在する店舗候補が発生した時の申請・承認・却下・誤登録候補削除の一連確認
 - 実在する価格誤記録が発生した時の修正申請・レビュー確認
 - 確認済み店舗の読み・別名の継続整備
 - 利用条件と費用を確認した後の位置情報・距離検索検討
