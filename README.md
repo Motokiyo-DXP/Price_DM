@@ -8,6 +8,9 @@ TCGカードの販売価格・買取価格・在庫状況を共有する Next.js
 ## 開発への参加・引き継ぎ
 
 - [引き継ぎガイド](docs/HANDOFF.md)
+- [家庭PCへの引継ぎ手順](docs/HOME_PC_HANDOFF.md)
+- [AI作業継続時の指示](docs/AI_CONTINUATION_PROMPT.md)
+- [引継ぎスナップショット](docs/HANDOFF_SNAPSHOT_2026-07-18.md)
 - [現在の実装状況](docs/PROJECT_STATUS.md)
 - [価格修正申請の運用](docs/PRICE_CORRECTION.md)
 - [共同開発ルール](CONTRIBUTING.md)

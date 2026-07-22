@@ -2,6 +2,8 @@
 
 この文書は、別のGitHubアカウントへ開発を引き継ぐ場合と、複数人で分担する場合の共通手順です。
 
+家庭PCでの具体的なセットアップは[HOME_PC_HANDOFF.md](HOME_PC_HANDOFF.md)、AIへ作業を渡す場合は[AI_CONTINUATION_PROMPT.md](AI_CONTINUATION_PROMPT.md)、現在の実装概要は[HANDOFF_SNAPSHOT_2026-07-18.md](HANDOFF_SNAPSHOT_2026-07-18.md)を参照してください。
+
 ## 推奨する共同開発の形
 
 最初は所有権を移さず、次の分担にします。
