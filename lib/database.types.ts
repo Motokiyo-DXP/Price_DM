@@ -941,6 +941,15 @@ export type Database = {
           website_url: string
         }[]
       }
+      list_shop_search_metadata_for_admin: {
+        Args: { p_limit?: number }
+        Returns: {
+          aliases: string[]
+          id: number
+          name: string
+          name_kana: string | null
+        }[]
+      }
       normalize_card_search: { Args: { p_value: string }; Returns: string }
       normalize_shop_search: { Args: { p_value: string }; Returns: string }
       review_price_correction_for_admin: {
@@ -1024,6 +1033,10 @@ export type Database = {
           p_stock_status: Database["public"]["Enums"]["stock_status"]
         }
         Returns: number
+      }
+      update_shop_search_metadata_for_admin: {
+        Args: { p_aliases?: string[]; p_name_kana?: string; p_shop_id: number }
+        Returns: undefined
       }
       submit_price_record: {
         Args: {
