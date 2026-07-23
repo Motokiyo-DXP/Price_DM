@@ -56,11 +56,16 @@ supabase/migrations/20260722164956_deny_direct_shop_update_audit_access.sql
 supabase/migrations/20260722171113_delete_pending_shop_candidate_for_admin.sql
 supabase/migrations/20260722182320_delete_registered_shop_for_admin.sql
 supabase/migrations/20260722184753_index_audit_foreign_keys.sql
+supabase/migrations/20260723055258_shop_correction_requests.sql
 ```
 
 これらのマイグレーションで追加した参照用ビューとRPCを、一覧とカード詳細画面から利用しています。SupabaseのTypeScript型も本番DBから再生成済みです。
 
 ## 実装済み
+
+- PIN認証済み利用者による承認済み店舗情報の修正依頼
+- 管理画面での店舗情報修正依頼の現行値比較・承認・却下
+- 店舗修正承認時の既存監査記録を通した安全な店舗マスター更新
 
 - Next.js / Supabase / Vercelの基本構成
 - 公開URLへの自動デプロイ

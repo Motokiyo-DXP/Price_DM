@@ -27,6 +27,7 @@ import {
 } from "@/lib/registration-response-validation";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
+import { ShopCorrectionForm } from "@/components/shop-correction-form";
 
 type SearchMode = "broad" | "precise";
 type PinSessionState = "checking" | "required" | "authenticated";
@@ -1109,6 +1110,7 @@ export default function RegisterPage() {
           </p>
         )}
       </form>
+      {selectedShop && <ShopCorrectionForm key={selectedShop.id} shop={selectedShop} />}
     </section>
   );
 }

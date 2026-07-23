@@ -410,6 +410,68 @@ export type Database = {
           },
         ]
       }
+      shop_correction_requests: {
+        Row: {
+          id: number
+          proposed_address_line: string | null
+          proposed_aliases: string[] | null
+          proposed_municipality: string | null
+          proposed_name: string | null
+          proposed_name_kana: string | null
+          proposed_prefecture: string | null
+          proposed_website_url: string | null
+          reason: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_id: number
+          status: string
+          submitted_at: string
+        }
+        Insert: {
+          id?: never
+          proposed_address_line?: string | null
+          proposed_aliases?: string[] | null
+          proposed_municipality?: string | null
+          proposed_name?: string | null
+          proposed_name_kana?: string | null
+          proposed_prefecture?: string | null
+          proposed_website_url?: string | null
+          reason: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_id: number
+          status?: string
+          submitted_at?: string
+        }
+        Update: {
+          id?: never
+          proposed_address_line?: string | null
+          proposed_aliases?: string[] | null
+          proposed_municipality?: string | null
+          proposed_name?: string | null
+          proposed_name_kana?: string | null
+          proposed_prefecture?: string | null
+          proposed_website_url?: string | null
+          reason?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_id?: number
+          status?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_correction_requests_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_record_attributes: {
         Row: {
           attribute_id: number
@@ -935,6 +997,29 @@ export type Database = {
           submitted_at: string
         }[]
       }
+      list_pending_shop_corrections_for_admin: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: number
+          original_address_line: string | null
+          original_aliases: string[]
+          original_municipality: string | null
+          original_name: string
+          original_name_kana: string | null
+          original_prefecture: string | null
+          original_website_url: string | null
+          proposed_address_line: string | null
+          proposed_aliases: string[] | null
+          proposed_municipality: string | null
+          proposed_name: string | null
+          proposed_name_kana: string | null
+          proposed_prefecture: string | null
+          proposed_website_url: string | null
+          reason: string
+          shop_id: number
+          submitted_at: string
+        }[]
+      }
       list_pending_shop_candidates_for_admin: {
         Args: { p_limit?: number }
         Returns: {
@@ -975,6 +1060,14 @@ export type Database = {
       normalize_card_search: { Args: { p_value: string }; Returns: string }
       normalize_shop_search: { Args: { p_value: string }; Returns: string }
       review_price_correction_for_admin: {
+        Args: {
+          p_decision: string
+          p_request_id: number
+          p_review_note?: string
+        }
+        Returns: undefined
+      }
+      review_shop_correction_for_admin: {
         Args: {
           p_decision: string
           p_request_id: number
@@ -1053,6 +1146,21 @@ export type Database = {
           p_sale_price: number
           p_session_token: string
           p_stock_status: Database["public"]["Enums"]["stock_status"]
+        }
+        Returns: number
+      }
+      submit_shop_correction_request: {
+        Args: {
+          p_address_line?: string
+          p_aliases?: string[]
+          p_municipality?: string
+          p_name?: string
+          p_name_kana?: string
+          p_prefecture?: string
+          p_reason?: string
+          p_session_token: string
+          p_shop_id: number
+          p_website_url?: string
         }
         Returns: number
       }

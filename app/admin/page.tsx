@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { AdminCandidateList } from "@/components/admin-candidate-list";
 import { AdminPriceCorrectionList } from "@/components/admin-price-correction-list";
+import { AdminShopCorrectionList } from "@/components/admin-shop-correction-list";
 import { AdminShopDetailsForm } from "@/components/admin-shop-details-form";
 import { AdminShopRegistrationForm } from "@/components/admin-shop-registration-form";
 import { loadPendingPriceCorrections } from "@/lib/admin-price-corrections";
+import { loadPendingShopCorrections } from "@/lib/admin-shop-corrections";
 import { loadPendingShopCandidates } from "@/lib/admin-shop-candidates";
 import { loadAdminShopDetails } from "@/lib/admin-shop-details";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
@@ -20,9 +22,10 @@ export default async function AdminPage() {
   if (error || typeof data?.claims?.sub !== "string") redirect("/admin/login");
 
   try {
-    const [candidates, corrections, shops] = await Promise.all([
+    const [candidates, corrections, shopCorrections, shops] = await Promise.all([
       loadPendingShopCandidates(supabase),
       loadPendingPriceCorrections(supabase),
+      loadPendingShopCorrections(supabase),
       loadAdminShopDetails(supabase),
     ]);
     return (
@@ -37,6 +40,9 @@ export default async function AdminPage() {
         <h2>価格修正申請の確認</h2>
         <p className="form-intro">承認すると元の価格記録を無効化し、修正版を新規作成します。</p>
         <AdminPriceCorrectionList corrections={corrections} />
+        <h2>店舗情報修正依頼の確認</h2>
+        <p className="form-intro">利用者から届いた店舗情報の変更内容を、現行値と比較して確認してください。</p>
+        <AdminShopCorrectionList corrections={shopCorrections} />
       </section>
     );
   } catch (caught) {
