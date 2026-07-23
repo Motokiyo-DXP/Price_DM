@@ -4,6 +4,7 @@ import { PriceHistoryChart } from "@/components/price-history-chart";
 import { PriceCorrectionForm } from "@/components/price-correction-form";
 import { loadCardDetail, type CardBestPrice } from "@/lib/card-detail-data";
 import { parseCanonicalCardId } from "@/lib/card-route-validation";
+import { createGoogleMapsSearchUrl } from "@/lib/google-maps-url";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,17 @@ const formatDate = (value: string | null) =>
         new Date(`${value}T00:00:00`),
       )
     : "未登録";
+
+function ShopMapLink({ shopName }: { shopName: string }) {
+  const href = createGoogleMapsSearchUrl(shopName);
+  if (!href) return null;
+
+  return (
+    <a className="map-link" href={href} target="_blank" rel="noreferrer">
+      Google Mapsで見る <span aria-hidden="true">↗</span>
+    </a>
+  );
+}
 
 function BestPricePanel({
   title,
@@ -31,6 +43,7 @@ function BestPricePanel({
       {value ? (
         <>
           <p>{value.shopName}</p>
+          <ShopMapLink shopName={value.shopName} />
           <p className="detail-meta">
             {formatDate(value.observedOn)}・{value.stock}
           </p>
@@ -193,6 +206,7 @@ export default async function CardDetailPage({
                 <div className="record-heading">
                   <div>
                     <strong>{record.shopName}</strong>
+                    <ShopMapLink shopName={record.shopName} />
                     <p className="detail-meta">
                       {formatDate(record.observedOn)}・{record.stock}
                     </p>
