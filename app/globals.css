@@ -18,6 +18,7 @@
 
 .best-price-filter{align-items:center;background:white;border:1px solid var(--line);border-radius:14px;display:grid;gap:8px;grid-template-columns:1fr auto;margin:0 0 16px;padding:16px}.best-price-filter label{align-items:center;display:flex;gap:9px;margin:0}.best-price-filter input{accent-color:var(--brand);margin:0;width:auto}.best-price-filter p{color:var(--muted);font-size:13px;margin:0}.best-price-filter-actions{align-items:center;display:flex;gap:12px;grid-column:2;grid-row:1 / span 2}.best-price-filter-actions a{color:var(--brand);font-size:13px;font-weight:700}.best-price-filter-actions .button{cursor:pointer;font:inherit;white-space:nowrap}.active-filter-note{background:#f5f0ff;border-radius:10px;color:var(--brand);font-size:13px;font-weight:700;margin:0 0 16px;padding:10px 12px}
 
+.map-link{color:var(--brand);display:inline-block;font-size:12px;font-weight:700;margin-top:4px;text-decoration:none}.map-link:hover{text-decoration:underline}.map-link:focus-visible{border-radius:4px;outline:2px solid var(--brand);outline-offset:3px}
 @media(max-width:700px){.best-price-filter{grid-template-columns:1fr}.best-price-filter-actions{grid-column:1;grid-row:auto;justify-content:flex-end}.best-price-filter-actions .button{padding:11px 14px}}
 
 @media(max-width:560px){.history-chart-wrap{overflow-x:auto;padding:14px}.history-chart{min-width:620px}.history-legend{justify-content:flex-start}.history-help{text-align:left}}
