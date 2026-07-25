@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  deduplicateCardOutput,
   parseFullImportArguments,
   processFetchedCard,
 } from "./import-dm-cards-full.mjs";
@@ -127,4 +128,23 @@ test("a URL already present in output is not parsed or appended twice", async ()
   assert.equal(appended, false);
   assert.equal(failures.size, 0);
   assert.equal(persisted, true);
+});
+
+test("duplicate URLs and an incomplete trailing record are repaired before resume", () => {
+  const first = JSON.stringify({
+    name: "Card A",
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=a",
+  });
+  const second = JSON.stringify({
+    name: "Card B",
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=b",
+  });
+  const result = deduplicateCardOutput(
+    `${first}\n${first}\n${second}\n{\"name\":\"incomplete`,
+  );
+
+  assert.equal(result.removedRecords, 2);
+  assert.equal(result.knownUrls.size, 2);
+  assert.equal(result.repaired, true);
+  assert.equal(result.content, `${first}\n${second}\n`);
 });

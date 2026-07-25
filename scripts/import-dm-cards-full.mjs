@@ -90,16 +90,59 @@ async function readJson(path, fallback) {
   }
 }
 
+export function deduplicateCardOutput(content) {
+  const rawLines = content.split(/\r?\n/);
+  const records = new Map();
+  let malformedTrailingRecord = false;
+  let nonEmptyIndex = 0;
+  const nonEmptyLines = rawLines.filter(Boolean);
+  for (const line of nonEmptyLines) {
+    nonEmptyIndex += 1;
+    let record;
+    try {
+      record = JSON.parse(line);
+    } catch (error) {
+      if (nonEmptyIndex === nonEmptyLines.length) {
+        malformedTrailingRecord = true;
+        continue;
+      }
+      throw error;
+    }
+    if (
+      !record ||
+      typeof record !== "object" ||
+      typeof record.official_url !== "string" ||
+      !record.official_url
+    ) {
+      throw new Error(`Invalid official card output record at line ${nonEmptyIndex}.`);
+    }
+    if (!records.has(record.official_url)) {
+      records.set(record.official_url, record);
+    }
+  }
+  const compacted = [...records.values()]
+    .map((record) => JSON.stringify(record))
+    .join("\n");
+  const output = compacted ? `${compacted}\n` : "";
+  return {
+    content: output,
+    knownUrls: new Set(records.keys()),
+    removedRecords: nonEmptyLines.length - records.size,
+    repaired: malformedTrailingRecord || output !== content,
+  };
+}
+
 async function loadKnownUrls() {
   try {
     const content = await readFile(OUTPUT_PATH, "utf8");
-    return new Set(
-      content
-        .split(/\r?\n/)
-        .filter(Boolean)
-        .map((line) => JSON.parse(line).official_url)
-        .filter(Boolean),
-    );
+    const compacted = deduplicateCardOutput(content);
+    if (compacted.repaired) {
+      await writeFile(OUTPUT_PATH, compacted.content, "utf8");
+      console.log(
+        `Repaired local output: removed ${compacted.removedRecords} duplicate or incomplete record(s).`,
+      );
+    }
+    return compacted.knownUrls;
   } catch (error) {
     if (error?.code === "ENOENT") return new Set();
     throw error;
