@@ -12,9 +12,17 @@ const CARD = {
 };
 
 test("現行の正規カード・収録版・検索語へ冪等なSQLを生成する", () => {
-  const sql = buildCanonicalImportSql([CARD]);
+  const sql = buildCanonicalImportSql([
+    CARD,
+    {
+      ...CARD,
+      card_number: "2/100",
+      official_url: "https://dm.takaratomy.co.jp/card/detail/?id=test-2",
+    },
+  ]);
 
   assert.match(sql, /insert into public\.canonical_cards/);
+  assert.match(sql, /group by source\.name/);
   assert.match(sql, /on conflict \(game_id, name\) where deleted_at is null/);
   assert.match(sql, /insert into public\.card_prints/);
   assert.match(sql, /on conflict \(official_card_id\)/);

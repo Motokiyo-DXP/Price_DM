@@ -90,6 +90,13 @@ with duel_masters as (
   select id as game_id
   from public.tcg_games
   where slug = 'duel-masters'
+),
+canonical_source as (
+  select
+    source.name,
+    max(source.generated_reading) as generated_reading
+  from dm_card_import_source as source
+  group by source.name
 )
 insert into public.canonical_cards(
   game_id,
@@ -106,7 +113,7 @@ select
   source.name,
   null,
   pg_catalog.now()
-from dm_card_import_source as source
+from canonical_source as source
 cross join duel_masters
 on conflict (game_id, name) where deleted_at is null do update
 set name_kana = excluded.name_kana,
@@ -124,7 +131,7 @@ insert into public.card_prints(
   official_url,
   source_checked_at
 )
-select
+select distinct
   canonical.id,
   source.official_card_id,
   source.card_number,
@@ -157,7 +164,7 @@ insert into public.card_search_terms(
   verified,
   priority
 )
-select
+select distinct
   canonical.id,
   source.name,
   public.normalize_card_search(source.name),
@@ -189,7 +196,7 @@ insert into public.card_search_terms(
   verified,
   priority
 )
-select
+select distinct
   canonical.id,
   source.generated_reading,
   public.normalize_card_search(source.generated_reading),
