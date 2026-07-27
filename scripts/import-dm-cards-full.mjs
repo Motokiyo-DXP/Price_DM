@@ -18,6 +18,7 @@ const MIN_DELAY_MS = 750;
 const OUTPUT_PATH = ".local/dm-cards-full.jsonl";
 const CHECKPOINT_PATH = ".local/dm-cards-full-checkpoint.json";
 const FAILURES_PATH = ".local/dm-cards-full-failures.json";
+const UNAVAILABLE_PATH = ".local/dm-cards-full-unavailable.json";
 
 function positiveInteger(value, label) {
   const parsed = Number.parseInt(value, 10);
@@ -154,6 +155,20 @@ function errorMessage(error) {
   return String(error);
 }
 
+export function isOfficialUnavailablePlaceholder(detailHtml, detailUrl) {
+  try {
+    const url = new URL(detailUrl);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "dm.takaratomy.co.jp" &&
+      url.pathname === "/card/detail/" &&
+      /\/\?{3}\s*(?:[)<]|&lt;)/i.test(detailHtml)
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function loadFailureRecords() {
   const source = await readJson(FAILURES_PATH, { failures: [] });
   const records = Array.isArray(source?.failures) ? source.failures : [];
@@ -189,14 +204,50 @@ async function saveFailureRecords(failures) {
   );
 }
 
+async function loadUnavailableRecords() {
+  const source = await readJson(UNAVAILABLE_PATH, { unavailable: [] });
+  const records = Array.isArray(source?.unavailable) ? source.unavailable : [];
+  return new Map(
+    records
+      .filter(
+        (record) =>
+          record &&
+          typeof record === "object" &&
+          typeof record.official_url === "string" &&
+          record.official_url.length > 0,
+      )
+      .map((record) => [record.official_url, record]),
+  );
+}
+
+async function saveUnavailableRecords(unavailable) {
+  const records = [...unavailable.values()].sort((left, right) =>
+    left.official_url.localeCompare(right.official_url),
+  );
+  await writeFile(
+    UNAVAILABLE_PATH,
+    `${JSON.stringify(
+      {
+        unavailable: records,
+        updated_at: new Date().toISOString(),
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+}
+
 export async function processFetchedCard({
   detailHtml,
   detailUrl,
   page,
   knownUrls,
   failures,
+  unavailable = new Map(),
   appendRecord,
   persistFailures,
+  persistUnavailable = async () => {},
   parseDetail = parseCardDetail,
   buildMetadata = buildCardSearchMetadata,
   now = () => new Date(),
@@ -212,6 +263,21 @@ export async function processFetchedCard({
     const searchMetadata = await buildMetadata(card.name);
     completeCard = { ...card, ...searchMetadata };
   } catch (error) {
+    if (isOfficialUnavailablePlaceholder(detailHtml, detailUrl)) {
+      unavailable.set(detailUrl, {
+        official_url: detailUrl,
+        page,
+        reason: "official_page_has_no_published_card_name",
+        observed_at: now().toISOString(),
+      });
+      failures.delete(detailUrl);
+      knownUrls.add(detailUrl);
+      await Promise.all([
+        persistFailures(failures),
+        persistUnavailable(unavailable),
+      ]);
+      return { status: "unavailable" };
+    }
     const previous = failures.get(detailUrl);
     const failedAt = now().toISOString();
     failures.set(detailUrl, {
@@ -254,6 +320,8 @@ async function main() {
 
   const knownUrls = await loadKnownUrls();
   const failures = await loadFailureRecords();
+  const unavailable = await loadUnavailableRecords();
+  for (const detailUrl of unavailable.keys()) knownUrls.add(detailUrl);
   const previous = await readJson(CHECKPOINT_PATH, {});
   let page = options.startPage ?? previous.page ?? 1;
   let pagesProcessed = 0;
@@ -270,6 +338,7 @@ async function main() {
   });
 
   const persistFailures = () => saveFailureRecords(failures);
+  const persistUnavailable = () => saveUnavailableRecords(unavailable);
   const appendRecord = (card) =>
     appendFile(OUTPUT_PATH, `${JSON.stringify(card)}\n`, "utf8");
 
@@ -289,9 +358,11 @@ async function main() {
       detailHtml,
       detailUrl,
       failures,
+      unavailable,
       knownUrls,
       page: sourcePage,
       persistFailures,
+      persistUnavailable,
     });
     if (result.status === "failed") {
       console.warn(`\nSkipped ${detailUrl}: ${result.error}`);
