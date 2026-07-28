@@ -1,5 +1,6 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { load } from "cheerio";
 
 import {
   isAllowedByRobots,
@@ -158,12 +159,24 @@ function errorMessage(error) {
 export function isOfficialUnavailablePlaceholder(detailHtml, detailUrl) {
   try {
     const url = new URL(detailUrl);
-    return (
+    if (
       url.protocol === "https:" &&
       url.hostname === "dm.takaratomy.co.jp" &&
-      url.pathname === "/card/detail/" &&
-      /\/\?{3}\s*(?:[)<]|&lt;)/i.test(detailHtml)
-    );
+      url.pathname === "/card/detail/"
+    ) {
+      const $ = load(detailHtml);
+      const heading = $(".card-name").first().clone();
+      if (heading.length === 0) {
+        const title = $("title").text().replace(/\s+/g, " ").trim();
+        return /^\(\s*DM[^)]*\)\s*\|\s*デュエル・マスターズ$/i.test(title);
+      }
+      if (heading.find(".packname").length === 0) {
+        return false;
+      }
+      heading.find(".packname").remove();
+      return heading.text().replace(/\s+/g, " ").trim().length === 0;
+    }
+    return false;
   } catch {
     return false;
   }

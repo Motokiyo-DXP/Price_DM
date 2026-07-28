@@ -139,7 +139,10 @@ test("an official placeholder without a published name is tracked as unavailable
   ]);
   const unavailable = new Map();
   let unavailablePersisted = false;
-  const detailHtml = "<title>(DMEX08 22/???) | デュエル・マスターズ</title>";
+  const detailHtml = `
+    <title>(DMEX08 22/???) | デュエル・マスターズ</title>
+    <h1 class="card-name"><span class="packname">(DMEX08 22/???)</span></h1>
+  `;
 
   assert.equal(isOfficialUnavailablePlaceholder(detailHtml, detailUrl), true);
   const result = await processFetchedCard({
@@ -166,6 +169,24 @@ test("an official placeholder without a published name is tracked as unavailable
   assert.equal(
     unavailable.get(detailUrl)?.reason,
     "official_page_has_no_published_card_name",
+  );
+  assert.equal(
+    isOfficialUnavailablePlaceholder(
+      '<h1 class="card-name">通常カード<span class="packname">(1/100)</span></h1>',
+      detailUrl,
+    ),
+    false,
+  );
+  assert.equal(
+    isOfficialUnavailablePlaceholder("<html>temporary error</html>", detailUrl),
+    false,
+  );
+  assert.equal(
+    isOfficialUnavailablePlaceholder(
+      "<title>(DMPROMOY16 P61/Y16) | デュエル・マスターズ</title>",
+      detailUrl,
+    ),
+    true,
   );
 });
 
