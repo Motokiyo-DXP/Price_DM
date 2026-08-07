@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  deduplicateCardOutput,
+  isOfficialUnavailablePlaceholder,
   parseFullImportArguments,
   processFetchedCard,
 } from "./import-dm-cards-full.mjs";
@@ -127,4 +129,82 @@ test("a URL already present in output is not parsed or appended twice", async ()
   assert.equal(appended, false);
   assert.equal(failures.size, 0);
   assert.equal(persisted, true);
+});
+
+test("an official placeholder without a published name is tracked as unavailable", async () => {
+  const detailUrl = "https://dm.takaratomy.co.jp/card/detail/?id=dmex08-022";
+  const knownUrls = new Set();
+  const failures = new Map([
+    [detailUrl, { official_url: detailUrl, attempts: 1 }],
+  ]);
+  const unavailable = new Map();
+  let unavailablePersisted = false;
+  const detailHtml = `
+    <title>(DMEX08 22/???) | デュエル・マスターズ</title>
+    <h1 class="card-name"><span class="packname">(DMEX08 22/???)</span></h1>
+  `;
+
+  assert.equal(isOfficialUnavailablePlaceholder(detailHtml, detailUrl), true);
+  const result = await processFetchedCard({
+    appendRecord: async () => assert.fail("placeholder must not be appended"),
+    detailHtml,
+    detailUrl,
+    failures,
+    knownUrls,
+    page: 131,
+    parseDetail: () => {
+      throw new Error("card name was missing");
+    },
+    persistFailures: async () => {},
+    persistUnavailable: async () => {
+      unavailablePersisted = true;
+    },
+    unavailable,
+  });
+
+  assert.deepEqual(result, { status: "unavailable" });
+  assert.equal(failures.size, 0);
+  assert.equal(knownUrls.has(detailUrl), true);
+  assert.equal(unavailablePersisted, true);
+  assert.equal(
+    unavailable.get(detailUrl)?.reason,
+    "official_page_has_no_published_card_name",
+  );
+  assert.equal(
+    isOfficialUnavailablePlaceholder(
+      '<h1 class="card-name">通常カード<span class="packname">(1/100)</span></h1>',
+      detailUrl,
+    ),
+    false,
+  );
+  assert.equal(
+    isOfficialUnavailablePlaceholder("<html>temporary error</html>", detailUrl),
+    false,
+  );
+  assert.equal(
+    isOfficialUnavailablePlaceholder(
+      "<title>(DMPROMOY16 P61/Y16) | デュエル・マスターズ</title>",
+      detailUrl,
+    ),
+    true,
+  );
+});
+
+test("duplicate URLs and an incomplete trailing record are repaired before resume", () => {
+  const first = JSON.stringify({
+    name: "Card A",
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=a",
+  });
+  const second = JSON.stringify({
+    name: "Card B",
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=b",
+  });
+  const result = deduplicateCardOutput(
+    `${first}\n${first}\n${second}\n{\"name\":\"incomplete`,
+  );
+
+  assert.equal(result.removedRecords, 2);
+  assert.equal(result.knownUrls.size, 2);
+  assert.equal(result.repaired, true);
+  assert.equal(result.content, `${first}\n${second}\n`);
 });
