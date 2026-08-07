@@ -6,6 +6,7 @@ import {
   isOfficialUnavailablePlaceholder,
   parseFullImportArguments,
   processFetchedCard,
+  resolveTotalAvailable,
 } from "./import-dm-cards-full.mjs";
 import { buildCardSearchMetadata } from "./lib/dm-card-readings.mjs";
 
@@ -16,6 +17,11 @@ test("full import arguments enforce a respectful delay", () => {
     startPage: null,
   });
   assert.throws(() => parseFullImportArguments(["--delay-ms=200"]), /cannot be lower/);
+});
+
+test("a resumed crawl adopts the latest official catalog total", () => {
+  assert.equal(resolveTotalAvailable(22_953, 23_120), 23_120);
+  assert.equal(resolveTotalAvailable(22_953, null), 22_953);
 });
 
 test("Japanese readings and verified alternate names are generated", async () => {

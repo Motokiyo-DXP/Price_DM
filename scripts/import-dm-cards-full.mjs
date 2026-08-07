@@ -59,6 +59,12 @@ function sleep(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+export function resolveTotalAvailable(previousTotal, observedTotal) {
+  return Number.isSafeInteger(observedTotal) && observedTotal > 0
+    ? observedTotal
+    : previousTotal;
+}
+
 function createRateLimitedFetcher(delayMs) {
   let lastRequestAt = 0;
   return async function fetchText(url, options = {}) {
@@ -402,7 +408,7 @@ async function main() {
       }),
     });
     const list = parseCardList(searchHtml);
-    totalAvailable ??= list.totalAvailable;
+    totalAvailable = resolveTotalAvailable(totalAvailable, list.totalAvailable);
     if (list.detailUrls.length === 0) {
       reachedEnd = true;
       break;

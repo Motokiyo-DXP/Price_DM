@@ -48,6 +48,18 @@ export function validateApplyRequest({ argv, linkedRef, manifest }) {
   };
 }
 
+export function resolveAppliedFiles(previous, request) {
+  if (
+    previous?.project_ref !== request.expectedRef ||
+    previous?.card_print_count !== request.cardPrintCount ||
+    !Array.isArray(previous?.applied)
+  ) {
+    return [];
+  }
+  const currentFiles = new Set(request.files);
+  return previous.applied.filter((file) => currentFiles.has(file));
+}
+
 async function readJson(path, fallback) {
   try {
     return JSON.parse(await readFile(path, "utf8"));
@@ -103,7 +115,7 @@ async function main() {
     linkedRef,
     manifest,
   });
-  const applied = new Set(Array.isArray(previous.applied) ? previous.applied : []);
+  const applied = new Set(resolveAppliedFiles(previous, request));
 
   for (const [index, file] of request.files.entries()) {
     if (applied.has(file)) continue;
