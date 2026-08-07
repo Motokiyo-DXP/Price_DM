@@ -26,3 +26,74 @@
 .admin-candidate-list{display:grid;gap:16px;margin-top:24px}.admin-candidate{background:white;border:1px solid var(--line);border-radius:16px;padding:20px}.admin-candidate h2{font-size:20px;margin:0 0 8px}.admin-candidate p{margin:7px 0}.admin-candidate a{color:var(--brand);font-weight:700}.admin-candidate-heading{align-items:flex-start;display:flex;gap:16px;justify-content:space-between}.admin-candidate-heading>div>p{color:var(--muted)}.admin-review-form{background:#fafafa;border:0;border-radius:12px;margin:16px 0 0;padding:16px}.admin-review-actions{display:flex;gap:10px}.admin-review-actions button{cursor:pointer;font:inherit}.admin-delete-form{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}.admin-delete-form button{cursor:pointer;font:inherit}.danger-button{color:#b91c1c}.history-empty{margin-top:24px}@media(max-width:560px){.admin-candidate{padding:16px}.admin-candidate-heading{display:block}.admin-candidate-heading .tag{display:inline-block;margin-top:5px}.admin-review-actions{display:grid;grid-template-columns:1fr 1fr}.admin-review-actions button{width:100%}.admin-delete-form button{width:100%}}
 .admin-registration-panel{background:white;border:1px solid var(--line);border-radius:18px;margin:28px 0 38px;padding:24px}.admin-registration-panel h2{margin:4px 0 8px}.admin-registration-panel form{background:#fafafa;margin:20px 0 0}.admin-registration-panel form>.button{width:100%}.admin-shop-actions{display:flex;flex-wrap:wrap;gap:10px}.admin-shop-actions button{cursor:pointer;font:inherit}@media(max-width:560px){.admin-registration-panel{padding:18px}.admin-registration-panel form{padding:16px}.admin-shop-actions{display:grid}.admin-shop-actions button{width:100%}}
 .hero-actions{display:flex;margin-top:22px}.admin-link{align-items:center;display:inline-flex;gap:7px;text-decoration:none}.admin-link:hover{border-color:#c4b5fd;color:var(--brand)}
+
+/* Public market redesign */
+.site-header{background:#191c1f;border-bottom:1px solid #3b4148;height:60px;padding:0 max(16px,calc((100% - 1180px)/2));position:sticky}
+.site-logo{align-items:center;display:flex;line-height:0}
+.site-logo img{height:auto;width:280px}
+.admin-header-link{align-items:center;color:#aeb4bc;display:inline-flex;font-size:13px;font-weight:700;gap:7px;text-decoration:none}
+.admin-header-link:hover{color:#fff}
+.admin-header-link:focus-visible,.site-logo:focus-visible{border-radius:6px;outline:2px solid #2f80ed;outline-offset:4px}
+body:has(.market-shell){background:#191c1f;color:#fff}
+body:has(.market-shell) main{max-width:none;padding:0}
+.market-shell{background:#191c1f;color:#fff;min-height:calc(100vh - 60px)}
+.game-tabs{border-bottom:1px solid #3b4148;display:flex;gap:8px;margin:0;padding:10px max(16px,calc((100% - 1180px)/2));white-space:nowrap}
+.game-tabs button{background:transparent;border:0;border-radius:999px;color:#b9bfc7;cursor:pointer;font:inherit;font-size:13px;font-weight:700;min-height:36px;padding:0 18px}
+.game-tabs button[aria-current="page"]{background:#f3c800;color:#191c1f}
+.game-tabs button:disabled{cursor:not-allowed;opacity:.48}
+.game-tabs button:focus-visible{outline:2px solid #2f80ed;outline-offset:2px}
+.market-content{margin:auto;max-width:1180px;padding:22px 16px 52px}
+.market-shell .toolbar{display:grid;gap:10px;grid-template-columns:minmax(0,1fr) auto;margin:0 0 10px}
+.market-shell .search-box input{background:#22262b;border:1px solid #59616b;color:#fff;min-height:52px;padding-left:16px}
+.market-shell .search-box input::placeholder{color:#9da4ad}
+.market-shell .search-box input:focus{border-color:#2f80ed;box-shadow:0 0 0 3px #075bd855;outline:none}
+.market-shell .search-box button{background:transparent;color:#c8cdd3;top:9px}
+.market-shell .toolbar>button{background:#22262b;border:1px solid #59616b;color:#fff;min-height:52px}
+.market-shell .toolbar>button.active{background:#263c5f;border-color:#2f80ed;color:#fff}
+.market-search-modes{display:flex;gap:8px;margin:0 6px 16px}
+.market-search-modes button{background:#22262b;border:1px solid #59616b;border-radius:999px;color:#d8dce1;cursor:pointer;font:inherit;font-size:12px;font-weight:700;min-height:30px;min-width:112px;padding:0 14px}
+.market-search-modes button.active{background:#1261d7;border-color:#3b8cff;color:#fff}
+.market-search-modes button:focus-visible{outline:2px solid #f3c800;outline-offset:2px}
+.market-result-count{color:#b6bcc4;font-size:13px;margin:0 2px 10px;text-align:right}
+.market-shell .grid{gap:14px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.market-shell .card{background:#22262b;border:1px solid #3b4148;border-radius:10px;border-top:4px solid #f3c800;box-shadow:none;display:flex;flex-direction:column;padding:18px}
+.market-shell .card h2{font-size:19px;margin:0 0 5px}
+.market-shell .card-head>div>small{color:#b6bcc4}
+.market-shell .star{background:transparent;color:#f3c800;cursor:pointer}
+.market-shell .prices{gap:10px;margin:18px 0 16px}
+.market-shell .prices div{background:#191c1f;border:1px solid #343a41;border-radius:7px;min-height:90px;padding:13px}
+.market-shell .prices small{color:#b6bcc4}
+.market-shell .prices strong{color:#fff;font-size:20px}
+.market-shell .prices strong.up{color:#ff7676}
+.market-shell .prices strong.down{color:#69a2ff}
+.market-shell .fallback-note{background:#3a3219;color:#ffe587}
+.card-register-link{align-items:center;background:#1261d7;border-radius:8px;color:#fff!important;display:flex;font-size:14px;font-weight:700;justify-content:center;margin-top:auto;min-height:48px;padding:10px 14px;text-decoration:none}
+.card-register-link:hover{background:#2877e8}
+.card-register-link:focus-visible{outline:2px solid #f3c800;outline-offset:3px}
+.market-shell .detail-link{align-items:center;color:#2f80ed;display:flex;justify-content:center;margin-top:10px;min-height:38px}
+.market-shell .filter-panel{background:#22262b;border-color:#59616b;box-shadow:0 14px 34px #0006;margin:0 0 16px}
+.market-shell .filter-check{color:#fff}
+.market-shell .secondary-button{background:#191c1f;border-color:#59616b;color:#fff}
+.market-shell .active-filters{margin:0 0 12px}
+.market-shell .active-filters span{background:#263c5f;color:#fff}
+.market-shell .notice{color:#b6bcc4}
+.market-shell .notice.error{color:#ff9b9b}
+.market-shell .empty{color:#b6bcc4}
+
+@media(max-width:850px){.market-shell .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+  .site-header{height:58px;padding:0 14px}
+  .site-logo img{width:205px}
+  .admin-header-link{font-size:11px;gap:5px}
+  .game-tabs{gap:4px;overflow-x:auto;padding:9px 12px}
+  .game-tabs button{min-height:34px;padding:0 13px}
+  .market-content{padding:10px 16px 30px}
+  .market-shell .toolbar{grid-template-columns:minmax(0,1fr) 52px;margin-bottom:9px}
+  .market-shell .toolbar>button{font-size:0;padding:0;width:52px}
+  .market-shell .toolbar>button:after{content:"☷";font-size:17px}
+  .market-search-modes{margin:0 6px 12px}
+  .market-search-modes button{min-height:27px;min-width:98px;padding:0 11px}
+  .market-shell .grid{grid-template-columns:1fr}
+  .market-shell .card{padding:18px}
+  .market-shell .filter-panel{background:#22262b;border-color:#59616b}
+}

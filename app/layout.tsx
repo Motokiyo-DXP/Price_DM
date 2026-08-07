@@ -1,8 +1,30 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import "./globals.css";
 
 export const metadata: Metadata = { title: "TCG 相場チェッカー", description: "TCGカードの販売・買取相場を記録、比較するアプリ" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ja"><body><header><a href="/">TCG 相場チェッカー</a><a className="button compact" href="/register">＋ 価格を登録</a></header><main>{children}</main></body></html>;
+  return (
+    <html lang="ja">
+      <body>
+        <header className="site-header">
+          <a className="site-logo" href="/" aria-label="TCG相場チェッカー ホーム">
+            <Image
+              src="/logo-dmsoba.svg"
+              alt="TCG相場チェッカー"
+              width={280}
+              height={48}
+              priority
+            />
+          </a>
+          <a className="admin-header-link" href="/admin">
+            <span aria-hidden="true">▣</span>
+            管理者ページ
+          </a>
+        </header>
+        <main>{children}</main>
+      </body>
+    </html>
+  );
 }
