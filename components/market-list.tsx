@@ -12,6 +12,8 @@ import {
   SearchMode,
   searchTextMatches,
 } from "@/lib/search-normalization";
+import { mapMarketSearchResults } from "@/lib/market-search-mapping";
+import { createBrowserSupabaseClient } from "@/lib/supabase";
 
 type MarketListProps = {
   initialCards: CardSummary[];
@@ -31,6 +33,12 @@ const trendClass = (trend: Trend, stale: boolean) => {
 export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [query, setQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
+  const [remoteSearch, setRemoteSearch] = useState<{
+    key: string;
+    cards: CardSummary[];
+  } | null>(null);
+  const [searchingCards, setSearchingCards] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftOnlyFavorites, setDraftOnlyFavorites] = useState(false);
@@ -40,6 +48,61 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     setFavorites(readFavoriteCardIds());
   }, []);
 
+  const pricedCardsById = useMemo(
+    () => new Map(initialCards.map((card) => [card.id, card])),
+    [initialCards],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const trimmedQuery = query.trim();
+    const searchKey = `${searchMode}:${trimmedQuery}`;
+
+    if (!trimmedQuery) {
+      setRemoteSearch(null);
+      setSearchingCards(false);
+      setSearchError(null);
+      return;
+    }
+
+    setSearchingCards(true);
+    setSearchError(null);
+    const timer = window.setTimeout(async () => {
+      const supabase = createBrowserSupabaseClient();
+      if (!supabase) {
+        if (!cancelled) {
+          setSearchingCards(false);
+          setSearchError("カード検索を利用できません。しばらくしてから再度お試しください。");
+        }
+        return;
+      }
+
+      const { data, error } = await supabase.rpc("search_canonical_cards", {
+        p_game_slug: "duel-masters",
+        p_limit: 100,
+        p_mode: searchMode,
+        p_query: trimmedQuery,
+      });
+
+      if (cancelled) return;
+      setSearchingCards(false);
+      if (error) {
+        setSearchError("カード候補を読み込めませんでした。");
+        return;
+      }
+
+      setRemoteSearch({
+        key: searchKey,
+        cards: mapMarketSearchResults(data, pricedCardsById),
+      });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [pricedCardsById, query, searchMode]);
+
   const toggleFavorite = (id: string) => {
     const next = toggleFavoriteCardId(favorites, id);
     setFavorites(next);
@@ -47,6 +110,14 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   };
 
   const cards = useMemo(() => {
+    const trimmedQuery = query.trim();
+    const searchKey = `${searchMode}:${trimmedQuery}`;
+    if (trimmedQuery && remoteSearch?.key === searchKey) {
+      return remoteSearch.cards.filter(
+        (card) => !onlyFavorites || favorites.includes(card.id),
+      );
+    }
+
     return initialCards.filter((card) => {
       return (
         searchTextMatches(
@@ -61,7 +132,7 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         (!onlyFavorites || favorites.includes(card.id))
       );
     });
-  }, [favorites, initialCards, onlyFavorites, query, searchMode]);
+  }, [favorites, initialCards, onlyFavorites, query, remoteSearch, searchMode]);
 
   const activeFilterCount = onlyFavorites ? 1 : 0;
 
@@ -169,7 +240,15 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         </div>
       )}
 
-      <p className="market-result-count" aria-live="polite">検索結果 {cards.length}件</p>
+      {searchError && (
+        <p className="notice error" role="alert">
+          {searchError}
+        </p>
+      )}
+
+      <p className="market-result-count" aria-live="polite">
+        {searchingCards ? "検索中…" : `検索結果 ${cards.length}件`}
+      </p>
 
       <div className="grid">
         {cards.map((card) => (
@@ -177,7 +256,11 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             <div className="card-head">
               <div>
                 <h2>
-                  <Link href={`/cards/${card.id}`}>{card.name}</Link>
+                  {card.updatedAt === null ? (
+                    card.name
+                  ) : (
+                    <Link href={`/cards/${card.id}`}>{card.name}</Link>
+                  )}
                 </h2>
                 <small>収録バリエーション {card.printCount}件</small>
               </div>
@@ -211,14 +294,16 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             <Link className="card-register-link" href={`/register?cardId=${card.id}`}>
               <span aria-hidden="true">＋</span> このカードを登録
             </Link>
-            <Link className="detail-link" href={`/cards/${card.id}`}>
-              詳細を見る →
-            </Link>
+            {card.updatedAt !== null && (
+              <Link className="detail-link" href={`/cards/${card.id}`}>
+                詳細を見る →
+              </Link>
+            )}
           </article>
         ))}
       </div>
 
-      {!loadError && cards.length === 0 && (
+      {!loadError && !searchError && !searchingCards && cards.length === 0 && (
         <p className="empty">
           {initialCards.length === 0
             ? "登録済みのカードはありません。"
