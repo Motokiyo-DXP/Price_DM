@@ -97,3 +97,52 @@ body:has(.market-shell) main{max-width:none;padding:0}
   .market-shell .card{padding:18px}
   .market-shell .filter-panel{background:#22262b;border-color:#59616b}
 }
+
+body:has(.register-page){background:#191c1f;color:#fff}
+body:has(.register-page) main{background:#191c1f}
+.register-page{color:#fff}
+.register-page>a{color:#9cc2ff}
+.register-page .form-intro{color:#b6bcc4}
+.register-page form{background:#22262b;border-color:#3b4148;box-shadow:none}
+.register-page input,.register-page select,.register-page textarea{background:#191c1f;border-color:#59616b;color:#fff;color-scheme:dark}
+.register-page input::placeholder,.register-page textarea::placeholder{color:#8f969f}
+.register-page input:focus,.register-page select:focus,.register-page textarea:focus{border-color:#2f80ed;box-shadow:0 0 0 3px #075bd855}
+.register-page .form-help,.register-page .notice{color:#b6bcc4}
+.register-page .notice.error{color:#ff9b9b}
+.register-page .notice.success{color:#7ee2aa}
+.registration-section{background:#191c1f;border:1px solid #3b4148;border-radius:10px;margin:0 0 14px;overflow:visible}
+.registration-section>summary{align-items:center;cursor:pointer;display:flex;font-size:17px;font-weight:800;justify-content:space-between;list-style:none;min-height:52px;padding:0 16px}
+.registration-section>summary::-webkit-details-marker{display:none}
+.registration-section>summary:after{color:#f3c800;content:"＋";font-size:20px;font-weight:500}
+.registration-section[open]>summary{border-bottom:1px solid #3b4148}
+.registration-section[open]>summary:after{content:"−"}
+.registration-section>summary:focus-visible{outline:2px solid #2f80ed;outline-offset:-3px}
+.registration-section-content{padding:18px 16px 4px}
+.register-page .search-mode label,.register-page .attribute-grid label{background:#22262b;border-color:#59616b;color:#fff}
+.register-page .search-mode label:has(input:checked),.register-page .attribute-grid label:has(input:checked){background:#263c5f;border-color:#2f80ed;color:#fff}
+.register-page .search-mode small{color:#b6bcc4}
+.register-page .suggestions{background:#22262b;border-color:#2f80ed;box-shadow:0 16px 36px #0009}
+.register-page .suggestions li.active{background:#263c5f}
+.register-page .suggestions small,.register-page .suggestion-status{color:#b6bcc4}
+.register-page .selected-card{background:#153c30;border-color:#28775d;color:#9af0c8}
+.register-page .attribute-options{border-color:#59616b}
+.register-page .shop-combobox{margin-bottom:2px}
+.register-page .shop-combobox .form-help{margin-bottom:5px}
+.register-page .shop-candidate-panel{background:#191c1f;border-color:#3b4148;color:#fff;margin-top:0}
+.register-page .compact-candidate-panel>summary{color:#9cc2ff;font-size:70%;line-height:1.25}
+.register-page .compact-candidate-panel[open]>summary{margin-bottom:12px}
+.register-page .secondary-button{background:#22262b;border:1px solid #59616b;color:#fff}
+.register-page .pin-status{background:#191c1f;border-color:#3b4148;color:#b6bcc4}
+.register-page .pin-status.authenticated{background:#153c30;border-color:#28775d;color:#9af0c8}
+.register-page .sale-price-label{color:#ff7676}
+.register-page .buy-price-label{color:#69a2ff}
+.register-page .sale-price-label input{color:#ff9b9b}
+.register-page .buy-price-label input{color:#9cc2ff}
+.register-page .button{background:#1261d7}
+.register-page .button:hover{background:#2877e8}
+.register-page .button:focus-visible{outline:2px solid #f3c800;outline-offset:3px}
+
+@media(max-width:560px){
+  .registration-section-content{padding:16px 13px 2px}
+  .registration-section>summary{font-size:16px;padding:0 13px}
+}

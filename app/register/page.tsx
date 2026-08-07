@@ -663,7 +663,7 @@ export default function RegisterPage() {
   const activeShopOption = shopOptions[activeShopOptionIndex];
 
   return (
-    <section className="form-wrap">
+    <section className="form-wrap register-page">
       <a href="/">← 一覧へ戻る</a>
       <h1>価格を登録</h1>
       <p className="form-intro">
@@ -677,6 +677,9 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={submit}>
+        <details className="registration-section" open>
+          <summary>カード名</summary>
+          <div className="registration-section-content">
         <label htmlFor="gameSlug">
           TCG
           <select
@@ -796,6 +799,12 @@ export default function RegisterPage() {
             ひらがな・カタカナ・漢字、中点「・」の有無、登録済みの別名で検索できます。
           </p>
         </div>
+          </div>
+        </details>
+
+        <details className="registration-section registration-details-section">
+          <summary>詳細</summary>
+          <div className="registration-section-content">
 
         {selectedCard && (
           <label htmlFor="cardPrintId">
@@ -862,6 +871,34 @@ export default function RegisterPage() {
             ))}
           </select>
         </label>
+
+        <label htmlFor="stockStatus">
+          在庫状況
+          <select id="stockStatus" name="stockStatus" defaultValue="unknown">
+            {stockStatuses.map(([value, label]) => (
+              <option key={value} value={value}>
+                {value === "unknown" ? "指定しない" : label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label htmlFor="observedOn">
+          調査日
+          <input id="observedOn" name="observedOn" type="date" defaultValue={observedOn} required />
+        </label>
+
+        <label htmlFor="contributorName">
+          登録者名
+          <input id="contributorName" name="contributorName" placeholder="任意のニックネーム" />
+        </label>
+
+        <label htmlFor="note">
+          コメント
+          <textarea id="note" name="note" rows={3} />
+        </label>
+          </div>
+        </details>
 
         <div
           className="card-combobox shop-combobox"
@@ -938,8 +975,8 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <details className="shop-candidate-panel">
-          <summary>店舗が見つからない場合：候補を申請</summary>
+        <details className="shop-candidate-panel compact-candidate-panel">
+          <summary>店舗が見つからない場合：候補を送信</summary>
           <p className="form-help">
             店舗情報を確認してから承認します。申請中は価格登録に使用できません。
           </p>
@@ -1013,7 +1050,7 @@ export default function RegisterPage() {
         </details>
 
         <div className="two">
-          <label htmlFor="salePrice">
+          <label className="sale-price-label" htmlFor="salePrice">
             販売価格
             <input
               id="salePrice"
@@ -1041,7 +1078,7 @@ export default function RegisterPage() {
               placeholder="半角・全角どちらでも入力できます"
             />
           </label>
-          <label htmlFor="buyPrice">
+          <label className="buy-price-label" htmlFor="buyPrice">
             買取価格
             <input
               id="buyPrice"
@@ -1070,32 +1107,6 @@ export default function RegisterPage() {
             />
           </label>
         </div>
-
-        <label htmlFor="stockStatus">
-          在庫状況
-          <select id="stockStatus" name="stockStatus" defaultValue="unknown">
-            {stockStatuses.map(([value, label]) => (
-              <option key={value} value={value}>
-                {value === "unknown" ? "指定しない" : label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label htmlFor="observedOn">
-          調査日
-          <input id="observedOn" name="observedOn" type="date" defaultValue={observedOn} required />
-        </label>
-
-        <label htmlFor="contributorName">
-          登録者名
-          <input id="contributorName" name="contributorName" placeholder="任意のニックネーム" />
-        </label>
-
-        <label htmlFor="note">
-          コメント
-          <textarea id="note" name="note" rows={3} />
-        </label>
 
         {pinSessionState === "checking" && (
           <p className="pin-status">登録PINの認証状態を確認中…</p>
