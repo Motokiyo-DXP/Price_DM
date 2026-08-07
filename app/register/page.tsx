@@ -26,6 +26,7 @@ import {
   parseShopCandidateResponse,
 } from "@/lib/registration-response-validation";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { parseCanonicalCardId } from "@/lib/card-route-validation";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
 
@@ -116,6 +117,7 @@ export default function RegisterPage() {
   const [buyPriceInput, setBuyPriceInput] = useState("");
   const salePriceIsComposing = useRef(false);
   const buyPriceIsComposing = useRef(false);
+  const prefillAttempted = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -173,6 +175,59 @@ export default function RegisterPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (games.length === 0 || prefillAttempted.current) return;
+
+    const requestedValue = new URLSearchParams(window.location.search).get("cardId");
+    if (requestedValue === null) {
+      prefillAttempted.current = true;
+      return;
+    }
+
+    prefillAttempted.current = true;
+    const requestedCardId = parseCanonicalCardId(requestedValue);
+    if (requestedCardId === null) {
+      setSystemError("指定されたカードを確認できませんでした。カードを選び直してください。");
+      return;
+    }
+    const cardId = requestedCardId;
+
+    let cancelled = false;
+
+    async function prefillCard() {
+      const supabase = createBrowserSupabaseClient();
+      if (!supabase) {
+        setSystemError("Supabase の接続情報が設定されていません。");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("canonical_cards")
+        .select("id, name, game_id")
+        .eq("id", cardId)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error || !data) {
+        setSystemError("指定されたカードを確認できませんでした。カードを選び直してください。");
+        return;
+      }
+
+      const matchingGame = games.find((game) => game.id === data.game_id);
+      if (matchingGame) setGameSlug(matchingGame.slug);
+      setSelectedCard({ id: data.id, name: data.name, print_count: 0 });
+      setCardQuery(data.name);
+      setSuggestionsOpen(false);
+      setSystemError(null);
+    }
+
+    void prefillCard();
+    return () => {
+      cancelled = true;
+    };
+  }, [games]);
 
   useEffect(() => {
     let cancelled = false;

@@ -28,18 +28,11 @@ const trendClass = (trend: Trend, stale: boolean) => {
   return "";
 };
 
-const formatObservedDate = (value: string) =>
-  new Intl.DateTimeFormat("ja-JP", {
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
-
 export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [query, setQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [draftSearchMode, setDraftSearchMode] = useState<SearchMode>("broad");
   const [draftOnlyFavorites, setDraftOnlyFavorites] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
 
@@ -70,40 +63,33 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     });
   }, [favorites, initialCards, onlyFavorites, query, searchMode]);
 
-  const activeFilterCount =
-    (searchMode === "precise" ? 1 : 0) + (onlyFavorites ? 1 : 0);
+  const activeFilterCount = onlyFavorites ? 1 : 0;
 
   const openFilters = () => {
-    setDraftSearchMode(searchMode);
     setDraftOnlyFavorites(onlyFavorites);
     setFiltersOpen((current) => !current);
   };
 
   const applyFilters = () => {
-    setSearchMode(draftSearchMode);
     setOnlyFavorites(draftOnlyFavorites);
     setFiltersOpen(false);
   };
 
   const resetFilters = () => {
-    setDraftSearchMode("broad");
     setDraftOnlyFavorites(false);
-    setSearchMode("broad");
     setOnlyFavorites(false);
   };
 
   return (
-    <>
-      <section className="hero">
-        <p className="eyebrow">みんなで共有 カード相場</p>
-        <h1>価格の動きを、ひと目で。</h1>
-        <p>カード名を検索し、販売・買取価格と在庫状況を確認できます。</p>
-        <div className="hero-actions">
-          <Link className="secondary-button admin-link" href="/admin">
-            <span aria-hidden="true">🔒</span> 管理者ページ
-          </Link>
-        </div>
-      </section>
+    <div className="market-shell">
+      <nav className="game-tabs" aria-label="TCGを選択">
+        <button type="button" aria-current="page">デュエマ</button>
+        <button type="button" disabled>ポケカ</button>
+        <button type="button" disabled>遊戯王</button>
+        <button type="button" disabled>その他</button>
+      </nav>
+
+      <div className="market-content">
 
       {loadError && (
         <p className="notice error" role="alert">
@@ -136,32 +122,27 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         </button>
       </section>
 
+      <div className="market-search-modes" role="group" aria-label="検索方法">
+        <button
+          className={searchMode === "broad" ? "active" : ""}
+          type="button"
+          aria-pressed={searchMode === "broad"}
+          onClick={() => setSearchMode("broad")}
+        >
+          ざっくり検索
+        </button>
+        <button
+          className={searchMode === "precise" ? "active" : ""}
+          type="button"
+          aria-pressed={searchMode === "precise"}
+          onClick={() => setSearchMode("precise")}
+        >
+          パーペキ検索
+        </button>
+      </div>
+
       {filtersOpen && (
         <section className="filter-panel" id="market-filters" aria-label="絞り込み条件">
-          <fieldset className="search-mode">
-            <legend>検索モード</legend>
-            <label>
-              <input
-                type="radio"
-                name="marketSearchMode"
-                value="broad"
-                checked={draftSearchMode === "broad"}
-                onChange={() => setDraftSearchMode("broad")}
-              />
-              ざっくり <small>目安60%</small>
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="marketSearchMode"
-                value="precise"
-                checked={draftSearchMode === "precise"}
-                onChange={() => setDraftSearchMode("precise")}
-              />
-              パーペキ <small>目安90%</small>
-            </label>
-          </fieldset>
-
           <label className="filter-check">
             <input
               type="checkbox"
@@ -184,17 +165,17 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
 
       {activeFilterCount > 0 && (
         <div className="active-filters" aria-label="適用中の条件">
-          {searchMode === "precise" && <span>パーペキ検索</span>}
           {onlyFavorites && <span>★ 気になる</span>}
         </div>
       )}
+
+      <p className="market-result-count" aria-live="polite">検索結果 {cards.length}件</p>
 
       <div className="grid">
         {cards.map((card) => (
           <article className={card.isStale ? "card muted" : "card"} key={card.id}>
             <div className="card-head">
               <div>
-                <span className="tag">{card.game}</span>
                 <h2>
                   <Link href={`/cards/${card.id}`}>{card.name}</Link>
                 </h2>
@@ -227,16 +208,9 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             {card.usesPrintFallback && (
               <p className="fallback-note">収録違いの価格を参考表示中</p>
             )}
-            <footer>
-              <span>{card.stock}</span>
-              <span>
-                {!card.updatedAt
-                  ? "価格未登録"
-                  : card.isStale
-                    ? "30日以上更新なし"
-                    : `${formatObservedDate(card.updatedAt)} 更新`}
-              </span>
-            </footer>
+            <Link className="card-register-link" href={`/register?cardId=${card.id}`}>
+              <span aria-hidden="true">＋</span> このカードを登録
+            </Link>
             <Link className="detail-link" href={`/cards/${card.id}`}>
               詳細を見る →
             </Link>
@@ -251,6 +225,7 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             : "条件に一致するカードはありません。"}
         </p>
       )}
-    </>
+      </div>
+    </div>
   );
 }
