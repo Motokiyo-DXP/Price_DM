@@ -677,7 +677,7 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={submit}>
-        <details className="registration-section" open>
+        <details className="registration-section">
           <summary>カード名</summary>
           <div className="registration-section-content">
         <label htmlFor="gameSlug">
