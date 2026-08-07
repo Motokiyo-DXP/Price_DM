@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { validateApplyRequest } from "./apply-dm-card-import.mjs";
+import {
+  resolveAppliedFiles,
+  validateApplyRequest,
+} from "./apply-dm-card-import.mjs";
 
 const MANIFEST = {
   card_print_count: 100,
@@ -61,5 +64,46 @@ test("確認不足、未完了、第三者別名、リンク先不一致を拒�
         manifest: { ...MANIFEST, third_party_aliases_included: true },
       }),
     /Third-party aliases/,
+  );
+});
+
+test("公式総件数または接続先が変わった場合は前回の適用済み一覧を破棄する", () => {
+  const request = {
+    expectedRef: "project-ref",
+    cardPrintCount: 200,
+    files: ["dm-cards-001.sql", "dm-cards-002.sql"],
+  };
+  assert.deepEqual(
+    resolveAppliedFiles(
+      {
+        project_ref: "project-ref",
+        card_print_count: 100,
+        applied: ["dm-cards-001.sql"],
+      },
+      request,
+    ),
+    [],
+  );
+  assert.deepEqual(
+    resolveAppliedFiles(
+      {
+        project_ref: "other-project",
+        card_print_count: 200,
+        applied: ["dm-cards-001.sql"],
+      },
+      request,
+    ),
+    [],
+  );
+  assert.deepEqual(
+    resolveAppliedFiles(
+      {
+        project_ref: "project-ref",
+        card_print_count: 200,
+        applied: ["dm-cards-001.sql", "obsolete.sql"],
+      },
+      request,
+    ),
+    ["dm-cards-001.sql"],
   );
 });
