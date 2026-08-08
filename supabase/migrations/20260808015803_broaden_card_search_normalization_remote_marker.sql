@@ -1,0 +1,4 @@
+-- Production applied the byte-identical contents of
+-- 20260808015351_broaden_card_search_normalization.sql through the Supabase
+-- integration, which assigned version 20260808015803. This no-op marker keeps
+-- CLI history aligned without editing or re-running the applied migration.
