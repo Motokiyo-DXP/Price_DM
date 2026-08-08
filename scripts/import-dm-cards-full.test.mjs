@@ -31,6 +31,10 @@ test("Japanese readings and verified alternate names are generated", async () =>
   const perfect = await buildCardSearchMetadata("理想と平和の決断");
   assert.deepEqual(perfect.aliases, ["パーフェクト・アルカディア"]);
   assert.deepEqual(perfect.aliases_kana, ["パーフェクト・アルカディア"]);
+
+  const hoshi = await buildCardSearchMetadata("星増樹");
+  assert.deepEqual(hoshi.aliases, ["ほしふぇるき"]);
+  assert.deepEqual(hoshi.aliases_kana, ["ほしふぇるき"]);
 });
 
 test("one malformed card is isolated, recorded, and succeeds on a later retry", async () => {

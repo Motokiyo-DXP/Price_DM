@@ -47,7 +47,9 @@ export function normalizeJapaneseSearch(value: string) {
     }
   }
 
-  return folded.toLocaleLowerCase("ja-JP").replace(/[\s・･·]/gu, "");
+  return folded
+    .toLocaleLowerCase("ja-JP")
+    .replace(/[\s・･·‐‑‒–—―−－-]/gu, "");
 }
 
 export function normalizeShopSearch(value: string) {
