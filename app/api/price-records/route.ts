@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { priceRegistrationRpcErrorCode } from "@/lib/price-registration-error";
 import { validatePriceRecordBody } from "@/lib/price-record-validation";
 import {
   isRegistrationSessionToken,
@@ -66,7 +67,9 @@ export async function POST(request: Request) {
   );
   if (error) {
     console.error("Failed to register a price record", error.code);
-    return json({ error: "registration_failed" }, 400);
+    const publicError = priceRegistrationRpcErrorCode(error);
+    const status = publicError === "service_unavailable" ? 503 : 400;
+    return json({ error: publicError }, status);
   }
   if (recordId === -4) {
     const response = json({ error: "session_required" }, 401);

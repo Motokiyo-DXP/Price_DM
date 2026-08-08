@@ -8,6 +8,7 @@ const DICTIONARY_PATH = fileURLToPath(
 
 const SPECIAL_CARD_ALIASES = new Map([
   ["理想と平和の決断", ["パーフェクト・アルカディア"]],
+  ["星増樹", ["ほしふぇるき"]],
 ]);
 
 let tokenizerPromise;
@@ -34,7 +35,9 @@ export async function buildCardSearchMetadata(name) {
   const aliases = SPECIAL_CARD_ALIASES.get(name) ?? [];
   return {
     aliases,
-    aliases_kana: await Promise.all(aliases.map(readingFor)),
+    // These entries are curated readings already. Running them through the
+    // tokenizer can corrupt intentionally non-dictionary pronunciations.
+    aliases_kana: aliases,
     name_kana: await readingFor(name),
   };
 }

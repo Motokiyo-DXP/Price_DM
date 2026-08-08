@@ -72,15 +72,20 @@ function todayForDateInput() {
 function registrationErrorMessage(code: string) {
   const messages: Record<string, string> = {
     card_required: "カードを選択してください。",
+    card_print_unavailable: "選択した収録版は利用できません。収録版を選び直すか、「収録版を定めない」を選択してください。",
+    card_registration_incomplete: "このカードは価格登録に必要な収録情報が不足しています。別の収録版を選ぶか、管理者へお知らせください。",
+    card_unavailable: "選択したカードは現在利用できません。カードを検索し直してください。",
     invalid_date: "調査日を確認してください。",
     invalid_price: "価格には0以上の整数を入力してください。",
-    invalid_request: "入力内容を確認してください。",
-    invalid_shop: "ショップ名を入力してください。",
+    invalid_price_attribute: "選択した価格の属性は現在利用できません。属性を選び直してください。",
+    invalid_request: "入力形式を確認してください。ページを再読み込みしても解決しない場合は管理者へお知らせください。",
+    invalid_shop: "選択した店舗は現在利用できません。承認済み店舗を検索し直してください。",
     invalid_website_url: "公式サイトは http:// または https:// から入力してください。",
     invalid_stock_status: "在庫状況を選び直してください。",
     price_required: "販売価格または買取価格のどちらかを入力してください。",
     rate_limited: "登録回数の上限に達しました。時間をおいて再度お試しください。",
-    registration_failed: "登録できませんでした。入力内容を確認してください。",
+    referenced_data_changed: "選択したカード・収録版・店舗の情報が更新されました。ページを再読み込みして選び直してください。",
+    registration_failed: "サーバーで登録処理に失敗しました。少し時間をおいて再度お試しください。",
     service_unavailable: "接続情報を確認できませんでした。時間をおいて再度お試しください。",
     session_required: "登録PINの有効時間が切れました。もう一度入力してください。",
     too_long: "入力内容が長すぎます。文字数を減らしてください。",
@@ -600,22 +605,32 @@ export default function RegisterPage() {
       return;
     }
 
-    const response = await fetch("/api/price-records", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        attributeSlugs: formData.getAll("attributeSlug").map(String),
-        buyPrice: buyPrice ? Number(buyPrice) : null,
-        canonicalCardId: selectedCard.id,
-        cardPrintId: selectedPrintId ? Number(selectedPrintId) : null,
-        contributorName: String(formData.get("contributorName") ?? ""),
-        note: String(formData.get("note") ?? ""),
-        observedOn: String(formData.get("observedOn") ?? ""),
-        salePrice: salePrice ? Number(salePrice) : null,
-        shopId: selectedShop.id,
-        stockStatus: String(formData.get("stockStatus") ?? "unknown"),
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/price-records", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attributeSlugs: formData.getAll("attributeSlug").map(String),
+          buyPrice: buyPrice ? Number(buyPrice) : null,
+          canonicalCardId: selectedCard.id,
+          cardPrintId: selectedPrintId ? Number(selectedPrintId) : null,
+          contributorName: String(formData.get("contributorName") ?? ""),
+          note: String(formData.get("note") ?? ""),
+          observedOn: String(formData.get("observedOn") ?? ""),
+          salePrice: salePrice ? Number(salePrice) : null,
+          shopId: selectedShop.id,
+          stockStatus: String(formData.get("stockStatus") ?? "unknown"),
+        }),
+      });
+    } catch {
+      setSubmitting(false);
+      setFeedback({
+        kind: "error",
+        text: "通信できませんでした。接続状況を確認して、もう一度お試しください。",
+      });
+      return;
+    }
     let result: unknown;
     try {
       result = await response.json();
