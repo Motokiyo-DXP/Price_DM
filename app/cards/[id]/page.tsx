@@ -5,6 +5,7 @@ import { PriceCorrectionForm } from "@/components/price-correction-form";
 import { loadCardDetail, type CardBestPrice } from "@/lib/card-detail-data";
 import { parseCanonicalCardId } from "@/lib/card-route-validation";
 import { createGoogleMapsSearchUrl } from "@/lib/google-maps-url";
+import { createCommerceLinks } from "@/lib/commerce-links";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,8 @@ export default async function CardDetailPage({
     );
   }
 
+  const commerceLinks = createCommerceLinks(card.name, card.game);
+
   return (
     <div className="card-detail">
       <Link className="back-link" href="/">
@@ -188,6 +191,32 @@ export default async function CardDetailPage({
         <PriceHistoryChart points={card.priceHistory} />
         <p className="detail-meta history-help">
           収録版を指定しない価格登録を日ごとに平均しています。
+        </p>
+      </section>
+
+      <section aria-labelledby="commerce-heading">
+        <div className="section-heading-row">
+          <h2 id="commerce-heading">通販・フリマで探す</h2>
+          <span>外部サイト</span>
+        </div>
+        <div className="commerce-link-grid">
+          {commerceLinks.map((link) => (
+            <a
+              href={link.href}
+              key={link.name}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span>
+                <strong>{link.name}</strong>
+                <small>{link.description}</small>
+              </span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          ))}
+        </div>
+        <p className="detail-meta commerce-note">
+          価格・在庫・カードの状態・送料はリンク先で確認してください。外部サイトの価格は、このページの平均価格には含まれません。
         </p>
       </section>
 
