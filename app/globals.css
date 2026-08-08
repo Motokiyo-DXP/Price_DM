@@ -146,3 +146,30 @@ body:has(.register-page) main{background:#191c1f}
   .registration-section-content{padding:16px 13px 2px}
   .registration-section>summary{font-size:16px;padding:0 13px}
 }
+
+body:has(.card-detail){background:#191c1f;color:#fff}
+body:has(.card-detail) main{background:#191c1f}
+.card-detail{color:#fff}
+.card-detail .back-link,.card-detail .map-link,.card-detail .best-price-filter-actions a{color:#69a2ff}
+.card-detail .back-link:focus-visible,.card-detail .map-link:focus-visible,.card-detail .best-price-filter-actions a:focus-visible{outline:2px solid #f3c800;outline-offset:3px}
+.card-detail .detail-heading,.card-detail .detail-price-grid article,.card-detail .best-price-panel,.card-detail .best-price-filter,.card-detail .history-chart-wrap,.card-detail .history-empty,.card-detail .record,.card-detail .detail-empty{background:#22262b;border-color:#3b4148;color:#fff}
+.card-detail .tag{background:#263c5f;color:#9cc2ff}
+.card-detail .detail-heading>p:not(.detail-meta),.card-detail .detail-meta,.card-detail .section-heading-row>span,.card-detail .history-legend span,.card-detail .history-empty p,.card-detail .best-price-filter p{color:#b6bcc4}
+.card-detail .notice.error{color:#ff9b9b}
+.card-detail .notice.warning{background:#3a3219;border-color:#7a681f;color:#ffe587}
+.card-detail .best-price-filter input{accent-color:#2f80ed}
+.card-detail .best-price-filter .button{background:#1261d7}
+.card-detail .best-price-filter .button:hover{background:#2877e8}
+.card-detail .active-filter-note{background:#263c5f;color:#9cc2ff}
+.card-detail .caution-badge{background:#4a242b;color:#ffb1bc}
+.card-detail .attribute-tags span{background:#263c5f;color:#9cc2ff}
+.card-detail .record-note,.card-detail .history-single-note{background:#191c1f;color:#d8dce1}
+.card-detail .chart-grid-line{stroke:#3b4148}
+.card-detail .chart-axis-label,.card-detail .chart-date-label{fill:#b6bcc4}
+.card-detail .chart-point{stroke:#22262b}
+.card-detail .correction-request{border-top:1px solid #3b4148;margin-top:14px;padding-top:12px}
+.card-detail .correction-request summary{color:#69a2ff;cursor:pointer;font-size:13px;font-weight:700}
+.card-detail .correction-request form{background:#191c1f;border-color:#3b4148;color:#fff;margin-top:12px}
+.card-detail .correction-request input,.card-detail .correction-request select,.card-detail .correction-request textarea{background:#22262b;border-color:#59616b;color:#fff;color-scheme:dark}
+.card-detail .correction-request input:focus,.card-detail .correction-request select:focus,.card-detail .correction-request textarea:focus{border-color:#2f80ed;box-shadow:0 0 0 3px #075bd855;outline:none}
+.card-detail .correction-request .secondary-button{background:#22262b;border-color:#59616b;color:#fff}
