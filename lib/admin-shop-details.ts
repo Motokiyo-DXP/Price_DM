@@ -74,20 +74,46 @@ function parseShop(value: unknown): AdminShopDetails | null {
 }
 
 export async function loadAdminShopDetails(client: unknown) {
-  const { data, error } = await (client as AdminRpcClient).rpc(
-    "list_shop_details_for_admin",
-    { p_limit: 500 },
-  );
-  if (error) throw new Error(error.code ?? error.message);
-  if (!Array.isArray(data)) {
-    throw new Error("invalid_admin_shop_details_response");
-  }
+  const pageSize = 200;
+  const shops: AdminShopDetails[] = [];
 
-  const shops = data.map(parseShop);
-  if (shops.some((shop) => shop === null)) {
-    throw new Error("invalid_admin_shop_details_response");
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await (client as AdminRpcClient).rpc(
+      "list_shop_details_page_for_admin",
+      { p_limit: pageSize, p_offset: offset },
+    );
+    if (error) throw new Error(error.code ?? error.message);
+    if (!Array.isArray(data)) throw new Error("invalid_admin_shop_details_response");
+    if (data.length === 0) {
+      if (offset === 0) return [];
+      throw new Error("invalid_admin_shop_details_response");
+    }
+
+    const firstRow = data[0];
+    const totalCount = typeof firstRow === "object" && firstRow !== null
+      ? (firstRow as Record<string, unknown>).total_count
+      : null;
+    if (
+      typeof totalCount !== "number" ||
+      !Number.isSafeInteger(totalCount) ||
+      totalCount < data.length ||
+      totalCount > 100_000 ||
+      data.some((row) =>
+        typeof row !== "object" ||
+        row === null ||
+        (row as Record<string, unknown>).total_count !== totalCount
+      )
+    ) {
+      throw new Error("invalid_admin_shop_details_response");
+    }
+
+    const page = data.map(parseShop);
+    if (page.some((shop) => shop === null)) {
+      throw new Error("invalid_admin_shop_details_response");
+    }
+    shops.push(...page as AdminShopDetails[]);
+    if (shops.length >= totalCount) return shops;
   }
-  return shops as AdminShopDetails[];
 }
 
 export async function updateAdminShopDetails(

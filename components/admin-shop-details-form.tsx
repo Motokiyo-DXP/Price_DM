@@ -43,6 +43,18 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
     );
   }, [filter, shops]);
 
+  const coverage = useMemo(() => shops.reduce((summary, shop) => ({
+    missingRegion: summary.missingRegion + Number(!shop.prefecture || !shop.municipality),
+    missingWebsite: summary.missingWebsite + Number(!shop.websiteUrl),
+    missingReading: summary.missingReading + Number(!shop.nameKana),
+    missingAliases: summary.missingAliases + Number(shop.aliases.length === 0),
+  }), {
+    missingRegion: 0,
+    missingWebsite: 0,
+    missingReading: 0,
+    missingAliases: 0,
+  }), [shops]);
+
   const selectedShop = useMemo(
     () => filteredShops.find((shop) => shop.id === shopId) ?? filteredShops[0] ?? null,
     [filteredShops, shopId],
@@ -68,6 +80,13 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
         <h2 id="admin-shop-details-heading">登録済み店舗を編集</h2>
         <p className="form-intro">
           店舗名、所在地、公式URL、検索用の読み・別名を修正します。変更履歴はDBに保存されます。
+        </p>
+        <p className="shop-coverage-summary" role="status">
+          全{shops.length.toLocaleString("ja-JP")}件
+          ／地域情報不足 {coverage.missingRegion.toLocaleString("ja-JP")}件
+          ／公式URL不足 {coverage.missingWebsite.toLocaleString("ja-JP")}件
+          ／読み不足 {coverage.missingReading.toLocaleString("ja-JP")}件
+          ／別名不足 {coverage.missingAliases.toLocaleString("ja-JP")}件
         </p>
       </div>
       <label>

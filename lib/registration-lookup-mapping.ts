@@ -23,6 +23,11 @@ export type RegistrationShopOption = {
   municipality: string;
 };
 
+export type RegistrationShopSearchPage = {
+  options: RegistrationShopOption[];
+  totalCount: number;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -127,4 +132,25 @@ export function mapRegistrationShopOptions(
       },
     ];
   });
+}
+
+export function mapRegistrationShopSearchPage(
+  value: unknown,
+): RegistrationShopSearchPage {
+  const rows = asRows(value);
+  if (rows.length === 0) return { options: [], totalCount: 0 };
+
+  const options = mapRegistrationShopOptions(rows);
+  const totalCount = isRecord(rows[0]) && isNonNegativeInteger(rows[0].total_count)
+    ? rows[0].total_count
+    : null;
+  if (
+    totalCount === null ||
+    totalCount < options.length ||
+    options.length !== rows.length ||
+    rows.some((row) => !isRecord(row) || row.total_count !== totalCount)
+  ) {
+    return { options: [], totalCount: 0 };
+  }
+  return { options, totalCount };
 }

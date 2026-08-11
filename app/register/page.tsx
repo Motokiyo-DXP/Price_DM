@@ -13,7 +13,7 @@ import {
   mapRegistrationCardOptions,
   mapRegistrationCardPrints,
   mapRegistrationGames,
-  mapRegistrationShopOptions,
+  mapRegistrationShopSearchPage,
   RegistrationCardOption,
   RegistrationCardPrint,
   RegistrationGame,
@@ -105,6 +105,7 @@ export default function RegisterPage() {
   const [shopQuery, setShopQuery] = useState("");
   const [shopPrefecture, setShopPrefecture] = useState("");
   const [shopOptions, setShopOptions] = useState<RegistrationShopOption[]>([]);
+  const [shopTotalCount, setShopTotalCount] = useState(0);
   const [selectedShop, setSelectedShop] = useState<RegistrationShopOption | null>(null);
   const [searchingShops, setSearchingShops] = useState(false);
   const [shopSuggestionsOpen, setShopSuggestionsOpen] = useState(false);
@@ -285,6 +286,7 @@ export default function RegisterPage() {
 
     if ((query.length === 0 && !shopPrefecture) || selectedShop) {
       setShopOptions([]);
+      setShopTotalCount(0);
       setSearchingShops(false);
       setActiveShopOptionIndex(-1);
       return;
@@ -299,8 +301,9 @@ export default function RegisterPage() {
         return;
       }
 
-      const { data, error } = await supabase.rpc("search_shops_by_prefecture", {
+      const { data, error } = await supabase.rpc("search_shops_page", {
         p_limit: 20,
+        p_offset: 0,
         p_prefecture: shopPrefecture || undefined,
         p_query: normalizeShopSearch(query),
       });
@@ -313,7 +316,9 @@ export default function RegisterPage() {
       }
 
       setSystemError(null);
-      setShopOptions(mapRegistrationShopOptions(data));
+      const page = mapRegistrationShopSearchPage(data);
+      setShopOptions(page.options);
+      setShopTotalCount(page.totalCount);
       setActiveShopOptionIndex(-1);
     }, 250);
 
@@ -322,6 +327,36 @@ export default function RegisterPage() {
       window.clearTimeout(timer);
     };
   }, [selectedShop, shopPrefecture, shopQuery]);
+
+  async function loadMoreShops() {
+    if (searchingShops || shopOptions.length >= shopTotalCount) return;
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setSystemError("Supabaseの接続情報が設定されていません。");
+      return;
+    }
+
+    setSearchingShops(true);
+    const { data, error } = await supabase.rpc("search_shops_page", {
+      p_limit: 20,
+      p_offset: shopOptions.length,
+      p_prefecture: shopPrefecture || undefined,
+      p_query: normalizeShopSearch(shopQuery.trim()),
+    });
+    setSearchingShops(false);
+    if (error) {
+      setSystemError("承認済み店舗を追加で読み込めませんでした。");
+      return;
+    }
+
+    const page = mapRegistrationShopSearchPage(data);
+    setShopOptions((current) => {
+      const knownIds = new Set(current.map((shop) => shop.id));
+      return [...current, ...page.options.filter((shop) => !knownIds.has(shop.id))];
+    });
+    setShopTotalCount(page.totalCount);
+    setSystemError(null);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -978,6 +1013,18 @@ export default function RegisterPage() {
                     </small>
                   </li>
                 ))}
+              {!searchingShops && shopOptions.length < shopTotalCount && (
+                <li className="suggestion-status">
+                  <button
+                    className="shop-search-more"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={loadMoreShops}
+                    type="button"
+                  >
+                    さらに表示（残り{(shopTotalCount - shopOptions.length).toLocaleString("ja-JP")}件）
+                  </button>
+                </li>
+              )}
             </ul>
           )}
           {selectedShop && (

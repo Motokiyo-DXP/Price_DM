@@ -686,6 +686,7 @@ export type Database = {
         Row: {
           address_line: string | null
           aliases: string[]
+          chain_name: string | null
           created_at: string
           id: number
           latitude: number | null
@@ -694,13 +695,19 @@ export type Database = {
           name: string
           name_kana: string | null
           name_key: string | null
+          operational_status: string
           prefecture: string | null
+          source_store_id: string | null
+          source_url: string | null
+          source_verified_at: string | null
+          superseded_by_shop_id: number | null
           updated_at: string
           website_url: string | null
         }
         Insert: {
           address_line?: string | null
           aliases?: string[]
+          chain_name?: string | null
           created_at?: string
           id?: never
           latitude?: number | null
@@ -709,13 +716,19 @@ export type Database = {
           name: string
           name_kana?: string | null
           name_key?: string | null
+          operational_status?: string
           prefecture?: string | null
+          source_store_id?: string | null
+          source_url?: string | null
+          source_verified_at?: string | null
+          superseded_by_shop_id?: number | null
           updated_at?: string
           website_url?: string | null
         }
         Update: {
           address_line?: string | null
           aliases?: string[]
+          chain_name?: string | null
           created_at?: string
           id?: never
           latitude?: number | null
@@ -724,11 +737,24 @@ export type Database = {
           name?: string
           name_kana?: string | null
           name_key?: string | null
+          operational_status?: string
           prefecture?: string | null
+          source_store_id?: string | null
+          source_url?: string | null
+          source_verified_at?: string | null
+          superseded_by_shop_id?: number | null
           updated_at?: string
           website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shops_superseded_by_shop_id_fkey"
+            columns: ["superseded_by_shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tcg_games: {
         Row: {
@@ -1048,6 +1074,21 @@ export type Database = {
           website_url: string
         }[]
       }
+      list_shop_details_page_for_admin: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          address_line: string
+          aliases: string[]
+          id: number
+          municipality: string
+          name: string
+          name_kana: string
+          prefecture: string
+          price_record_count: number
+          total_count: number
+          website_url: string
+        }[]
+      }
       list_shop_search_metadata_for_admin: {
         Args: { p_limit?: number }
         Returns: {
@@ -1134,6 +1175,21 @@ export type Database = {
           municipality: string
           name: string
           prefecture: string
+        }[]
+      }
+      search_shops_page: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_prefecture?: string
+          p_query?: string
+        }
+        Returns: {
+          id: number
+          municipality: string
+          name: string
+          prefecture: string
+          total_count: number
         }[]
       }
       submit_price_correction_request: {
