@@ -118,8 +118,8 @@ export function mapRegistrationShopOptions(
       !isRecord(row) ||
       !isPositiveId(row.id) ||
       !isDisplayText(row.name, 200) ||
-      !isOptionalText(row.prefecture, 20) ||
-      !isOptionalText(row.municipality, 100)
+      !(row.prefecture === null || isOptionalText(row.prefecture, 20)) ||
+      !(row.municipality === null || isOptionalText(row.municipality, 100))
     ) {
       return [];
     }
@@ -127,8 +127,8 @@ export function mapRegistrationShopOptions(
       {
         id: row.id,
         name: row.name,
-        prefecture: row.prefecture,
-        municipality: row.municipality,
+        prefecture: row.prefecture ?? "",
+        municipality: row.municipality ?? "",
       },
     ];
   });
