@@ -694,13 +694,15 @@ export default function RegisterPage() {
     setCardPrints([]);
     setSelectedPrintId("");
     setSuggestionsOpen(false);
-    setShopQuery("");
     setShopOptions([]);
-    setSelectedShop(null);
+    setShopTotalCount(0);
     setShopSuggestionsOpen(false);
     setSalePriceInput("");
     setBuyPriceInput("");
-    setFeedback({ kind: "success", text: "価格情報を登録しました。" });
+    setFeedback({
+      kind: "success",
+      text: `価格情報を登録しました。店舗「${selectedShop.name}」は次の登録にも引き継がれます。`,
+    });
   }
 
   const showSuggestions =
