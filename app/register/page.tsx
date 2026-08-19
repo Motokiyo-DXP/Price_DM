@@ -27,6 +27,10 @@ import {
 } from "@/lib/registration-response-validation";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { parseCanonicalCardId } from "@/lib/card-route-validation";
+import {
+  readLastRegisteredShop,
+  writeLastRegisteredShop,
+} from "@/lib/last-registered-shop";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
 
@@ -180,6 +184,14 @@ export default function RegisterPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const shop = readLastRegisteredShop();
+    if (shop === null) return;
+
+    setSelectedShop(shop);
+    setShopQuery(shop.name);
   }, []);
 
   useEffect(() => {
@@ -697,6 +709,7 @@ export default function RegisterPage() {
     setShopOptions([]);
     setShopTotalCount(0);
     setShopSuggestionsOpen(false);
+    writeLastRegisteredShop(selectedShop);
     setSalePriceInput("");
     setBuyPriceInput("");
     setFeedback({
@@ -974,6 +987,7 @@ export default function RegisterPage() {
                 : undefined
             }
             placeholder="店舗名を入力して候補から選択"
+            autoComplete="off"
             value={shopQuery}
             onFocus={() => setShopSuggestionsOpen(true)}
             onKeyDown={handleShopKeyDown}
