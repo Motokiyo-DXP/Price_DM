@@ -32,6 +32,166 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          user_id: string
+          display_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          display_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          display_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      decks: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          format: string
+          visibility: string
+          description: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          format?: string
+          visibility?: string
+          description?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          format?: string
+          visibility?: string
+          description?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      game_rooms: {
+        Row: {
+          created_at: string
+          expires_at: string
+          format: string
+          guest_deck_snapshot: Json | null
+          guest_user_id: string | null
+          host_deck_snapshot: Json
+          host_user_id: string
+          id: string
+          room_code: string
+          state: Json
+          state_version: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          format: string
+          guest_deck_snapshot?: Json | null
+          guest_user_id?: string | null
+          host_deck_snapshot: Json
+          host_user_id: string
+          id?: string
+          room_code: string
+          state?: Json
+          state_version?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          format?: string
+          guest_deck_snapshot?: Json | null
+          guest_user_id?: string | null
+          host_deck_snapshot?: Json
+          host_user_id?: string
+          id?: string
+          room_code?: string
+          state?: Json
+          state_version?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deck_cards: {
+        Row: {
+          id: number
+          deck_id: string
+          canonical_card_id: number
+          card_print_id: number | null
+          zone: string
+          quantity: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: never
+          deck_id: string
+          canonical_card_id: number
+          card_print_id?: number | null
+          zone?: string
+          quantity: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: never
+          deck_id?: string
+          canonical_card_id?: number
+          card_print_id?: number | null
+          zone?: string
+          quantity?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deck_cards_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deck_cards_canonical_card_id_fkey"
+            columns: ["canonical_card_id"]
+            isOneToOne: false
+            referencedRelation: "canonical_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deck_cards_card_print_id_fkey"
+            columns: ["card_print_id"]
+            isOneToOne: false
+            referencedRelation: "card_prints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canonical_cards: {
         Row: {
           aliases: string[]
@@ -95,6 +255,11 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           id: number
+          image_byte_size: number | null
+          image_height: number | null
+          image_key: string | null
+          image_updated_at: string | null
+          image_width: number | null
           legacy_card_id: number | null
           manually_locked: boolean
           official_card_id: string | null
@@ -109,6 +274,11 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           id?: never
+          image_byte_size?: number | null
+          image_height?: number | null
+          image_key?: string | null
+          image_updated_at?: string | null
+          image_width?: number | null
           legacy_card_id?: number | null
           manually_locked?: boolean
           official_card_id?: string | null
@@ -123,6 +293,11 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           id?: never
+          image_byte_size?: number | null
+          image_height?: number | null
+          image_key?: string | null
+          image_updated_at?: string | null
+          image_width?: number | null
           legacy_card_id?: number | null
           manually_locked?: boolean
           official_card_id?: string | null
@@ -887,6 +1062,28 @@ export type Database = {
       }
     }
     Functions: {
+      create_game_room: {
+        Args: { p_deck_id: string }
+        Returns: {
+          id: string
+          room_code: string
+        }[]
+      }
+      join_game_room: {
+        Args: { p_deck_id: string; p_room_code: string }
+        Returns: {
+          id: string
+          room_code: string
+        }[]
+      }
+      start_game_room: {
+        Args: { p_initial_state: Json; p_room_id: string }
+        Returns: { state: Json; state_version: number }[]
+      }
+      update_game_room_state: {
+        Args: { p_expected_version: number; p_room_id: string; p_state: Json }
+        Returns: { state: Json; state_version: number }[]
+      }
       create_shop_for_admin: {
         Args: {
           p_address_line?: string

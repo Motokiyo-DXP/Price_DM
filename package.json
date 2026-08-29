@@ -28,9 +28,17 @@
     "test:maps": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/google-maps-url.test.mjs",
     "test:commerce-links": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/commerce-links.test.mjs",
     "test:search": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/search-normalization.test.mjs",
+    "test:decks": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/deck-validation.test.mjs",
+    "test:rooms": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/game-room-validation.test.mjs",
+    "test:playfield": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/playfield-interactions.test.mjs",
+    "test:images": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/card-image.test.mjs && npm run test:images:sync",
+    "images:prepare": "node scripts/prepare-card-images.mjs",
+    "images:sync:dm": "node scripts/sync-dm-card-images.mjs",
+    "images:sql:dm": "node scripts/build-dm-card-image-sql.mjs",
+    "test:images:sync": "node --test scripts/sync-dm-card-images.test.mjs",
     "audit:shops": "node scripts/audit-shop-manifest.mjs",
     "test:shops:audit": "node --test scripts/audit-shop-manifest.test.mjs",
-    "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:card-detail && npm run test:favorites && npm run test:routes && npm run test:maps && npm run test:commerce-links && npm run test:search && npm run test:shops:audit && npm run test:import:dm"
+    "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:card-detail && npm run test:favorites && npm run test:routes && npm run test:maps && npm run test:commerce-links && npm run test:search && npm run test:decks && npm run test:rooms && npm run test:playfield && npm run test:images && npm run test:shops:audit && npm run test:import:dm"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
@@ -45,6 +53,7 @@
     "@types/react-dom": "^19.0.4",
     "cheerio": "1.0.0",
     "kuromoji": "0.1.2",
+    "sharp": "0.35.3",
     "typescript": "^5.8.2"
   },
   "overrides": {

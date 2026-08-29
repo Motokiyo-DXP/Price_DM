@@ -18,10 +18,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               priority
             />
           </a>
-          <a className="admin-header-link" href="/admin">
-            <span aria-hidden="true">▣</span>
-            管理者ページ
-          </a>
+          <nav className="header-links" aria-label="主要メニュー">
+            <a href="/decks"><span aria-hidden="true">▤</span> マイデッキ</a>
+            <a href="/rooms"><span aria-hidden="true">⚔</span> オンライン対戦</a>
+            <a href="/admin"><span aria-hidden="true">▣</span> 管理者</a>
+          </nav>
         </header>
         <main>{children}</main>
       </body>

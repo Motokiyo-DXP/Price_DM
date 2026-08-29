@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
         email: email.trim(),
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
         },
       });
       if (error) {

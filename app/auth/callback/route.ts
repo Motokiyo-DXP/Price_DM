@@ -3,15 +3,23 @@ import { createAuthRouteSupabaseClient } from "@/lib/supabase-auth";
 
 export const dynamic = "force-dynamic";
 
+function safeNext(request: NextRequest) {
+  const next = new URL(request.url).searchParams.get("next");
+  if (next === "/admin" || next === "/decks" || next === "/decks/new" || next === "/rooms") return next;
+  if (next && /^\/(rooms|playtest)\/[0-9a-f-]{36}$/i.test(next)) return next;
+  return "/decks";
+}
+
 function loginRedirect(request: NextRequest) {
-  return NextResponse.redirect(new URL("/admin/login?error=callback", request.url));
+  const destination = safeNext(request) === "/admin" ? "/admin/login?error=callback" : "/login?error=callback";
+  return NextResponse.redirect(new URL(destination, request.url));
 }
 
 export async function GET(request: NextRequest) {
   const code = new URL(request.url).searchParams.get("code");
   if (!code) return loginRedirect(request);
 
-  const response = NextResponse.redirect(new URL("/admin", request.url));
+  const response = NextResponse.redirect(new URL(safeNext(request), request.url));
   const supabase = createAuthRouteSupabaseClient(request, response);
   if (!supabase) return loginRedirect(request);
 
