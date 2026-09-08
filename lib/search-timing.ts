@@ -1,0 +1,1 @@
+export const CARD_SEARCH_DEBOUNCE_MS = 50;

@@ -146,3 +146,6 @@ vite.config.ts.timestamp-*
 .local/
 .npm-cache/
 public/cards/official/
+
+.vercel
+.env*

@@ -1,10 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { canonicalizeDuelMastersCard } from "./dm-canonical-equivalents.mjs";
 
 const CARD_PATH = ".local/dm-cards-full.jsonl";
+const METADATA_PATH = ".local/dm-card-metadata.jsonl";
+const CARD_TYPES_PATH = ".local/dm-card-types.jsonl";
 const CHECKPOINT_PATH = ".local/dm-cards-full-checkpoint.json";
 const OUTPUT_DIRECTORY = ".local/dm-import-sql";
 const DEFAULT_CHUNK_SIZE = 100;
+const CIVILIZATIONS = new Set(["light", "water", "darkness", "fire", "nature", "zero"]);
 
 function sqlText(value) {
   return value === null || value === undefined
@@ -12,11 +16,17 @@ function sqlText(value) {
     : `'${String(value).replaceAll("'", "''")}'`;
 }
 
+function sqlTextArray(values) {
+  if (!Array.isArray(values) || values.length === 0) return "'{}'::text[]";
+  return `array[${values.map(sqlText).join(", ")}]::text[]`;
+}
+
 function officialCardId(card) {
   if (typeof card.official_url !== "string") return null;
   try {
-    const value = new URL(card.official_url).searchParams.get("id");
-    return value?.trim() || null;
+    const url = new URL(card.official_url);
+    const match = url.search.match(/[?&]id=([^&]+)/u);
+    return match ? decodeURIComponent(match[1]).trim() || null : null;
   } catch {
     return null;
   }
@@ -32,6 +42,34 @@ function validateCard(card, index) {
   if (!officialCardId(card)) {
     throw new Error(`Card ${index + 1} has no official card id.`);
   }
+  if (card.cost !== undefined && card.cost !== null && (!Number.isSafeInteger(card.cost) || card.cost < 0 || card.cost > 99)) {
+    throw new Error(`Card ${index + 1} has an invalid cost.`);
+  }
+  if (card.civilizations !== undefined && (!Array.isArray(card.civilizations) || card.civilizations.some((value) => typeof value !== "string" || !CIVILIZATIONS.has(value)))) {
+    throw new Error(`Card ${index + 1} has invalid civilizations.`);
+  }
+  if (card.card_types !== undefined && (!Array.isArray(card.card_types) || card.card_types.some((value) => typeof value !== "string" || !value.trim()))) {
+    throw new Error(`Card ${index + 1} has invalid card types.`);
+  }
+}
+
+export function mergeCardMetadata(cards, metadata) {
+  const byName = new Map();
+  for (const record of metadata) {
+    if (typeof record?.name === "string" && record.name.trim()) {
+      byName.set(record.name.trim(), record);
+    }
+  }
+  return cards.map((card) => ({ ...card, ...(byName.get(card.name?.trim()) ?? {}) }));
+}
+
+async function readOptionalJsonl(path) {
+  try {
+    return (await readFile(path, "utf8")).split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
 }
 
 async function loadCards() {
@@ -40,8 +78,13 @@ async function loadCards() {
     .split(/\r?\n/)
     .filter(Boolean)
     .map((line) => JSON.parse(line));
+  const metadata = [
+    ...await readOptionalJsonl(METADATA_PATH),
+    ...await readOptionalJsonl(CARD_TYPES_PATH),
+  ];
+  const mergedCards = mergeCardMetadata(cards, metadata);
   const deduplicated = new Map();
-  for (const [index, card] of cards.entries()) {
+  for (const [index, card] of mergedCards.entries()) {
     validateCard(card, index);
     const key = officialCardId(card);
     if (!deduplicated.has(key)) deduplicated.set(key, card);
@@ -55,6 +98,9 @@ function sourceValues(cards) {
       (card) => `(
       ${sqlText(card.name.trim())},
       ${sqlText(card.name_kana?.trim() || null)},
+      ${card.cost ?? "null"},
+      ${sqlTextArray(card.civilizations)},
+      ${sqlTextArray(card.card_types)},
       ${sqlText(officialCardId(card))},
       ${sqlText(card.card_number?.trim() || null)},
       ${sqlText(card.product_name?.trim() || null)},
@@ -66,13 +112,16 @@ function sourceValues(cards) {
 
 export function buildCanonicalImportSql(cards) {
   cards.forEach(validateCard);
-  const values = sourceValues(cards);
+  const values = sourceValues(cards.map((card) => canonicalizeDuelMastersCard(card, officialCardId(card))));
 
   return `begin;
 
 create temporary table dm_card_import_source (
   name text not null,
   generated_reading text,
+  cost smallint,
+  civilizations text[] not null,
+  card_types text[] not null,
   official_card_id text not null,
   card_number text,
   product_name text,
@@ -80,7 +129,7 @@ create temporary table dm_card_import_source (
 ) on commit drop;
 
 insert into dm_card_import_source(
-  name, generated_reading, official_card_id,
+  name, generated_reading, cost, civilizations, card_types, official_card_id,
   card_number, product_name, official_url
 )
 values
@@ -94,7 +143,16 @@ with duel_masters as (
 canonical_source as (
   select
     source.name,
-    max(source.generated_reading) as generated_reading
+    max(source.generated_reading) as generated_reading,
+    max(source.cost) as cost,
+    coalesce(
+      max(nullif(source.civilizations, '{}'::text[])::text)::text[],
+      '{}'::text[]
+    ) as civilizations,
+    coalesce(
+      max(nullif(source.card_types, '{}'::text[])::text)::text[],
+      '{}'::text[]
+    ) as card_types
   from dm_card_import_source as source
   group by source.name
 )
@@ -102,6 +160,9 @@ insert into public.canonical_cards(
   game_id,
   name,
   name_kana,
+  cost,
+  civilizations,
+  card_types,
   source_name,
   source_name_kana,
   source_checked_at
@@ -110,6 +171,9 @@ select
   duel_masters.game_id,
   source.name,
   source.generated_reading,
+  source.cost,
+  source.civilizations,
+  source.card_types,
   source.name,
   null,
   pg_catalog.now()
@@ -117,6 +181,15 @@ from canonical_source as source
 cross join duel_masters
 on conflict (game_id, name) where deleted_at is null do update
 set name_kana = excluded.name_kana,
+    cost = coalesce(excluded.cost, public.canonical_cards.cost),
+    civilizations = case
+      when cardinality(excluded.civilizations) > 0 then excluded.civilizations
+      else public.canonical_cards.civilizations
+    end,
+    card_types = case
+      when cardinality(excluded.card_types) > 0 then excluded.card_types
+      else public.canonical_cards.card_types
+    end,
     source_name = excluded.source_name,
     source_name_kana = excluded.source_name_kana,
     source_checked_at = excluded.source_checked_at,
@@ -149,7 +222,7 @@ on conflict (official_card_id) where official_card_id is not null and deleted_at
 do update
 set canonical_card_id = excluded.canonical_card_id,
     card_number = excluded.card_number,
-    product_name = excluded.product_name,
+    product_name = coalesce(public.card_prints.product_name, excluded.product_name),
     official_url = excluded.official_url,
     source_checked_at = excluded.source_checked_at,
     updated_at = pg_catalog.now()

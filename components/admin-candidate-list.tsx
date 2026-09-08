@@ -113,7 +113,7 @@ function CandidateReviewForm({ candidate }: { candidate: AdminShopCandidate }) {
           disabled={actionPending}
           type="submit"
         >
-          {deletePending ? "削除中…" : "候補を削除"}
+          <span aria-hidden="true" className="ui-icon ui-icon-trash" />{deletePending ? "削除中…" : "候補を削除"}
         </button>
       </form>
     </article>

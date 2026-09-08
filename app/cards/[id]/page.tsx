@@ -111,7 +111,6 @@ export default async function CardDetailPage({
       <section className="detail-heading">
         <span className="tag">{card.game}</span>
         <h1>{card.name}</h1>
-        {card.nameKana && <p>{card.nameKana}</p>}
         <p className="detail-meta">
           収録バリエーション {card.printCount}件・最終更新 {formatDate(card.updatedAt)}
         </p>

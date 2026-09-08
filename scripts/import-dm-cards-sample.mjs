@@ -176,7 +176,9 @@ function findProductName($, officialId) {
     }
   });
 
-  return exactProduct?.name ?? products[0]?.name ?? null;
+  // Do not silently associate an unrelated product when the official id
+  // cannot be matched to a product slug on the detail page.
+  return exactProduct?.name ?? null;
 }
 
 export function parseCardDetail(html, officialUrl) {
@@ -193,8 +195,42 @@ export function parseCardDetail(html, officialUrl) {
 
   if (!name) throw new Error(`Could not find the card name for ${officialUrl}`);
 
+  const costText = normalizeText($(".cardDetail td.cost").first().text());
+  const normalizedCost = costText.replace(/[０-９]/g, (character) =>
+    String.fromCharCode(character.charCodeAt(0) - 0xfee0),
+  );
+  const costMatch = normalizedCost.match(/\d+/);
+  const cost = costMatch ? Number.parseInt(costMatch[0], 10) : null;
+  const civilizationMap = new Map([
+    ["光", "light"],
+    ["水", "water"],
+    ["闇", "darkness"],
+    ["火", "fire"],
+    ["自然", "nature"],
+    ["ゼロ", "zero"],
+    ["無色", "zero"],
+  ]);
+  const civilizations = [...new Set(
+    $(".cardDetail td.civil").toArray()
+      .flatMap((element) => normalizeText($(element).text())
+      .split(/[\/／・]/u)
+      .map((value) => civilizationMap.get(value.trim())))
+      .filter(Boolean),
+  )];
+
+  const cardTypes = [...new Set(
+    $(".cardDetail").toArray()
+      .flatMap((detail) => $(detail).find("th").toArray())
+      .filter((heading) => normalizeText($(heading).text()) === "カードの種類")
+      .map((heading) => normalizeText($(heading).next("td").text()))
+      .filter(Boolean),
+  )];
+
   return {
     card_number: cardNumber || null,
+    card_types: cardTypes,
+    civilizations,
+    cost: Number.isSafeInteger(cost) && cost >= 0 && cost <= 99 ? cost : null,
     name,
     name_kana: null,
     official_url: officialUrl,

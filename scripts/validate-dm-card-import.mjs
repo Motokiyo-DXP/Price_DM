@@ -5,6 +5,8 @@ const CARD_PATH = ".local/dm-cards-full.jsonl";
 const CHECKPOINT_PATH = ".local/dm-cards-full-checkpoint.json";
 const FAILURES_PATH = ".local/dm-cards-full-failures.json";
 const UNAVAILABLE_PATH = ".local/dm-cards-full-unavailable.json";
+const METADATA_PATH = ".local/dm-card-metadata.jsonl";
+const CARD_TYPES_PATH = ".local/dm-card-types.jsonl";
 const FORBIDDEN_FIELDS = new Set([
   "card_text",
   "effect_text",
@@ -103,6 +105,34 @@ export function validateCardCatalog(
   };
 }
 
+export function validateCardMetadataCoverage(records, metadata, cardTypes) {
+  const canonicalNames = new Set(records.map((record) => record.name?.trim()).filter(Boolean));
+  const metadataByName = new Map(metadata
+    .filter((record) => typeof record?.name === "string")
+    .map((record) => [record.name.trim(), record]));
+  const typesByName = new Map(cardTypes
+    .filter((record) => typeof record?.name === "string")
+    .map((record) => [record.name.trim(), record]));
+  let metadataMissing = 0;
+  let civilizationMissing = 0;
+  let cardTypesMissing = 0;
+  for (const name of canonicalNames) {
+    const cardMetadata = metadataByName.get(name);
+    if (!cardMetadata || !("cost" in cardMetadata)) metadataMissing += 1;
+    if (!cardMetadata || !Array.isArray(cardMetadata.civilizations)) civilizationMissing += 1;
+    const typeMetadata = typesByName.get(name);
+    if (!typeMetadata || !Array.isArray(typeMetadata.card_types) || typeMetadata.card_types.length === 0) cardTypesMissing += 1;
+  }
+  return {
+    canonical_name_count: canonicalNames.size,
+    metadata_name_count: metadataByName.size,
+    metadata_missing_count: metadataMissing,
+    civilization_missing_count: civilizationMissing,
+    card_types_missing_count: cardTypesMissing,
+    complete: metadataMissing === 0 && civilizationMissing === 0 && cardTypesMissing === 0,
+  };
+}
+
 async function readJson(path, fallback) {
   try {
     return JSON.parse(await readFile(path, "utf8"));
@@ -113,28 +143,31 @@ async function readJson(path, fallback) {
 }
 
 async function main() {
-  const [content, checkpoint, failures, unavailable] = await Promise.all([
+  const [content, checkpoint, failures, unavailable, metadataContent, cardTypesContent] = await Promise.all([
     readFile(CARD_PATH, "utf8"),
     readJson(CHECKPOINT_PATH, null),
     readJson(FAILURES_PATH, []),
     readJson(UNAVAILABLE_PATH, { unavailable: [] }),
+    readFile(METADATA_PATH, "utf8").catch((error) => error?.code === "ENOENT" ? "" : Promise.reject(error)),
+    readFile(CARD_TYPES_PATH, "utf8").catch((error) => error?.code === "ENOENT" ? "" : Promise.reject(error)),
   ]);
   const records = content
     .split(/\r?\n/)
     .filter(Boolean)
     .map((line) => JSON.parse(line));
-  console.log(
-    JSON.stringify(
-      validateCardCatalog(
-        records,
-        checkpoint,
-        Array.isArray(failures?.failures) ? failures.failures : failures,
-        Array.isArray(unavailable?.unavailable) ? unavailable.unavailable : [],
-      ),
-      null,
-      2,
-    ),
+  const catalogResult = validateCardCatalog(
+    records,
+    checkpoint,
+    Array.isArray(failures?.failures) ? failures.failures : failures,
+    Array.isArray(unavailable?.unavailable) ? unavailable.unavailable : [],
   );
+  const metadata = metadataContent.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+  const cardTypes = cardTypesContent.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+  const metadataResult = validateCardMetadataCoverage(records, metadata, cardTypes);
+  console.log(JSON.stringify({ ...catalogResult, metadata: metadataResult }, null, 2));
+  if (catalogResult.complete && !metadataResult.complete) {
+    throw new Error(`Card metadata is incomplete: ${metadataResult.metadata_missing_count} metadata, ${metadataResult.civilization_missing_count} civilizations, ${metadataResult.card_types_missing_count} card types missing.`);
+  }
 }
 
 const entryPoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

@@ -7,6 +7,7 @@ export type PlayZone =
   | "graveyard"
   | "hyperspatial"
   | "gr"
+  | "abyss"
   | "reveal";
 
 export type CardFace = "face_up" | "face_down" | "owner_only";
@@ -21,13 +22,30 @@ export type MoveDefaults = {
   shieldMarker: ShieldPlacementMarker | null;
 };
 
+export type MoveRule = "prohibited" | "face_down" | "face_up" | "special";
+
+const zones: PlayZone[] = ["battle", "shield", "deck", "graveyard", "hyperspatial", "gr", "abyss", "mana", "reveal", "hand"];
+
+export const MOVE_RULE_TABLE = Object.fromEntries(zones.map((from) => [
+  from,
+  Object.fromEntries(zones.map((to) => [to, from === to ? "prohibited" : to === "shield" ? "face_down" : to === "deck" ? "special" : "face_up"])),
+])) as Record<PlayZone, Record<PlayZone, MoveRule>>;
+
+export function getMoveRule(from: PlayZone, to: PlayZone): MoveRule {
+  return MOVE_RULE_TABLE[from][to];
+}
+
 export function moveDefaults(
-  _from: PlayZone,
+  from: PlayZone,
   to: PlayZone,
   context: { turn: number; shieldPlacementOrder: number },
 ): MoveDefaults {
-  if (to === "deck") return { face: "face_down", shieldMarker: null };
-  if (to === "shield") {
+  const rule = getMoveRule(from, to);
+  if (rule === "prohibited") throw new Error(`Cards cannot move from ${from} to ${to}.`);
+  // The selection UI for rule 2 (special) is intentionally deferred. Until it
+  // is specified, completing the drop places the card face down in the deck.
+  if (rule === "special") return { face: "face_down", shieldMarker: null };
+  if (rule === "face_down") {
     return {
       face: "face_down",
       shieldMarker: {
@@ -36,6 +54,7 @@ export function moveDefaults(
       },
     };
   }
+  // A hand card is upright, but remains visible only to its owner.
   if (to === "hand") return { face: "owner_only", shieldMarker: null };
   return { face: "face_up", shieldMarker: null };
 }
@@ -58,6 +77,106 @@ export function classifyPointerGesture(input: {
   if (input.durationMs >= 500) return "long_press";
   if (input.durationMs <= 250) return "tap";
   return "none";
+}
+
+/**
+ * A drag is latched as soon as the pointer crosses the drag threshold.
+ * Layout changes (for example, expanding the hand fan) are allowed to move
+ * the gesture origin afterwards, but must not turn an active drag back into
+ * a tap or a long press when the pointer is released.
+ */
+export function resolvePointerReleaseGesture(input: {
+  dragActivated: boolean;
+  durationMs: number;
+  distancePx: number;
+  cancelled?: boolean;
+}): GestureKind {
+  if (input.cancelled) return "none";
+  if (input.dragActivated) return "drag";
+  return classifyPointerGesture(input);
+}
+
+export function resolveCenteredHandCardId(
+  renderedCards: Iterable<{ centerX: number; id: string }>,
+  viewportCenterX: number,
+  touchedCardId: string,
+) {
+  let closest: { distance: number; id: string } | null = null;
+  for (const renderedCard of renderedCards) {
+    const distance = Math.abs(renderedCard.centerX - viewportCenterX);
+    if (!Number.isFinite(distance)) continue;
+    if (!closest || distance < closest.distance) closest = { distance, id: renderedCard.id };
+  }
+  return closest?.id ?? touchedCardId;
+}
+
+export function resolveDropTarget(
+  candidates: Iterable<{ cardId?: string; owner: string; zone: PlayZone }>,
+  owner: string,
+  sourceZone: PlayZone,
+  movingCardId: string,
+) {
+  const ordered = [...candidates];
+  const target = ordered.find((candidate) => candidate.owner === owner && (
+    candidate.zone !== sourceZone
+    || (sourceZone === "battle"
+      && candidate.zone === "battle"
+      && Boolean(candidate.cardId)
+      && candidate.cardId !== movingCardId)
+  ));
+  if (!target) return null;
+  const targetZone = target.zone;
+  const targetCardId = ordered.find((candidate) => candidate.owner === owner
+    && candidate.zone === targetZone
+    && candidate.cardId
+    && candidate.cardId !== movingCardId)?.cardId ?? null;
+  return { targetCardId, targetZone };
+}
+
+export function shouldSwitchHandScrollToDrag(input: {
+  isScrolling: boolean;
+  stepX: number;
+  stepY: number;
+  zone: PlayZone;
+}) {
+  return input.zone === "hand"
+    && input.isScrolling
+    && Math.abs(input.stepY) > 10
+    && Math.abs(input.stepY) > Math.abs(input.stepX);
+}
+
+export function shouldUseZoneScroll(input: {
+  dragActivated: boolean;
+  horizontalWithinScrollAngle: boolean;
+  isScrolling: boolean;
+}) {
+  return !input.dragActivated
+    && (input.isScrolling || input.horizontalWithinScrollAngle);
+}
+
+export const ZONE_SCROLL_ANGLE_DEGREES = 20;
+
+export function isWithinHorizontalScrollAngle(deltaX: number, deltaY: number) {
+  return Math.abs(deltaX) > 8
+    && Math.abs(deltaY) <= Math.abs(deltaX) * Math.tan(ZONE_SCROLL_ANGLE_DEGREES * Math.PI / 180);
+}
+
+export const STACK_HOLD_PROGRESS_MS = 300;
+export const STACK_HOLD_MENU_MS = 1000;
+
+export function stackHoldPhase(elapsedMs: number) {
+  if (elapsedMs >= STACK_HOLD_MENU_MS) return "menu" as const;
+  if (elapsedMs >= STACK_HOLD_PROGRESS_MS) return "progress" as const;
+  return "drag" as const;
+}
+
+export function resolveDeckDragRelease(
+  placementChoice: "deck_top" | "deck_bottom" | null,
+  finalZone: PlayZone | null,
+) {
+  if (placementChoice) return { kind: "deck" as const, choice: placementChoice };
+  if (finalZone && finalZone !== "deck") return { kind: "zone" as const, zone: finalZone };
+  return null;
 }
 
 export type ManaCard = {

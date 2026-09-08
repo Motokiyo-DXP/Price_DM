@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "dm-price-tracker-card-images",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-06",
+  "workers_dev": true,
+  "r2_buckets": [
+    {
+      "binding": "CARD_IMAGES",
+      "bucket_name": "dm-price-tracker-card-images"
+    }
+  ]
+}

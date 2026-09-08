@@ -9,14 +9,20 @@ const USER_AGENT = "DM-Souba/0.2 (noncommercial licensed card-image archive; con
 export function officialCardId(officialUrl) {
   try {
     const url = new URL(officialUrl);
-    const id = url.hostname === "dm.takaratomy.co.jp" ? url.searchParams.get("id") : null;
-    return id && /^[a-zA-Z0-9_-]+$/.test(id) ? id : null;
+    const match = url.hostname === "dm.takaratomy.co.jp" ? url.search.match(/[?&]id=([^&]+)/u) : null;
+    const id = match ? decodeURIComponent(match[1]) : null;
+    return id && /^[a-zA-Z0-9_+$-]+$/.test(id) ? id : null;
   } catch { return null; }
 }
 
 export function officialImageUrl(id) {
-  if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error("Invalid official card ID.");
+  if (!/^[a-zA-Z0-9_+$-]+$/.test(id)) throw new Error("Invalid official card ID.");
   return `https://dm.takaratomy.co.jp/wp-content/card/cardimage/${id}.jpg`;
+}
+
+export function imageStorageId(id) {
+  if (!/^[a-zA-Z0-9_+$-]+$/.test(id)) throw new Error("Invalid official card ID.");
+  return id.replaceAll("+", "_plus_").replaceAll("$", "_dollar_");
 }
 
 function positiveInteger(value, label) {
@@ -83,10 +89,11 @@ export async function main(argv = process.argv.slice(2)) {
     try {
       const { response, imageUrl } = await fetchImage(item);
       const source = Buffer.from(await response.arrayBuffer());
-      const outputPath = path.join(options.output, `${item.id}.webp`);
+      const storageId = imageStorageId(item.id);
+      const outputPath = path.join(options.output, `${storageId}.webp`);
       const info = await sharp(source).rotate().resize({ width: 384, withoutEnlargement: true }).webp({ quality: 78, effort: 4 }).toFile(outputPath);
       const file = await stat(outputPath);
-      manifest.set(item.id, { official_card_id: item.id, card_name: item.card.name, card_number: item.card.card_number, official_url: item.card.official_url, source_image_url: imageUrl, image_key: `official/${item.id}`, width: info.width, height: info.height, byte_size: file.size, downloaded_at: new Date().toISOString() });
+      manifest.set(item.id, { official_card_id: item.id, card_name: item.card.name, card_number: item.card.card_number, official_url: item.card.official_url, source_image_url: imageUrl, image_key: `official/${storageId}`, width: info.width, height: info.height, byte_size: file.size, downloaded_at: new Date().toISOString() });
       downloaded += 1;
       sinceCheckpoint += 1;
       process.stdout.write(`\rDownloaded ${downloaded}/${pending.length}; failed ${failed}`);

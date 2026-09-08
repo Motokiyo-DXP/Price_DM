@@ -1,0 +1,16 @@
+create table if not exists public.deck_folders(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users(id) on delete cascade,name varchar(60) not null check(btrim(name)<>''),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(owner_id,name));
+create index if not exists deck_folders_owner_id_idx on public.deck_folders(owner_id);
+alter table public.deck_folders enable row level security;
+grant select,insert,update,delete on public.deck_folders to authenticated;
+create policy "Owners can select deck folders" on public.deck_folders for select to authenticated using((select auth.uid())=owner_id);
+create policy "Owners can insert deck folders" on public.deck_folders for insert to authenticated with check((select auth.uid())=owner_id);
+create policy "Owners can update deck folders" on public.deck_folders for update to authenticated using((select auth.uid())=owner_id) with check((select auth.uid())=owner_id);
+create policy "Owners can delete deck folders" on public.deck_folders for delete to authenticated using((select auth.uid())=owner_id);
+alter table public.decks add column if not exists folder_id uuid references public.deck_folders(id) on delete set null;
+create index if not exists decks_folder_id_idx on public.decks(folder_id);
+alter table public.decks add column if not exists icon_canonical_card_id bigint references public.canonical_cards(id) on delete set null;
+create index if not exists decks_icon_canonical_card_id_idx on public.decks(icon_canonical_card_id);
+drop policy if exists "Owners can insert decks" on public.decks;
+create policy "Owners can insert decks" on public.decks for insert to authenticated with check((select auth.uid())=owner_id and(folder_id is null or exists(select 1 from public.deck_folders f where f.id=folder_id and f.owner_id=(select auth.uid()))));
+drop policy if exists "Owners can update decks" on public.decks;
+create policy "Owners can update decks" on public.decks for update to authenticated using((select auth.uid())=owner_id) with check((select auth.uid())=owner_id and(folder_id is null or exists(select 1 from public.deck_folders f where f.id=folder_id and f.owner_id=(select auth.uid()))));

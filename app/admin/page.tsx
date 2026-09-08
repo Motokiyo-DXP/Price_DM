@@ -8,6 +8,7 @@ import { loadPendingPriceCorrections } from "@/lib/admin-price-corrections";
 import { loadPendingShopCorrections } from "@/lib/admin-shop-corrections";
 import { loadPendingShopCandidates } from "@/lib/admin-shop-candidates";
 import { loadAdminShopDetails } from "@/lib/admin-shop-details";
+import { isAdminEmail } from "@/lib/admin-auth";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,9 @@ export default async function AdminPage() {
 
   const { data, error } = await supabase.auth.getClaims();
   if (error || typeof data?.claims?.sub !== "string") redirect("/admin/login");
+  if (!isAdminEmail(data.claims.email)) {
+    return <section className="form-wrap"><h1>管理権限がありません</h1><p className="form-intro">管理者アカウントでログインしてください。</p></section>;
+  }
 
   try {
     const [candidates, corrections, shopCorrections, shops] = await Promise.all([

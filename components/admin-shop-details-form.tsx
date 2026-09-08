@@ -219,7 +219,7 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
               }}
               type="submit"
             >
-              {deletePending ? "削除中…" : "登録済み店舗を削除"}
+              <span aria-hidden="true" className="ui-icon ui-icon-trash" />{deletePending ? "削除中…" : "登録済み店舗を削除"}
             </button>
           </div>
           <p className="form-help">

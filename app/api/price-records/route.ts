@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { priceRegistrationRpcErrorCode } from "@/lib/price-registration-error";
@@ -8,6 +9,7 @@ import {
   REGISTRATION_SESSION_COOKIE,
 } from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { MARKET_CARDS_CACHE_TAG } from "@/lib/market-data";
 
 export const dynamic = "force-dynamic";
 
@@ -82,5 +84,7 @@ export async function POST(request: Request) {
     return json({ error: "registration_failed" }, 400);
   }
 
+  revalidateTag(MARKET_CARDS_CACHE_TAG);
+  revalidatePath("/");
   return json({ recordId }, 201);
 }

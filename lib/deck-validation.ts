@@ -1,18 +1,19 @@
 export type DeckCardInput = {
   canonicalCardId: number;
+  cardPrintId: number | null;
   name: string;
   quantity: number;
 };
 
 export type DeckInput = {
   name: string;
-  format: "original" | "advanced";
+  format: "original" | "advanced" | "duel_party";
   visibility: "private" | "unlisted" | "public";
   description: string;
   cards: DeckCardInput[];
 };
 
-const formats = new Set(["original", "advanced"]);
+const formats = new Set(["original", "advanced", "duel_party"]);
 const visibilities = new Set(["private", "unlisted", "public"]);
 
 export function parseDeckInput(formData: FormData): DeckInput | null {
@@ -46,7 +47,8 @@ export function parseDeckInput(formData: FormData): DeckInput | null {
   } catch {
     return null;
   }
-  if (!Array.isArray(parsed) || parsed.length > 40) return null;
+  const deckLimit = formatValue === "duel_party" ? 60 : 40;
+  if (!Array.isArray(parsed) || parsed.length > deckLimit) return null;
 
   const ids = new Set<number>();
   const cards: DeckCardInput[] = [];
@@ -55,11 +57,13 @@ export function parseDeckInput(formData: FormData): DeckInput | null {
     const candidate = item as Record<string, unknown>;
     const canonicalCardId = candidate.canonicalCardId;
     const quantity = candidate.quantity;
+    const cardPrintId = candidate.cardPrintId ?? null;
     const cardName = candidate.name;
     if (
       typeof canonicalCardId !== "number" ||
       !Number.isSafeInteger(canonicalCardId) ||
       canonicalCardId <= 0 ||
+      (cardPrintId !== null && (typeof cardPrintId !== "number" || !Number.isSafeInteger(cardPrintId) || cardPrintId <= 0)) ||
       ids.has(canonicalCardId) ||
       typeof quantity !== "number" ||
       !Number.isSafeInteger(quantity) ||
@@ -70,10 +74,10 @@ export function parseDeckInput(formData: FormData): DeckInput | null {
       cardName.trim().length > 200
     ) return null;
     ids.add(canonicalCardId);
-    cards.push({ canonicalCardId, quantity, name: cardName.trim() });
+    cards.push({ canonicalCardId, cardPrintId: cardPrintId as number | null, quantity, name: cardName.trim() });
   }
 
-  if (cards.reduce((total, card) => total + card.quantity, 0) > 40) return null;
+  if (cards.reduce((total, card) => total + card.quantity, 0) > deckLimit) return null;
 
   return {
     name,

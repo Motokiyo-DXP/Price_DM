@@ -6,6 +6,8 @@ import {
   REGISTRATION_SESSION_MAX_AGE,
 } from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
+import { parseRegistrationSessionRpcResult } from "@/lib/registration-response-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +21,7 @@ function json(body: unknown, status = 200) {
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get(REGISTRATION_SESSION_COOKIE)?.value;
-  if (!token) return json({ authenticated: false });
-  if (!isRegistrationSessionToken(token)) {
+  if (token && !isRegistrationSessionToken(token)) {
     const response = json({ authenticated: false });
     response.cookies.delete(REGISTRATION_SESSION_COOKIE);
     return response;
@@ -29,18 +30,41 @@ export async function GET() {
   const supabase = createServerSupabaseClient();
   if (!supabase) return json({ authenticated: false }, 503);
 
-  const { data: expiresAt, error } = await supabase.rpc(
-    "validate_registration_session",
-    { p_session_token: token },
-  );
+  if (token) {
+    const { data: expiresAt, error } = await supabase.rpc(
+      "validate_registration_session",
+      { p_session_token: token },
+    );
+    if (!error && expiresAt) return json({ authenticated: true, expiresAt });
+  }
 
-  if (error || !expiresAt) {
+  const authSupabase = await createAuthServerSupabaseClient();
+  const { data: claims } = authSupabase
+    ? await authSupabase.auth.getClaims()
+    : { data: null };
+  if (!authSupabase || typeof claims?.claims?.sub !== "string") {
     const response = json({ authenticated: false });
-    response.cookies.delete(REGISTRATION_SESSION_COOKIE);
+    if (token) response.cookies.delete(REGISTRATION_SESSION_COOKIE);
     return response;
   }
 
-  return json({ authenticated: true, expiresAt });
+  const { data, error } = await authSupabase.rpc("create_registration_session", {
+    p_pin: "",
+  });
+  const session = parseRegistrationSessionRpcResult(data);
+  if (error || !session || session.status !== "ok") {
+    return json({ authenticated: false }, 503);
+  }
+
+  const response = json({ authenticated: true, expiresAt: session.expiresAt });
+  response.cookies.set(REGISTRATION_SESSION_COOKIE, session.sessionToken, {
+    httpOnly: true,
+    maxAge: REGISTRATION_SESSION_MAX_AGE,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+  return response;
 }
 
 export async function POST(request: Request) {

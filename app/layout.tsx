@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { SiteNavigation } from "@/components/site-navigation";
+import { PrimaryNavigation } from "@/components/primary-navigation";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "TCG 相場チェッカー", description: "TCGカードの販売・買取相場を記録、比較するアプリ" };
+export const metadata: Metadata = { title: "TCG 相場チェッカー", description: "TCGカードの販売・買取相場を記録、比較するアプリ", icons: { icon: "/card-back.svg", shortcut: "/card-back.svg", apple: "/card-back.svg" } };
+
+const cardImageBaseUrl = process.env.NEXT_PUBLIC_CARD_IMAGE_BASE_URL;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
+      {cardImageBaseUrl ? (
+        <head>
+          <link rel="preconnect" href={cardImageBaseUrl} crossOrigin="anonymous" />
+        </head>
+      ) : null}
       <body>
         <header className="site-header">
           <a className="site-logo" href="/" aria-label="TCG相場チェッカー ホーム">
@@ -18,12 +27,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               priority
             />
           </a>
-          <nav className="header-links" aria-label="主要メニュー">
-            <a href="/decks"><span aria-hidden="true">▤</span> マイデッキ</a>
-            <a href="/rooms"><span aria-hidden="true">⚔</span> オンライン対戦</a>
-            <a href="/admin"><span aria-hidden="true">▣</span> 管理者</a>
-          </nav>
+          <SiteNavigation />
         </header>
+        <PrimaryNavigation />
         <main>{children}</main>
       </body>
     </html>

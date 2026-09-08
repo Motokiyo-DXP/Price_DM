@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
+import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { normalizeShopSearch } from "@/lib/search-normalization";
 import {
   mapRegistrationCardOptions,
@@ -26,6 +27,7 @@ import {
   parseShopCandidateResponse,
 } from "@/lib/registration-response-validation";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { parseCanonicalCardId } from "@/lib/card-route-validation";
 import {
   readLastRegisteredShop,
@@ -33,6 +35,7 @@ import {
 } from "@/lib/last-registered-shop";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
+import { PasswordInput } from "@/components/password-input";
 
 type SearchMode = "broad" | "precise";
 type PinSessionState = "checking" | "required" | "authenticated";
@@ -284,7 +287,7 @@ export default function RegisterPage() {
       setSystemError(null);
       setCardOptions(mapRegistrationCardOptions(data));
       setActiveOptionIndex(-1);
-    }, 250);
+    }, CARD_SEARCH_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
@@ -396,7 +399,7 @@ export default function RegisterPage() {
           setSystemError("収録版を読み込めませんでした。");
           return;
         }
-        setCardPrints(mapRegistrationCardPrints(data));
+        setCardPrints(sortCardPrintsOldestFirst(mapRegistrationCardPrints(data)));
       });
 
     return () => {
@@ -1220,18 +1223,17 @@ export default function RegisterPage() {
                 tabIndex={-1}
               />
             </label>
-            <label htmlFor="registrationPin">
-              登録PIN
-              <input
+            <div className="password-field">
+              <label htmlFor="registrationPin">登録PIN</label>
+              <PasswordInput
                 id="registrationPin"
                 name="password"
-                type="password"
                 inputMode="numeric"
                 autoComplete="current-password"
                 required
               />
               <small className="form-help">一度認証すると、この端末では14日間入力を省略できます。</small>
-            </label>
+            </div>
           </>
         )}
 

@@ -1,3 +1,4 @@
+import { getCardImageUrl } from "./card-image.ts";
 import { STOCK_STATUS_LABELS, type CardSummary } from "./types.ts";
 
 type PricedCardsById = ReadonlyMap<string, CardSummary>;
@@ -41,11 +42,23 @@ export function mapMarketSearchResults(
 
     const id = String(row.id);
     const pricedCard = pricedCardsById.get(id);
-    if (pricedCard) return [pricedCard];
+    if (pricedCard) {
+      return [
+        {
+          ...pricedCard,
+          imageUrl:
+            pricedCard.imageUrl ??
+            (typeof row.image_key === "string"
+              ? getCardImageUrl(row.image_key)
+              : null),
+        },
+      ];
+    }
 
     return [
       {
         id,
+        imageUrl: typeof row.image_key === "string" ? getCardImageUrl(row.image_key) : null,
         game: row.game_name,
         name: row.name,
         nameKana:

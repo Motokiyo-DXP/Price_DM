@@ -1,0 +1,13 @@
+.codex-remote-attachments/
+.local/
+outputs/
+images/
+docs/
+supabase/
+scripts/
+public/cards/official
+*.xlsx
+AGENTS.md
+**/*.test.mjs
+
+

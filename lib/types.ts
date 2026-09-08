@@ -14,6 +14,7 @@ export const STOCK_STATUS_LABELS: Record<StockStatus, string> = {
 
 export type CardSummary = {
   id: string;
+  imageUrl: string | null;
   game: string;
   name: string;
   nameKana?: string;

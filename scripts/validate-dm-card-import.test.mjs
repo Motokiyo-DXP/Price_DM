@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { validateCardCatalog } from "./validate-dm-card-import.mjs";
+import { validateCardCatalog, validateCardMetadataCoverage } from "./validate-dm-card-import.mjs";
 
 const CARD = {
   name: "テストカード",
@@ -75,5 +75,23 @@ test("重複ID、不正URL、画像等の禁止項目を拒否する", () => {
   assert.throws(
     () => validateCardCatalog([{ ...CARD, image_url: "secret" }], checkpoint),
     /forbidden field/,
+  );
+});
+
+test("公式の無文明カードは完了扱いにし、種類の欠損だけを検出する", () => {
+  assert.deepEqual(
+    validateCardMetadataCoverage(
+      [CARD],
+      [{ name: CARD.name, cost: null, civilizations: [] }],
+      [],
+    ),
+    {
+      canonical_name_count: 1,
+      metadata_name_count: 1,
+      metadata_missing_count: 0,
+      civilization_missing_count: 0,
+      card_types_missing_count: 1,
+      complete: false,
+    },
   );
 });

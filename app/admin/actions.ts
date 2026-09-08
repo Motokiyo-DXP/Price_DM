@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import {
   deletePendingShopCandidate,
   reviewShopCandidate,
@@ -19,6 +19,7 @@ import { validateShopSearchMetadataInput } from "@/lib/admin-shop-search-metadat
 import { validateAdminShopRegistrationInput } from "@/lib/admin-shop-registration-validation";
 import { reviewPriceCorrection } from "@/lib/admin-price-corrections";
 import { reviewShopCorrection } from "@/lib/admin-shop-corrections";
+import { MARKET_CARDS_CACHE_TAG } from "@/lib/market-data";
 import {
   validateAdminCandidateDeletionInput,
   validateAdminReviewInput,
@@ -323,6 +324,7 @@ export async function reviewPriceCorrectionAction(
     return { status: "error", message: "処理に失敗しました。" };
   }
   revalidatePath("/admin");
+  revalidateTag(MARKET_CARDS_CACHE_TAG);
   return { status: "success", message: "価格修正申請を処理しました。" };
 }
 

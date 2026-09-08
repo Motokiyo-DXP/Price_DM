@@ -78,6 +78,7 @@ export function mapMarketSummaryRow(
 
   return {
     id: String(row.canonical_card_id),
+    imageUrl: null,
     game: optionalString(row.game_name) ?? "TCG 未設定",
     name: row.name,
     nameKana: optionalString(row.name_kana),
