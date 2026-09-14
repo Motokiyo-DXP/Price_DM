@@ -1373,7 +1373,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     const fixedHand = document.querySelector<HTMLElement>(".battle-player-bottom .zone-hand");
     const fixedHandCards = document.querySelector<HTMLElement>(".battle-player-bottom .zone-hand .play-zone-cards");
     const measuredElements = [
-      !opponentCollapsed
+      !opponentCollapsed && !externalState
         ? document.querySelector<HTMLElement>(".battle-player-top .battle-player-content")
         : null,
       ownAuxiliaryDrawer,
@@ -1399,7 +1399,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       observer.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [opponentCollapsed, opponentButtonsCollapsed, activeAuxiliaryZones, displayPlayers[0]]);
+  }, [opponentCollapsed, opponentButtonsCollapsed, activeAuxiliaryZones, displayPlayers[0], Boolean(externalState)]);
 
   function commit(update: (current: BoardState) => BoardState) {
     if (readOnly) return;
