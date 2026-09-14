@@ -1370,12 +1370,8 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     const ownAuxiliaryDrawer = activeAuxiliaryZones[displayPlayers[1]] && activeAuxiliaryZones[displayPlayers[1]] !== "hand"
       ? document.querySelector<HTMLElement>(".battle-player-bottom .battle-auxiliary-drawer")
       : null;
-    const fixedHand = ownAuxiliaryDrawer
-      ? document.querySelector<HTMLElement>(".battle-player-bottom .zone-hand")
-      : null;
-    const fixedHandCards = ownAuxiliaryDrawer
-      ? document.querySelector<HTMLElement>(".battle-player-bottom .zone-hand .play-zone-cards")
-      : null;
+    const fixedHand = document.querySelector<HTMLElement>(".battle-player-bottom .zone-hand");
+    const fixedHandCards = document.querySelector<HTMLElement>(".battle-player-bottom .zone-hand .play-zone-cards");
     const measuredElements = [
       !opponentCollapsed
         ? document.querySelector<HTMLElement>(".battle-player-top .battle-player-content")
@@ -1391,9 +1387,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       );
       const handHeight = fixedHand?.getBoundingClientRect().height ?? 0;
       const handCardsHeight = fixedHandCards?.getBoundingClientRect().height ?? 0;
-      const floatingHandOverflow = window.innerWidth <= 700
-        ? Math.max(0, handCardsHeight - handHeight)
-        : 0;
+      const floatingHandOverflow = Math.max(0, handCardsHeight - handHeight);
       setDynamicBottomClearance(Math.ceil(measuredHeight + floatingHandOverflow));
     };
     update();
