@@ -2,17 +2,20 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@94b1aae620794b18c6f27052d276886c60933c90`
-Plan: Implementation / Operations Plan v4
+Baseline: `main@125bed44cea6f9ea2b6575af8ac689bb2020d1d9`
+Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
 ## Progress
 
 - Stage 0: complete
-- Stage 1 Repository Discovery: complete (read-only)
-- Stage 2 Boundary Design: draft complete
+- Stage 1 Repository Discovery: complete
+- Stage 2 Boundary Design: complete enough for implementation
 - Stage 3 Data Acquisition Spike: initial official-source spike complete
-- Stage 4 First Vertical Slice: DRAW Pure Rule Core + test-only Shadow implemented on branch
+- Stage 4 DRAW Pure Rule Core: complete
+- Stage 4 DRAW test-only Shadow: complete and merged to `main` via PR #2
+- Convenience Architecture Review: complete; no longer a Rule Core blocker
+- Stage 4.5 DRAW Production Shadow: **NEXT**
 
 ## Key findings
 
@@ -26,29 +29,37 @@ Rule design: Duel Masters Rule Automation v5
 
 ## Architecture direction
 
-1. Add a Pure Rule Core beside the existing helpers.
-2. Do not replace the current online persistence path during the first slice.
-3. Use Shadow Mode to compare Rule Core predictions with existing manual behavior.
-4. Migrate from full-state submission toward semantic Action submission only after Shadow validation.
-5. Preserve current hidden-information boundaries.
+1. Place the Pure Rule Core beside the Legacy Board.
+2. Do not change existing Online authority during early migration.
+3. Use Shadow Mode to compare Legacy and Rule Core results.
+4. Consider semantic Action authority only after Shadow validation.
+5. Preserve the hidden-information boundary.
+6. Do not turn the Convenience Layer into a Rule Engine or Workflow Engine.
+7. Apply Automation First to repeatable work and leave a reusable mechanism.
 
-## First vertical slice
+## Current vertical slice
 
 Use **DRAW**.
 
-Implementation status: **SHADOW ONLY** on `feature/motokiyo-rule-core-draw-shadow`.
-The production DRAW path and online authority remain unchanged.
+Implementation status: the Pure Rule Core and test-only Shadow are complete and merged to `main` via PR #2. Stage 4.5 DRAW Production Shadow is next.
+
+During Stage 4.5, only the Legacy result has Production authority. The Rule Core result is comparison-only. The production Online authority and hidden-information boundary remain unchanged.
 
 Reason:
+
 - existing small legacy helper `drawRandomCard`
 - official comprehensive rules have explicit draw rules
 - naturally proves Attempt vs Result
 - useful hidden-information boundary case
 - replacement/trigger/stabilization can be exposed as future hooks rather than guessed
 
-## Current blocker
+## Source of truth
 
-ChatGPT GitHub read access works, but branch creation returned HTTP 403 (`Resource not accessible by integration`).
-Repository writes should therefore be performed via the user's locally authenticated Codex/Git until that permission changes.
+1. Production security / online authority
+2. `PROJECT_STATE.md`
+3. `IMPLEMENTATION_OPERATIONS_PLAN.md`
+4. `BOUNDARY_DESIGN_DRAFT.md`
+5. `REPO_MAP.md`
+6. individual older specs
 
-No application code or production Supabase data has been modified by ChatGPT.
+For official Duel Masters rule content, official evidence takes precedence.
