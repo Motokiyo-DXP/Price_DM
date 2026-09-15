@@ -13,7 +13,7 @@ export function OnlineLobbyDeckPicker({ decks, lobbyId, selectedDeckId }: { deck
   return <form action={setOnlineLobbySelectedDeckAction} className="online-lobby-deck-picker">
     <input name="lobbyId" type="hidden" value={lobbyId} />
     <span className="online-lobby-deck-icon">{selected ? <CardArtwork imageUrl={selected.imageUrl} name={selected.name} sizes="56px" /> : "デッキを選択"}</span>
-    {selected ? <Link className="online-lobby-deck-edit" href={`/decks/${selected.id}/edit`}>編集</Link> : <span aria-disabled="true" className="online-lobby-deck-edit disabled">編集</span>}
+    {selected ? <Link className="online-lobby-deck-edit" href={`/decks/${selected.id}/edit`}><span aria-hidden="true" className="ui-icon ui-icon-edit" />編集</Link> : <span aria-disabled="true" className="online-lobby-deck-edit disabled"><span aria-hidden="true" className="ui-icon ui-icon-edit" />編集</span>}
     <label><span>{selected?.name ?? "デッキ名"}</span><select aria-label="このルームで使うデッキ" name="deckId" onChange={(event) => { setSelectedId(event.target.value); event.currentTarget.form?.requestSubmit(); }} required value={selectedId}><option disabled value="">デッキを選択</option>{decks.map((deck) => <option key={deck.id} value={deck.id}>{deck.name}（{deck.format === "advanced" ? "アドバンス" : "オリジナル"}）</option>)}</select></label>
   </form>;
 }

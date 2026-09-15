@@ -47,8 +47,8 @@ export function SiteNavigation() {
     <div className="site-action-menu" ref={menuRef}>
       <button aria-controls="site-action-menu-panel" aria-expanded={menuOpen} aria-haspopup="menu" aria-label="メニュー" className="site-action-menu-trigger" onClick={() => setMenuOpen((open) => !open)} type="button"><span aria-hidden="true">≡</span><b>メニュー</b></button>
       {menuOpen ? <div aria-label="サイトメニュー" className="site-action-menu-panel" id="site-action-menu-panel" role="menu">
-        <a href="/account" onClick={() => setMenuOpen(false)} role="menuitem"><span aria-hidden="true" className="ui-icon ui-icon-person" /><span><strong>アカウント</strong></span></a>
-        <a href="/account#friends" onClick={() => setMenuOpen(false)} role="menuitem"><span aria-hidden="true" className="ui-icon ui-icon-team" /><span><strong>フレンド</strong></span></a>
+        <a href="/account" onClick={() => setMenuOpen(false)} role="menuitem"><span aria-hidden="true" className="ui-icon ui-icon-person" /><span><strong>アカウント</strong><small>アカウントの情報を変更</small></span></a>
+        <a href="/friends" onClick={() => setMenuOpen(false)} role="menuitem"><span aria-hidden="true" className="ui-icon ui-icon-team" /><span><strong>フレンド</strong><small>フレンド申請・一覧を表示</small></span></a>
         {isAdmin ? <a href="/admin" onClick={() => setMenuOpen(false)} role="menuitem"><span aria-hidden="true">◆</span><span><strong>管理者ページ</strong><small>店舗・申請を管理する</small></span></a> : null}
       </div> : null}
     </div>

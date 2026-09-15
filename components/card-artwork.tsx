@@ -9,18 +9,20 @@ export function CardArtwork({
   className = "",
   sizes,
   eager = false,
+  fit = "contain",
 }: {
   imageUrl: string | null;
   name: string;
   className?: string;
   sizes: string;
   eager?: boolean;
+  fit?: "contain" | "cover";
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   if (!imageUrl || failedUrl === imageUrl) return <span aria-label={`${name}（画像未登録）`} className={`card-artwork card-artwork-placeholder ${className}`} style={{ backgroundImage: "url(/card-back.svg)" }}><img alt="" draggable={false} src="/card-back.svg" /></span>;
   return (
     <span className={`card-artwork ${className}`} >
-      <img alt={name} decoding="async" draggable={false} fetchPriority={eager ? "high" : "auto"} loading={eager ? "eager" : "lazy"} onError={() => setFailedUrl(imageUrl)} sizes={sizes} src={resolveCardArtworkUrl(imageUrl)} style={{ display: "block", height: "100%", width: "100%", opacity: 1, objectFit: "contain" }} />
+      <img alt={name} decoding="async" draggable={false} fetchPriority={eager ? "high" : "auto"} loading={eager ? "eager" : "lazy"} onError={() => setFailedUrl(imageUrl)} sizes={sizes} src={resolveCardArtworkUrl(imageUrl)} style={{ display: "block", height: "100%", width: "100%", opacity: 1, objectFit: fit }} />
     </span>
   );
 }

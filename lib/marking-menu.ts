@@ -19,6 +19,7 @@ export type MarkingMenuAction =
   | "inspect"
   | "publish"
   | "open_stack"
+  | "unbundle_stack"
   | "bundle"
   | "shuffle_stack"
   | "flip_stack"
@@ -201,7 +202,7 @@ export function selectMarkingMenuItem(
   optionRadius = 92,
 ) {
   const distance = Math.hypot(deltaX, deltaY);
-  const outerCancelRadius = deadZoneRadius + 3 * (optionRadius - deadZoneRadius);
+  const outerCancelRadius = 2.5 * (deadZoneRadius + 3 * (optionRadius - deadZoneRadius));
   if (distance <= deadZoneRadius || distance > outerCancelRadius) return null;
   const pointerAngle = (Math.atan2(deltaX, -deltaY) * 180 / Math.PI + 360) % 360;
   return positions.reduce<MarkingMenuPosition | null>((selected, item) => {
@@ -236,7 +237,7 @@ export function selectStackDestinationItem(
   optionRadius = 100,
 ) {
   const distance = Math.hypot(deltaX, deltaY);
-  const outerCancelRadius = deadZoneRadius + 3 * (optionRadius - deadZoneRadius);
+  const outerCancelRadius = 2.5 * (deadZoneRadius + 3 * (optionRadius - deadZoneRadius));
   if (distance <= deadZoneRadius || distance > outerCancelRadius) return null;
   const pointerAngle = (Math.atan2(deltaX, -deltaY) * 180 / Math.PI + 360) % 360;
   return positions.reduce<StackDestinationPosition | null>((selected, item) => {

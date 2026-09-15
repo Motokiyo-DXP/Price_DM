@@ -108,6 +108,31 @@ export async function updateDeckAction(
   redirect("/decks");
 }
 
+export async function renameDeckAction(formData: FormData): Promise<DeckActionState> {
+  const deckId = formData.get("deckId");
+  const name = formData.get("name");
+  if (typeof deckId !== "string" || !/^[0-9a-f-]{36}$/i.test(deckId)) {
+    return { status: "error", message: "デッキを確認できませんでした。" };
+  }
+  if (typeof name !== "string" || !name.trim() || name.trim().length > 60) {
+    return { status: "error", message: "デッキ名は1〜60文字で入力してください。" };
+  }
+  const auth = await authenticatedClient();
+  if (!auth) return { status: "error", message: "ログインし直してください。" };
+  const { data, error } = await auth.supabase
+    .from("decks")
+    .update({ name: name.trim(), updated_at: new Date().toISOString() })
+    .eq("id", deckId)
+    .eq("owner_id", auth.userId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { status: "error", message: "デッキ名を変更できませんでした。" };
+  if (!data) return { status: "error", message: "このデッキを変更できません。" };
+  revalidatePath("/decks");
+  revalidatePath(`/decks/${deckId}/edit`);
+  return { status: "success", message: "デッキ名を変更しました。" };
+}
+
 export async function deleteDeckAction(formData: FormData) {
   const id = formData.get("deckId");
   if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)) return;
@@ -153,6 +178,138 @@ export async function assignDeckFolderAction(formData: FormData) {
   await auth.supabase.from("decks").update({folder_id:folderId||null,updated_at:new Date().toISOString()}).eq("id",deckId).eq("owner_id",auth.userId); revalidatePath("/decks");
 }
 
+const deckListSortModes = new Set(["user", "newest"]);
+
+function isUuid(value: FormDataEntryValue | null): value is string {
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+export async function renameDeckFolderAction(
+  _previousState: DeckActionState,
+  formData: FormData,
+): Promise<DeckActionState> {
+  const folderId = formData.get("folderId");
+  const name = formData.get("name");
+  if (!isUuid(folderId)) return { status: "error", message: "フォルダを確認できませんでした。" };
+  if (typeof name !== "string") return { status: "error", message: "フォルダ名を入力してください。" };
+  const normalizedName = name.trim();
+  if (normalizedName.length < 1 || normalizedName.length > 60) {
+    return { status: "error", message: "フォルダ名は1〜60文字で入力してください。" };
+  }
+  const auth = await authenticatedClient();
+  if (!auth) return { status: "error", message: "ログインし直してください。" };
+  const { data, error } = await auth.supabase
+    .from("deck_folders")
+    .update({ name: normalizedName, updated_at: new Date().toISOString() })
+    .eq("id", folderId)
+    .eq("owner_id", auth.userId)
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    return {
+      status: "error",
+      message: error.code === "23505" ? "同じ名前のフォルダが既にあります。" : "フォルダ名を変更できませんでした。",
+    };
+  }
+  if (!data) return { status: "error", message: "このフォルダを変更できません。" };
+  revalidatePath("/decks");
+  return { status: "success", message: "フォルダ名を変更しました。" };
+}
+
+export async function deleteDeckFolderAction(
+  _previousState: DeckActionState,
+  formData: FormData,
+): Promise<DeckActionState> {
+  const folderId = formData.get("folderId");
+  if (!isUuid(folderId)) return { status: "error", message: "フォルダを確認できませんでした。" };
+  const auth = await authenticatedClient();
+  if (!auth) return { status: "error", message: "ログインし直してください。" };
+  const { data, error } = await auth.supabase
+    .from("deck_folders")
+    .delete()
+    .eq("id", folderId)
+    .eq("owner_id", auth.userId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { status: "error", message: "フォルダを削除できませんでした。" };
+  if (!data) return { status: "error", message: "このフォルダを削除できません。" };
+  revalidatePath("/decks");
+  return { status: "success", message: "フォルダを削除しました。デッキは未分類へ移動しました。" };
+}
+
+function parseOrderedIds(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return null;
+  try {
+    const ids: unknown = JSON.parse(value);
+    if (!Array.isArray(ids) || ids.length > 500 || ids.some((id) => typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id))) return null;
+    return ids as string[];
+  } catch {
+    return null;
+  }
+}
+
+export async function setDeckListSortAction(formData: FormData) {
+  const mode = formData.get("mode");
+  if (typeof mode !== "string" || !deckListSortModes.has(mode)) return { ok: false };
+  const auth = await authenticatedClient(); if (!auth) return { ok: false };
+  const { error } = await auth.supabase.from("profiles").update({ deck_list_sort_mode: mode, updated_at: new Date().toISOString() }).eq("user_id", auth.userId);
+  revalidatePath("/decks");
+  return { ok: !error };
+}
+
+export async function reorderDeckFoldersAction(formData: FormData) {
+  const value = formData.get("orderedIds");
+  let orderedIds: string[] | null = null;
+  try {
+    const ids: unknown = typeof value === "string" ? JSON.parse(value) : null;
+    if (Array.isArray(ids) && ids.length <= 501 && ids.every((id) => typeof id === "string" && (id === "none" || /^[0-9a-f-]{36}$/i.test(id)))) orderedIds = ids;
+  } catch {}
+  if (!orderedIds || new Set(orderedIds).size !== orderedIds.length || orderedIds.filter((id) => id === "none").length !== 1) return { ok: false };
+  const auth = await authenticatedClient(); if (!auth) return { ok: false };
+  const { data: ownedFolders } = await auth.supabase.from("deck_folders").select("id").eq("owner_id", auth.userId);
+  const ownedIds = (ownedFolders ?? []).map((folder) => folder.id);
+  if (ownedIds.length + 1 !== orderedIds.length || ownedIds.some((id) => !orderedIds.includes(id))) return { ok: false };
+  const results = await Promise.all(orderedIds.flatMap((id, index) => id === "none" ? [] : [auth.supabase.from("deck_folders").update({ user_sort_order: index }).eq("id", id).eq("owner_id", auth.userId)]));
+  const { error: profileError } = await auth.supabase.from("profiles").update({ unfiled_folder_sort_order: orderedIds.indexOf("none"), updated_at: new Date().toISOString() }).eq("user_id", auth.userId);
+  revalidatePath("/decks");
+  return { ok: !profileError && results.every(({ error }) => !error) };
+}
+
+export async function reorderDecksAction(formData: FormData) {
+  const orderedIds = parseOrderedIds(formData.get("orderedIds"));
+  const rawFolderId = formData.get("folderId");
+  if (!orderedIds || new Set(orderedIds).size !== orderedIds.length || typeof rawFolderId !== "string" || (rawFolderId && !/^[0-9a-f-]{36}$/i.test(rawFolderId))) return { ok: false };
+  const auth = await authenticatedClient(); if (!auth) return { ok: false };
+  let query = auth.supabase.from("decks").select("id").eq("owner_id", auth.userId);
+  query = rawFolderId ? query.eq("folder_id", rawFolderId) : query.is("folder_id", null);
+  const { data: ownedDecks } = await query;
+  const ownedIds = (ownedDecks ?? []).map((deck) => deck.id);
+  if (ownedIds.length !== orderedIds.length || ownedIds.some((id) => !orderedIds.includes(id))) return { ok: false };
+  const results = await Promise.all(orderedIds.map((id, index) => auth.supabase.from("decks").update({ user_sort_order: index }).eq("id", id).eq("owner_id", auth.userId)));
+  await auth.supabase.from("profiles").update({ deck_list_sort_mode: "user", updated_at: new Date().toISOString() }).eq("user_id", auth.userId);
+  revalidatePath("/decks");
+  return { ok: results.every(({ error }) => !error) };
+}
+
+export async function moveDeckToFolderAction(formData: FormData) {
+  const deckId = formData.get("deckId"), folderId = formData.get("folderId");
+  if (!isUuid(deckId) || typeof folderId !== "string" || (folderId !== "" && !isUuid(folderId))) return { ok: false };
+  const auth = await authenticatedClient(); if (!auth) return { ok: false };
+  if (folderId) {
+    const { data: folder, error } = await auth.supabase.from("deck_folders").select("id").eq("id", folderId).eq("owner_id", auth.userId).maybeSingle();
+    if (error || !folder) return { ok: false };
+  }
+  let orderQuery = auth.supabase.from("decks").select("user_sort_order").eq("owner_id", auth.userId);
+  orderQuery = folderId ? orderQuery.eq("folder_id", folderId) : orderQuery.is("folder_id", null);
+  const { data: lastDeck, error: orderError } = await orderQuery.order("user_sort_order", { ascending: false }).limit(1).maybeSingle();
+  if (orderError) return { ok: false };
+  const userSortOrder = (lastDeck?.user_sort_order ?? -1) + 1;
+  const { data: moved, error } = await auth.supabase.from("decks").update({ folder_id: folderId || null, user_sort_order: userSortOrder, updated_at: new Date().toISOString() }).eq("id", deckId).eq("owner_id", auth.userId).select("id").maybeSingle();
+  if (error || !moved) return { ok: false };
+  revalidatePath("/decks");
+  return { ok: true };
+}
+
 export async function toggleDeckVisibilityAction(formData: FormData) {
   const deckId=formData.get("deckId"), visibility=formData.get("visibility")==="public"?"public":"private";
   if(typeof deckId!=="string"||!/^[0-9a-f-]{36}$/i.test(deckId))return;
@@ -185,6 +342,52 @@ export async function copyDeckAction(formData: FormData) {
   }
   revalidatePath("/decks");
   redirect(`/decks/${copy.id}/edit`);
+}
+
+export async function importPublicDeckAction(formData: FormData) {
+  const deckId = formData.get("deckId");
+  const destination = formData.get("destination");
+  if (typeof deckId !== "string" || !/^[0-9a-f-]{36}$/i.test(deckId)) return;
+  if (destination !== "edit" && destination !== "solo") return;
+
+  const auth = await authenticatedClient();
+  if (!auth) redirect(`/login?next=${encodeURIComponent("/deck-search")}`);
+
+  const { data: source } = await auth.supabase
+    .from("decks")
+    .select("name, format, description, icon_canonical_card_id, deck_cards(canonical_card_id, card_print_id, zone, quantity, sort_order)")
+    .eq("id", deckId)
+    .eq("visibility", "public")
+    .single();
+  if (!source) return;
+
+  const { data: copy } = await auth.supabase
+    .from("decks")
+    .insert({
+      owner_id: auth.userId,
+      name: source.name,
+      format: source.format,
+      description: source.description,
+      icon_canonical_card_id: source.icon_canonical_card_id,
+      visibility: "private",
+    })
+    .select("id")
+    .single();
+  if (!copy) return;
+
+  if (source.deck_cards.length) {
+    const { error } = await auth.supabase.from("deck_cards").insert(
+      source.deck_cards.map((card) => ({ ...card, deck_id: copy.id })),
+    );
+    if (error) {
+      await auth.supabase.from("decks").delete().eq("id", copy.id).eq("owner_id", auth.userId);
+      return;
+    }
+  }
+
+  revalidatePath("/decks");
+  revalidatePath("/solo");
+  redirect(destination === "edit" ? `/decks/${copy.id}/edit` : `/playtest/${copy.id}/opponent`);
 }
 
 export async function signOutAction() {

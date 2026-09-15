@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1081.7 1919.35">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        font-family: HiraKakuProN-W6-90ms-RKSJ-H, 'Hiragino Kaku Gothic ProN';
+        font-size: 46.65px;
+      }
+
+      .cls-2 {
+        fill: #c1c15f;
+        stroke: #ce891b;
+        stroke-miterlimit: 10;
+        stroke-width: 3px;
+      }
+
+      .cls-3 {
+        fill: none;
+      }
+
+      .cls-4 {
+        fill: #ba0000;
+      }
+
+      .cls-5 {
+        fill: #191c1f;
+      }
+
+      .cls-6 {
+        fill: #d6bc3a;
+      }
+
+      .cls-7 {
+        fill: #183389;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 5px;
+      }
+
+      .cls-8 {
+        clip-path: url(#clippath);
+      }
+    </style>
+    <clipPath id="clippath">
+      <rect class="cls-3" x="477.41" y="732.4" width="128.37" height="90.59" rx="8.86" ry="8.86" transform="translate(-366.68 1048.19) rotate(-71.73)"/>
+    </clipPath>
+  </defs>
+  <g id="_レイヤー_1" data-name="レイヤー 1">
+    <rect class="cls-5" width="1081.7" height="1919.35"/>
+  </g>
+  <g id="_レイヤー_2" data-name="レイヤー 2">
+    <g>
+      <path class="cls-6" d="M557.54,606.87v-28.31l-64.67,43.11,64.67,37.73v-23.61c33.33,3.67,63.16,18.66,85.68,41.16,26.03,26.05,42.08,61.89,42.09,101.62h28.74c0-89.87-68.74-163.64-156.52-171.69Z"/>
+      <path class="cls-6" d="M527.59,919.43c-71.96-6.95-128.71-67.1-129.7-141.06l-28.74.39c1.24,89.86,70.95,162.66,158.82,169.53l.39,28.34,64.08-43.99-65.17-36.84.32,23.63Z"/>
+    </g>
+    <g>
+      <rect class="cls-7" x="474.58" y="729.61" width="134.05" height="95.97" rx="9.92" ry="9.92" transform="translate(-366.58 1048.12) rotate(-71.73)"/>
+      <g class="cls-8">
+        <path class="cls-2" d="M532.44,694.42s48.97,31.93,30.65,87.46c-18.33,55.53-73.82,58.34-73.82,58.34,0,0,78.17,14.84,98.7-47.33,20.53-62.17-55.53-98.47-55.53-98.47Z"/>
+      </g>
+      <path class="cls-2" d="M519.28,779.85c-9.99-3.3-14.3-15.21-11.31-24.27,4.18-12.67,17.81-14.31,17.81-14.31,0,0,19.49-14.8,32.3-10.57,12.82,4.23,18.1,22.16,18.1,22.16,0,0-9.15-10.69-18.98-13.94-9.83-3.24-24.23,4.97-24.23,4.97,0,0,16.1,5.44,10.57,22.23-4.28,12.98-14.25,17.02-24.24,13.72h-.01Z"/>
+      <g>
+        <rect class="cls-4" x="536.48" y="722.89" width="10.26" height="87.05" transform="translate(-355.97 1040.46) rotate(-71.73)"/>
+        <path d="M503.36,750.83l78.26,25.84-1.76,5.34-78.28-25.84,1.76-5.34M500.41,744.99l-4.67,14.14,87.05,28.74,4.67-14.14-87.05-28.74h0Z"/>
+      </g>
+    </g>
+    <text class="cls-1" transform="translate(401.65 1086.24)"><tspan x="0" y="0">読み込み中…</tspan></text>
+  </g>
+</svg>

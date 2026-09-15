@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_2" data-name="レイヤー 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 115.26 141.05">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #183389;
+        stroke: #000;
+        stroke-width: 5px;
+      }
+
+      .cls-1, .cls-2 {
+        stroke-miterlimit: 10;
+      }
+
+      .cls-2 {
+        fill: #c1c15f;
+        stroke: #ce891b;
+        stroke-width: 3px;
+      }
+
+      .cls-3 {
+        fill: none;
+      }
+
+      .cls-4 {
+        fill: #ba0000;
+      }
+
+      .cls-5 {
+        clip-path: url(#clippath);
+      }
+    </style>
+    <clipPath id="clippath">
+      <rect class="cls-3" x="18.66" y="17.84" width="78.25" height="110.88" rx="7.65" ry="7.65" transform="translate(25.89 -14.42) rotate(18.27)"/>
+    </clipPath>
+  </defs>
+  <rect class="cls-1" x="16.43" y="15.3" width="82.89" height="115.78" rx="9.92" ry="9.92" transform="translate(25.86 -14.45) rotate(18.27)"/>
+  <g class="cls-5">
+    <path class="cls-2" d="M49.88,1.35s42.3,27.58,26.47,75.54c-15.83,47.96-63.76,50.39-63.76,50.39,0,0,67.52,12.82,85.25-40.88C115.57,32.7,49.88,1.35,49.88,1.35Z"/>
+  </g>
+  <path class="cls-2" d="M43.05,75.14c-8.63-2.85-12.35-13.14-9.77-20.96,3.61-10.94,15.38-12.36,15.38-12.36,0,0,16.83-12.78,27.9-9.13,11.07,3.65,15.63,19.14,15.63,19.14,0,0-7.9-9.23-16.39-12.04-8.49-2.8-20.93,4.29-20.93,4.29,0,0,13.91,4.7,9.13,19.2-3.7,11.21-12.31,14.7-20.94,11.85Z"/>
+  <g>
+    <rect class="cls-4" x="57.31" y="25.95" width="8.86" height="75.19" transform="translate(-17.96 102.25) rotate(-71.73)"/>
+    <path d="M28.7,50.08l67.6,22.32-1.52,4.61L27.17,54.69l1.52-4.61M26.15,45.03l-4.03,12.21,75.19,24.82,4.03-12.21L26.15,45.03h0Z"/>
+  </g>
+</svg>

@@ -18,11 +18,32 @@ export type CardInstance = {
   stackOrder?: number | null;
   stackLayout?: "diagonal" | "spread" | null;
   stackPlacement?: "top" | "bottom" | null;
+  attachedToStackId?: string | null;
 };
-export type CardMarker = "cannot_attack" | "cannot_block" | "ignore_ability" | "keep_tapped" | "shield_force" | "summoning_sickness";
+export type CardMarker = "cannot_attack" | "cannot_block" | "keep_tapped" | "removal_resistance" | "ignore_ability" | "meta_warning" | "hyper_mode" | "blocker" | "power_up" | "power_down" | "speed_attacker" | "mach_fighter" | "slayer" | "shield_force" | "summoning_sickness" | "just_diver" | "cannot_be_chosen" | "cannot_be_attacked" | "cannot_be_blocked";
 export type PlayerState = Record<PlayZone, CardInstance[]>;
+export function findAttachedSpreadStackId(cards: CardInstance[], verticalStackId: string): string | null {
+  return cards.find((card) => card.attachedToStackId === verticalStackId && card.stackLayout === "spread" && card.stackId)?.stackId ?? null;
+}
+
+export function stackOnHorizontalRoot(cards: CardInstance[], target: CardInstance, movingIds: ReadonlySet<string>, face: CardFace, placement: "top" | "bottom"): CardInstance[] | null {
+  if (!target.stackId || target.stackLayout !== "spread" || target.attachedToStackId || !cards.some((card) => card.stackId === target.stackId && card.instanceId !== target.instanceId && !movingIds.has(card.instanceId))) return null;
+  const verticalId = `vertical-${target.stackId}`;
+  const moving = cards.filter((card) => movingIds.has(card.instanceId)).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
+  const vertical = placement === "top" ? [target, ...moving] : [...moving, target];
+  const members = new Map(vertical.map((card, index) => [card.instanceId, { ...card, face: movingIds.has(card.instanceId) ? face : card.face, markers: index === vertical.length - 1 ? card.markers : [], stackId: verticalId, stackOrder: index, stackLayout: "diagonal" as const, stackPlacement: placement, attachedToStackId: null }]));
+  return cards.map((card) => members.get(card.instanceId) ?? (card.stackId === target.stackId ? { ...card, attachedToStackId: verticalId } : card));
+}
+
+export function hasConnectedStack(cards: CardInstance[], card: CardInstance): boolean {
+  if (!card.stackId) return false;
+  return card.stackLayout === "spread"
+    ? Boolean(card.attachedToStackId && cards.some((member) => member.stackId === card.attachedToStackId))
+    : cards.some((member) => member.attachedToStackId === card.stackId && member.stackLayout === "spread");
+}
 export type BoardState = {
   players: Record<PlayerId, PlayerState>;
+  revealPublic?: Record<PlayerId, boolean>;
   turn: number;
   activePlayer: PlayerId;
   shieldPlacementOrder: number | Record<PlayerId, number>;
@@ -103,6 +124,7 @@ export function initialBoard(cards: DeckCard[], random = Math.random): BoardStat
 export function initialOnlineBoard(hostCards: DeckCard[], guestCards: DeckCard[], random = Math.random): BoardState {
   return {
     players: { p1: makePlayer(hostCards, "p1", random), p2: makePlayer(guestCards, "p2", random) },
+    revealPublic: { p1: false, p2: false },
     turn: 1,
     activePlayer: "p1",
     shieldPlacementOrder: { p1: 1, p2: 1 },
@@ -114,7 +136,7 @@ export function initialOnlineBoard(hostCards: DeckCard[], guestCards: DeckCard[]
 
 export function resetBoard(current: BoardState, random = Math.random): BoardState {
   const resetPlayer = (playerId: PlayerId) => dealInstances(Object.values(current.players[playerId]).flat(), random);
-  return { players: { p1: resetPlayer("p1"), p2: resetPlayer("p2") }, turn: 1, activePlayer: "p1", shieldPlacementOrder: { p1: 1, p2: 1 }, notifications: [], turnRequest: null, inspection: null };
+  return { players: { p1: resetPlayer("p1"), p2: resetPlayer("p2") }, revealPublic: { p1: false, p2: false }, turn: 1, activePlayer: "p1", shieldPlacementOrder: { p1: 1, p2: 1 }, notifications: [], turnRequest: null, inspection: null };
 }
 
 export function advanceTurn(current: BoardState): BoardState {
@@ -148,6 +170,33 @@ export function setCardMarker(current: BoardState, owner: PlayerId, zone: PlayZo
   };
 }
 
+export function clearCardMarkers(current: BoardState, owner: PlayerId, zone: PlayZone, cardId: string): BoardState {
+  const cards = current.players[owner][zone];
+  const target = cards.find((card) => card.instanceId === cardId);
+  if (!target?.markers?.length) return current;
+  return {
+    ...current,
+    players: {
+      ...current.players,
+      [owner]: {
+        ...current.players[owner],
+        [zone]: cards.map((card) => card.instanceId === cardId ? { ...card, markers: [] } : card),
+      },
+    },
+  };
+}
+
+export function changeSlayerCount(current: BoardState, owner: PlayerId, zone: PlayZone, cardId: string, delta: -1 | 1): BoardState {
+  const cards = current.players[owner][zone];
+  const target = cards.find((card) => card.instanceId === cardId);
+  if (!target) return current;
+  const markers = target.markers ?? [];
+  const index = markers.lastIndexOf("slayer");
+  if (delta < 0 && index < 0) return current;
+  const nextMarkers = delta > 0 ? [...markers, "slayer" as CardMarker] : markers.filter((_, position) => position !== index);
+  return { ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: cards.map((card) => card.instanceId === cardId ? { ...card, markers: nextMarkers } : card) } } };
+}
+
 export function shuffleSelectedCards(current: BoardState, ids: ReadonlySet<string>, random = Math.random): BoardState {
   if (ids.size < 2) return current;
   const stackId = `stack-${Date.now()}`;
@@ -171,7 +220,7 @@ export function bundleSelectedCards(current: BoardState, ids: ReadonlySet<string
     changed = true;
     let stackOrder = 0;
     return [zone, cards.map((card) => ids.has(card.instanceId)
-      ? { ...card, stackId, stackOrder: stackOrder++, stackLayout: "diagonal" as const, stackPlacement: "top" as const }
+      ? { ...card, markers: stackOrder === selected.length - 1 ? card.markers : [], stackId, stackOrder: stackOrder++, stackLayout: "diagonal" as const, stackPlacement: "top" as const }
       : card)];
   }))])) as BoardState["players"];
   return changed ? { ...current, players } : current;
@@ -264,6 +313,34 @@ export function resolveDraggedCardIds(cards: readonly CardInstance[], cardId: st
   return new Set(cards.filter((card) => card.stackId === dragged.stackId).map((card) => card.instanceId));
 }
 
+export function countZoneCards(cards: readonly CardInstance[]): number {
+  return cards.filter((card, index) => !card.stackId || cards.findIndex((member) => member.stackId === card.stackId) === index).length;
+}
+
+export function unbundleStack(current: BoardState, owner: PlayerId, zone: PlayZone, stackId: string): BoardState {
+  const cards = current.players[owner][zone];
+  if (!cards.some((card) => card.stackId === stackId)) return current;
+  return { ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: cards.map((card) => card.stackId === stackId
+    ? { ...card, stackId: null, stackOrder: null, stackLayout: null, stackPlacement: null }
+    : card) } } };
+}
+
+export function detachCardFromStack(current: BoardState, owner: PlayerId, zone: PlayZone, cardId: string): BoardState {
+  const source = current.players[owner][zone];
+  const dragged = source.find((card) => card.instanceId === cardId);
+  if (!dragged?.stackId) return current;
+  const remaining = source.filter((card) => card.instanceId !== cardId);
+  const detached = { ...dragged, stackId: null, stackOrder: null, stackLayout: null, stackPlacement: null, attachedToStackId: null };
+  return { ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: [
+    ...remaining.map((card) => card.stackId === dragged.stackId
+      && remaining.filter((member) => member.stackId === card.stackId).length === 1
+      && !hasConnectedStack(remaining, card)
+      ? { ...card, stackId: null, stackOrder: null, stackLayout: null, stackPlacement: null }
+      : card),
+    detached,
+  ] } } };
+}
+
 export function moveCardsBetweenZones(
   current: BoardState,
   owner: PlayerId,
@@ -288,21 +365,24 @@ export function moveCardsBetweenZones(
     : current.shieldPlacementOrder;
   const moved = moving.map((card, index) => {
     const defaults = moveDefaults(from, to, { turn: current.turn, shieldPlacementOrder: orders[owner] });
+    const unbundleInHand = to === "hand" && Boolean(card.stackId);
     return {
       ...card,
-      face: defaults.face,
+      face: unbundleInHand ? "face_up" as CardFace : defaults.face,
       tapped: to === "mana" && isMulticolorCard(card),
       shieldMarker: defaults.shieldMarker ? { ...defaults.shieldMarker, order: orders[owner] + index } : null,
       markers: addSummoningSickness && to === "battle" && from !== "battle"
-        ? [...new Set([...(card.markers ?? []), "summoning_sickness" as CardMarker])]
-        : card.markers,
-      stackId: preservesCompleteStack ? card.stackId : null,
-      stackOrder: preservesCompleteStack ? card.stackOrder : null,
-      stackLayout: preservesCompleteStack ? card.stackLayout : null,
-      stackPlacement: preservesCompleteStack ? card.stackPlacement : null,
+        ? ["summoning_sickness" as CardMarker]
+        : [],
+      stackId: preservesCompleteStack && !unbundleInHand ? card.stackId : null,
+      stackOrder: preservesCompleteStack && !unbundleInHand ? card.stackOrder : null,
+      stackLayout: preservesCompleteStack && !unbundleInHand ? card.stackLayout : null,
+      stackPlacement: preservesCompleteStack && !unbundleInHand ? card.stackPlacement : null,
+      attachedToStackId: null,
     };
   });
   const destination = player[to];
+  const remaining = player[from].filter((card) => !ids.has(card.instanceId));
   return {
     ...current,
     shieldPlacementOrder: to === "shield" ? { ...orders, [owner]: orders[owner] + moved.length } : orders,
@@ -310,11 +390,22 @@ export function moveCardsBetweenZones(
       ...current.players,
       [owner]: {
         ...player,
-        [from]: player[from].filter((card) => !ids.has(card.instanceId)),
+        [from]: remaining.map((card) =>
+          card.stackId && remaining.filter((member) => member.stackId === card.stackId).length === 1 && !hasConnectedStack(remaining, card)
+            ? { ...card, stackId: null, stackOrder: null, stackLayout: null, stackPlacement: null }
+            : card),
         [to]: placement === "top" ? [...moved, ...destination] : [...destination, ...moved],
       },
     },
   };
+}
+
+export function toggleRevealPublic(current: BoardState, owner: PlayerId): BoardState {
+  const nextPublic = !current.revealPublic?.[owner];
+  const next = { ...current, revealPublic: { p1: current.revealPublic?.p1 ?? false, p2: current.revealPublic?.p2 ?? false, [owner]: nextPublic } };
+  if (!nextPublic) return next;
+  const recipient: PlayerId = owner === "p1" ? "p2" : "p1";
+  return { ...next, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-reveal-${recipient}`, recipient, message: "相手が仮置き場のカードを公開しました", createdAt: Date.now() }].slice(-20) };
 }
 
 export function untapAllCards(current: BoardState, owner: PlayerId): BoardState {

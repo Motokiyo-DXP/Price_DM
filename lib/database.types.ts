@@ -70,6 +70,9 @@ export type Database = {
           user_id: string
           display_name: string
           avatar_url: string | null
+          deck_list_sort_mode: string
+          unfiled_folder_sort_order: number
+          friend_code: string
           created_at: string
           updated_at: string
         }
@@ -77,6 +80,9 @@ export type Database = {
           user_id: string
           display_name: string
           avatar_url?: string | null
+          deck_list_sort_mode?: string
+          unfiled_folder_sort_order?: number
+          friend_code: string
           created_at?: string
           updated_at?: string
         }
@@ -84,6 +90,9 @@ export type Database = {
           user_id?: string
           display_name?: string
           avatar_url?: string | null
+          deck_list_sort_mode?: string
+          unfiled_folder_sort_order?: number
+          friend_code?: string
           created_at?: string
           updated_at?: string
         }
@@ -93,6 +102,7 @@ export type Database = {
         Row: {
           folder_id: string | null
           icon_canonical_card_id: number | null
+          user_sort_order: number
           id: string
           owner_id: string
           name: string
@@ -105,6 +115,7 @@ export type Database = {
         Insert: {
           folder_id?: string | null
           icon_canonical_card_id?: number | null
+          user_sort_order?: number
           id?: string
           owner_id: string
           name: string
@@ -117,6 +128,7 @@ export type Database = {
         Update: {
           folder_id?: string | null
           icon_canonical_card_id?: number | null
+          user_sort_order?: number
           id?: string
           owner_id?: string
           name?: string
@@ -129,9 +141,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: "decks_folder_id_fkey"; columns: ["folder_id"]; isOneToOne: false; referencedRelation: "deck_folders"; referencedColumns: ["id"] }]
       }
       deck_folders: {
-        Row: { id: string; owner_id: string; name: string; created_at: string; updated_at: string }
-        Insert: { id?: string; owner_id: string; name: string; created_at?: string; updated_at?: string }
-        Update: { id?: string; owner_id?: string; name?: string; created_at?: string; updated_at?: string }
+        Row: { id: string; owner_id: string; name: string; user_sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; owner_id: string; name: string; user_sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; owner_id?: string; name?: string; user_sort_order?: number; created_at?: string; updated_at?: string }
         Relationships: []
       }
       game_rooms: {
@@ -397,6 +409,7 @@ export type Database = {
           official_card_id: string | null
           official_url: string | null
           product_name: string | null
+          product_id: number | null
           source_checked_at: string | null
           updated_at: string
         }
@@ -416,6 +429,7 @@ export type Database = {
           official_card_id?: string | null
           official_url?: string | null
           product_name?: string | null
+          product_id?: number | null
           source_checked_at?: string | null
           updated_at?: string
         }
@@ -435,6 +449,7 @@ export type Database = {
           official_card_id?: string | null
           official_url?: string | null
           product_name?: string | null
+          product_id?: number | null
           source_checked_at?: string | null
           updated_at?: string
         }
@@ -1192,8 +1207,37 @@ export type Database = {
           },
         ]
       }
+      card_products: {
+        Row: { id: number; game_id: number; product_code: string; product_name: string; release_date: string | null; release_date_precision: string; official_url: string | null; source_checked_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: never; game_id: number; product_code: string; product_name: string; release_date?: string | null; release_date_precision?: string; official_url?: string | null; source_checked_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: never; game_id?: number; product_code?: string; product_name?: string; release_date?: string | null; release_date_precision?: string; official_url?: string | null; source_checked_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
     }
     Functions: {
+      deck_filter_options: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      search_deck_cards_filtered: {
+        Args: {
+          p_query?: string
+          p_limit?: number
+          p_sort?: string
+          p_ascending?: boolean
+          p_product_name?: string | null
+          p_card_number?: string | null
+          p_civilizations?: string[]
+          p_civilization_mode?: string
+          p_color?: string
+          p_card_types?: string[]
+          p_min_cost?: number | null
+          p_max_cost?: number | null
+          p_no_cost?: boolean
+          p_image?: string
+        }
+        Returns: { id: number; name: string; name_kana: string | null; print_count: number; usage_count: number }[]
+      }
       retire_stale_game_rooms: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1291,6 +1335,26 @@ export type Database = {
       list_invitable_lobby_friends: {
         Args: { p_lobby_id: string }
         Returns: { friend_user_id: string; display_name: string; invitation_status: string; is_online: boolean }[]
+      }
+      get_my_friend_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      list_my_friends: {
+        Args: Record<PropertyKey, never>
+        Returns: { friend_user_id: string; display_name: string; avatar_url: string | null; friends_since: string }[]
+      }
+      list_incoming_friend_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: { requester_user_id: string; display_name: string; avatar_url: string | null; requested_at: string }[]
+      }
+      send_friend_request: {
+        Args: { p_friend_code: string }
+        Returns: string
+      }
+      respond_friend_request: {
+        Args: { p_accept: boolean; p_requester_user_id: string }
+        Returns: string
       }
       send_online_lobby_friend_invitation: {
         Args: { p_friend_user_id: string; p_lobby_id: string }

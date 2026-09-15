@@ -198,6 +198,11 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     <div className="market-shell">
       <div className="market-content">
 
+      <div className="primary-page-title market-page-title">
+        <h1>相場チェック</h1>
+        <div className="directory-accent" aria-hidden="true" />
+      </div>
+
       {loadError && (
         <p className="notice error" role="alert">
           {loadError}
@@ -270,7 +275,6 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
                     <Link href={`/cards/${card.id}`}>{card.name}</Link>
                   )}
                 </h2>
-                <small>収録バリエーション {card.printCount}件</small>
               </div>
               <button
                 className="star"
@@ -284,13 +288,13 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             </div>
             <div className="prices">
               <div>
-                <small>販売平均（{card.saleRecordCount}件）</small>
+                <small>販売平均</small>
                 <strong className={trendClass(card.saleTrend, card.isStale)}>
                   {yen(card.salePrice)}
                 </strong>
               </div>
               <div>
-                <small>買取平均（{card.buyRecordCount}件）</small>
+                <small>買取平均</small>
                 <strong className={trendClass(card.buyTrend, card.isStale)}>
                   {yen(card.buyPrice)}
                 </strong>
@@ -299,14 +303,16 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             {card.usesPrintFallback && (
               <p className="fallback-note">収録違いの価格を参考表示中</p>
             )}
-            <Link className="card-register-link" href={`/register?cardId=${card.id}`}>
-              <span aria-hidden="true">＋</span> このカードを登録
-            </Link>
-            {card.updatedAt !== null && (
-              <Link className="detail-link" href={`/cards/${card.id}`}>
-                詳細を見る →
+            <div className="market-card-actions">
+              <Link className="card-register-link" href={`/register?cardId=${card.id}`}>
+                <span aria-hidden="true">＋</span> このカードを登録
               </Link>
-            )}
+              {card.updatedAt !== null && (
+                <Link className="detail-link" href={`/cards/${card.id}`}>
+                  詳細を見る <span aria-hidden="true">→</span>
+                </Link>
+              )}
+            </div>
           </article>
         ))}
       </div>

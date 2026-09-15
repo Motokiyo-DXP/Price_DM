@@ -13,7 +13,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_website_url: "公式サイトURLは http:// または https:// から入力してください。",
   no_changes: "修正したい項目を1つ以上入力してください。",
   service_unavailable: "現在、修正依頼を受け付けられません。時間をおいて再度お試しください。",
-  session_required: "登録PINの認証が必要です。先にこの画面でPINを認証してください。",
+  session_required: "依頼にはログインが必要です。ログイン後に再度お試しください。",
   shop_unavailable: "この店舗は現在修正できません。画面を更新して確認してください。",
   submission_failed: "修正依頼を送信できませんでした。入力内容を確認して再度お試しください。",
   too_long: "入力内容が長すぎます。文字数を減らしてください。",
@@ -40,6 +40,11 @@ export function ShopCorrectionForm({ shop }: { shop: RegistrationShopOption }) {
     setPending(true);
     setFeedback(null);
     try {
+      const session = await fetch("/api/registration-session", { cache: "no-store" });
+      if (!session.ok) {
+        setFeedback({ status: "error", message: ERROR_MESSAGES.session_required });
+        return;
+      }
       const aliases = String(formData.get("aliases") ?? "")
         .split(/[\n,]/)
         .map((alias) => alias.trim())

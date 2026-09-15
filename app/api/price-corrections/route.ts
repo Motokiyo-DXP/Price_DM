@@ -7,6 +7,7 @@ import {
   REGISTRATION_SESSION_COOKIE,
 } from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { hasRegistrationUser } from "@/lib/registration-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ function json(body: unknown, status = 200) {
 }
 
 export async function POST(request: Request) {
+  if (!(await hasRegistrationUser())) return json({ error: "session_required" }, 401);
   const sessionToken = (await cookies()).get(REGISTRATION_SESSION_COOKIE)?.value;
   if (!isRegistrationSessionToken(sessionToken)) {
     const response = json({ error: "session_required" }, 401);

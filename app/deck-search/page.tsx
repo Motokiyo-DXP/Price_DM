@@ -1,6 +1,7 @@
 import { PublicDeckSearch, type PublicDeckItem } from "@/components/public-deck-search";
 import { getCardImageUrl } from "@/lib/card-image";
 import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
+import { getDeckIconSelection } from "@/lib/deck-icon";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -11,14 +12,16 @@ export default async function DeckSearchPage() {
     ? await supabase.from("decks").select("id, owner_id, name, description, format, updated_at, icon_canonical_card_id, deck_cards(canonical_card_id, card_print_id, quantity, zone, canonical_cards(name))").eq("visibility", "public").order("updated_at", { ascending: false }).limit(100)
     : { data: null, error: new Error("Supabase is not configured") };
   const ownerIds = [...new Set((decks ?? []).map((deck) => deck.owner_id))];
-  const { data: profiles } = supabase && ownerIds.length
-    ? await supabase.from("profiles").select("user_id, display_name").in("user_id", ownerIds)
-    : { data: [] };
+  const iconIds = [...new Set((decks ?? []).map((deck) => getDeckIconSelection(deck.deck_cards, deck.icon_canonical_card_id)?.canonicalCardId).filter((id): id is number => typeof id === "number"))];
+  const [{ data: profiles }, { data: prints }] = await Promise.all([
+    supabase && ownerIds.length
+      ? supabase.from("profiles").select("user_id, display_name").in("user_id", ownerIds)
+      : Promise.resolve({ data: [] }),
+    supabase && iconIds.length
+      ? supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", iconIds).not("image_key", "is", null).order("id")
+      : Promise.resolve({ data: [] }),
+  ]);
   const ownerNames = new Map((profiles ?? []).map((profile) => [profile.user_id, profile.display_name]));
-  const cardIds = [...new Set((decks ?? []).flatMap((deck) => deck.deck_cards.filter((card) => card.zone === "main").map((card) => card.canonical_card_id)))];
-  const { data: prints } = supabase && cardIds.length
-    ? await supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", cardIds).not("image_key", "is", null).order("id")
-    : { data: [] };
   const images = new Map<number, string>();
   const printImages = new Map<number, string>();
   for (const print of sortCardPrintsOldestFirst(prints ?? [])) if (print.image_key) {
@@ -27,9 +30,8 @@ export default async function DeckSearchPage() {
   }
   const items: PublicDeckItem[] = (decks ?? []).map((deck) => {
     const main = deck.deck_cards.filter((card) => card.zone === "main");
-    const iconId = deck.icon_canonical_card_id ?? main[0]?.canonical_card_id;
-    const iconCard = main.find((card) => card.canonical_card_id === iconId);
-    const imageKey = iconCard ? (iconCard.card_print_id ? printImages.get(iconCard.card_print_id) : null) ?? images.get(iconCard.canonical_card_id) : iconId ? images.get(iconId) : null;
+    const icon = getDeckIconSelection(deck.deck_cards, deck.icon_canonical_card_id);
+    const imageKey = icon ? (icon.cardPrintId ? printImages.get(icon.cardPrintId) : null) ?? images.get(icon.canonicalCardId) : null;
     return {
       id: deck.id,
       name: deck.name,
@@ -43,5 +45,5 @@ export default async function DeckSearchPage() {
       updatedAt: deck.updated_at,
     };
   });
-  return <section className="directory-page deck-search-page"><h1>デッキ検索</h1><p className="directory-lead">公開デッキを、デッキ名や収録カードから検索できます。</p><div className="directory-accent" aria-hidden="true" />{error ? <p className="notice error">公開デッキを読み込めませんでした。</p> : <PublicDeckSearch decks={items} />}</section>;
+  return <section className="directory-page deck-search-page"><div className="primary-page-title"><h1>デッキ検索</h1><p className="directory-lead">公開デッキを、デッキ名や収録カードから検索できます。</p><div className="directory-accent" aria-hidden="true" /></div>{error ? <p className="notice error">公開デッキを読み込めませんでした。</p> : <PublicDeckSearch decks={items} />}</section>;
 }

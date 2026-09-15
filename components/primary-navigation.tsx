@@ -8,7 +8,7 @@ const destinations = [
   { href: "/deck-search", label: "デッキ検索", icon: "/navigation/deck-search.svg" },
   { href: "/decks", label: "マイデッキ", icon: "/navigation/solo-play.svg" },
   { href: "/", label: "ホーム", icon: "/navigation/home.svg" },
-  { href: "/solo", label: "一人回し", icon: "/navigation/my-decks.svg" },
+  { href: "/solo", label: "ひとり回し", icon: "/navigation/my-decks.svg" },
   { href: "/rooms", label: "オンライン", icon: "/navigation/online.svg" },
 ] as const;
 

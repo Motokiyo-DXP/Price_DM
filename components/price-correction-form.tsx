@@ -20,7 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_request: "入力内容を確認してください。販売価格または買取価格の入力が必要です。",
   price_record_unavailable: "この価格記録は修正できません。画面を更新して状態を確認してください。",
   service_unavailable: "現在、修正申請を受け付けられません。時間をおいて再度お試しください。",
-  session_required: "登録PINの認証期限が切れています。価格登録画面でPINを再認証してください。",
+  session_required: "申請にはログインが必要です。ログイン後に再度お試しください。",
   submission_failed: "申請を送信できませんでした。入力内容を確認して再度お試しください。",
 };
 
@@ -51,6 +51,11 @@ export function PriceCorrectionForm({
     setFeedback(null);
 
     try {
+      const session = await fetch("/api/registration-session", { cache: "no-store" });
+      if (!session.ok) {
+        setFeedback({ status: "error", message: ERROR_MESSAGES.session_required });
+        return;
+      }
       const response = await fetch("/api/price-corrections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

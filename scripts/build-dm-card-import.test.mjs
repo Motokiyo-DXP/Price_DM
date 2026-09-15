@@ -70,3 +70,14 @@ test("DMART-26の別名カードをゲーム上の正式カードへ収録版と
   assert.match(sql, /∞龍 ゲンムエンペラー/);
   assert.doesNotMatch(sql, /ゲンム装備/);
 });
+
+test("DMART-10の別名カードをゲーム上の正式カードへ収録版として統合する", () => {
+  const sql = buildCanonicalImportSql([{
+    ...CARD,
+    name: "バンブルビー [切札勝太&カツキング ー熱血の物語ー]",
+    card_number: "DMART10 3/6",
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=dmart10-003",
+  }]);
+  assert.match(sql, /切札勝太&カツキング ー熱血の物語ー/);
+  assert.doesNotMatch(sql, /バンブルビー/);
+});

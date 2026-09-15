@@ -6,6 +6,8 @@ import {
   type CardDetail,
   type CardRecentRecord,
 } from "./card-detail-data-mapping";
+import { getCardImageUrl } from "./card-image";
+import { pickCardPrintImageKey } from "./card-print-order";
 import { createServerSupabaseClient } from "./supabase";
 export type { CardBestPrice, CardDetail, CardRecentRecord };
 
@@ -82,6 +84,18 @@ export async function loadCardDetail(
 
   if (!card) {
     return { card: null, error: null };
+  }
+
+  const { data: prints, error: imageError } = await supabase
+    .from("card_prints")
+    .select("id, image_key, product_name, card_number, official_card_id")
+    .eq("canonical_card_id", canonicalCardId)
+    .not("image_key", "is", null)
+    .is("deleted_at", null);
+  if (imageError) {
+    console.error("Failed to load card artwork", imageError);
+  } else {
+    card.imageUrl = getCardImageUrl(pickCardPrintImageKey(prints ?? []));
   }
 
   return {

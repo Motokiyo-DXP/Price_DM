@@ -10,6 +10,7 @@ import {
 } from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { MARKET_CARDS_CACHE_TAG } from "@/lib/market-data";
+import { hasRegistrationUser } from "@/lib/registration-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ function json(body: unknown, status = 200) {
 }
 
 export async function POST(request: Request) {
+  if (!(await hasRegistrationUser())) return json({ error: "session_required" }, 401);
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(REGISTRATION_SESSION_COOKIE)?.value;
   if (!isRegistrationSessionToken(sessionToken)) {

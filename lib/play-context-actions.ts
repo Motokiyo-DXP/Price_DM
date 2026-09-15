@@ -13,7 +13,7 @@ export type ActionContext = {
   zone: PlayZone;
 };
 
-const labels: Record<ContextualAction, string> = { details:"カードの詳細",toggle_tap:"タップ切り替え",move:"移動",face_up:"表向き",face_down:"裏向き",close:"閉じる",flip:"反転",mark:"マーキング",multi_select:"複数選択",target:"対象指定",shuffle:"シャッフル",other:"その他",yobinion:"ヨビニオン",effect_warning:"効果無視の疑い",deselect:"選択解除",inspect:"確認",publish:"公開",open_stack:"束を開く",bundle:"束にする",shuffle_stack:"シャッフル",flip_stack:"反転",mark_general:"マーキング" };
+const labels: Record<ContextualAction, string> = { details:"カードの詳細",toggle_tap:"タップ切り替え",move:"移動",face_up:"表向き",face_down:"裏向き",close:"閉じる",flip:"反転",mark:"マーキング",multi_select:"複数選択",target:"対象指定",shuffle:"シャッフル",other:"その他",yobinion:"ヨビニオン",effect_warning:"効果無視の疑い",deselect:"選択解除",inspect:"確認",publish:"公開",open_stack:"束を開く",unbundle_stack:"束を解除",bundle:"束にする",shuffle_stack:"シャッフル",flip_stack:"反転",mark_general:"マーキング" };
 
 function slots(actions: Array<[MarkingMenuSlot, ContextualAction, string?]>): MarkingMenuItem[] {
   return actions.map(([slot, action, label]) => ({ action: action as MarkingMenuAction, label: label ?? labels[action], slot }));
@@ -33,6 +33,7 @@ export function getContextualActions(context: ActionContext): MarkingMenuItem[] 
 export function getOtherContextualActions(firstLayer: readonly MarkingMenuItem[]): MarkingMenuItem[] {
   const firstLayerActions = new Set(firstLayer.map((item) => item.action));
   const candidates: Array<[MarkingMenuSlot, ContextualAction, MarkingMenuAction]> = [
+    ...(firstLayerActions.has("open_stack") ? [[1, "unbundle_stack", "unbundle_stack"] as [MarkingMenuSlot, ContextualAction, MarkingMenuAction]] : []),
     [2, "details", "details"],
     [3, "toggle_tap", "toggle_tap"],
     [4, "effect_warning", "effect_warning"],

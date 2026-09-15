@@ -25,20 +25,22 @@ function PricedShoppingCard({ entry, kind, onRemove }: { entry: ShoppingListEntr
           <div><dt>平均価格</dt><dd>{yen(entry.averagePrice)}</dd></div>
         </dl>
       </div>
-      <button aria-label={`${entry.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(entry.id)} type="button"><span aria-hidden="true" className="ui-icon ui-icon-trash" /></button>
+      <button aria-label={`${entry.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(entry.id)} type="button"><span aria-hidden="true">★</span></button>
     </article>
   );
 }
 
-function UnpricedShoppingCard({ card }: { card: ShoppingCard }) {
+function UnpricedShoppingCard({ card, onRemove }: { card: ShoppingCard; onRemove: (id: number) => void }) {
   return (
-    <Link aria-label={`${card.name}の詳細を開く`} className="shopping-card" href={`/cards/${card.id}`}>
+    <article className="shopping-card shopping-card-unpriced">
+      <Link aria-label={`${card.name}の詳細を開く`} className="shopping-card-detail-link" href={`/cards/${card.id}`} />
       <CardArtwork imageUrl={card.imageUrl} name={card.name} sizes={artworkSizes} />
       <div className="shopping-card-copy">
         <h3>{card.name}</h3>
         <p>価格データがありません</p>
       </div>
-    </Link>
+      <button aria-label={`${card.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(card.id)} type="button"><span aria-hidden="true">★</span></button>
+    </article>
   );
 }
 
@@ -68,6 +70,20 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
     }
   };
 
+  const removeAllBookmarks = async () => {
+    if (!visibleCards.length || !window.confirm(`買い物リストの${visibleCards.length}件をすべて解除しますか？`)) return;
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setRemoveError("買い物リストを更新できませんでした。");
+      return;
+    }
+    const ids = visibleCards.map((card) => card.id);
+    setRemoveError(null);
+    const { error } = await supabase.from("account_card_bookmarks").delete().in("canonical_card_id", ids);
+    if (error) setRemoveError("全件解除できませんでした。再度お試しください。");
+    else setRemovedCardIds((current) => [...new Set([...current, ...ids])]);
+  };
+
   return (
     <div className="shopping-list-page">
       <div className="shopping-list-heading">
@@ -75,6 +91,7 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
           <p className="eyebrow">MY BOOKMARKS</p>
           <h1>買い物リスト</h1>
         </div>
+        {visibleCards.length > 0 && <button aria-label="買い物リストを全件解除" className="shopping-remove-all" onClick={() => void removeAllBookmarks()} type="button"><span aria-hidden="true" className="ui-icon ui-icon-trash" /></button>}
         <div className="shopping-list-controls">
           <div className="shopping-kind-toggle" role="group" aria-label="価格の種類">
             <button aria-pressed={kind === "sale"} className={kind === "sale" ? "active" : ""} onClick={() => setKind("sale")} type="button">販売</button>
@@ -86,7 +103,8 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
             onClick={() => setShowSecondChoices((current) => !current)}
             type="button"
           >
-            次点を{showSecondChoices ? "非表示" : "表示"}
+            <span>次点を表示</span>
+            <span aria-hidden="true" className="shopping-switch-track"><span className="shopping-switch-thumb" /></span>
           </button>
         </div>
       </div>
@@ -95,22 +113,24 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
 
       {!visibleCards.length ? <section className="shopping-list-empty"><p>ブックマークしたカードはありません。</p><Link className="button" href="/">カードを探す</Link></section> : null}
 
-      {groups.map((group) => (
-        <section className="shopping-store" key={group.shopId}>
-          <h2>{group.shopName}</h2>
-          <div className="shopping-store-cards">
-            {group.entries
-              .filter((entry) => showSecondChoices || entry.rank === 1)
-              .map((entry) => <PricedShoppingCard entry={entry} key={`${group.shopId}-${entry.id}`} kind={kind} onRemove={(id) => void removeBookmark(id)} />)}
-          </div>
-        </section>
-      ))}
+      {groups.map((group) => {
+        const visibleEntries = group.entries.filter((entry) => showSecondChoices || entry.rank === 1);
+        if (!visibleEntries.length) return null;
+        return (
+          <section className="shopping-store" key={group.shopId}>
+            <h2>{group.shopName}</h2>
+            <div className="shopping-store-cards">
+              {visibleEntries.map((entry) => <PricedShoppingCard entry={entry} key={`${group.shopId}-${entry.id}`} kind={kind} onRemove={(id) => void removeBookmark(id)} />)}
+            </div>
+          </section>
+        );
+      })}
 
       {cardsWithoutPrices.length ? (
         <section className="shopping-store shopping-unpriced">
           <h2>{kind === "sale" ? "販売価格未登録" : "買取価格未登録"}</h2>
           <div className="shopping-store-cards">
-            {cardsWithoutPrices.map((card) => <UnpricedShoppingCard card={card} key={card.id} />)}
+            {cardsWithoutPrices.map((card) => <UnpricedShoppingCard card={card} key={card.id} onRemove={(id) => void removeBookmark(id)} />)}
           </div>
         </section>
       ) : null}

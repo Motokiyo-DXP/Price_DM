@@ -17,7 +17,7 @@ export default async function EditDeckPage({ params }: { params: Promise<{ id: s
   if (authError || typeof userId !== "string") redirect(`/login?next=/decks/${id}/edit`);
 
   const { data: deck } = await supabase.from("decks")
-    .select("id, name, format, visibility, description, deck_cards(canonical_card_id, card_print_id, quantity, sort_order, zone, canonical_cards(name, cost))")
+    .select("id, name, format, visibility, description, deck_cards(canonical_card_id, card_print_id, quantity, sort_order, zone, canonical_cards(name, cost, civilizations))")
     .eq("id", id).eq("owner_id", userId).maybeSingle();
   if (!deck) notFound();
 
@@ -37,7 +37,7 @@ export default async function EditDeckPage({ params }: { params: Promise<{ id: s
     format,
     visibility,
     description: deck.description,
-    cards: mainCards.map((card) => ({ canonicalCardId: card.canonical_card_id, cardPrintId: card.card_print_id, name: card.canonical_cards?.name ?? "カード", quantity: card.quantity, imageUrl: getCardImageUrl((card.card_print_id ? printImages.get(card.card_print_id) : null) ?? firstImages.get(card.canonical_card_id)), cost: card.canonical_cards?.cost ?? localMetadata.get(card.canonical_cards?.name ?? "")?.cost })),
+    cards: mainCards.map((card) => ({ canonicalCardId: card.canonical_card_id, cardPrintId: card.card_print_id, name: card.canonical_cards?.name ?? "カード", quantity: card.quantity, imageUrl: getCardImageUrl((card.card_print_id ? printImages.get(card.card_print_id) : null) ?? firstImages.get(card.canonical_card_id)), cost: card.canonical_cards?.cost ?? localMetadata.get(card.canonical_cards?.name ?? "")?.cost, civilizations: card.canonical_cards?.civilizations?.length ? card.canonical_cards.civilizations : localMetadata.get(card.canonical_cards?.name ?? "")?.civilizations })),
   };
   return <section className="deck-editor-page"><DeckEditor fallbackCosts={fallbackCosts} initialDeck={initialDeck} /></section>;
 }

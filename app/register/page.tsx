@@ -22,7 +22,6 @@ import {
 } from "@/lib/registration-lookup-mapping";
 import {
   parseApiErrorCode,
-  parseRegistrationSessionRpcResult,
   parseRegistrationSessionStatusResponse,
   parseShopCandidateResponse,
 } from "@/lib/registration-response-validation";
@@ -35,10 +34,11 @@ import {
 } from "@/lib/last-registered-shop";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
-import { PasswordInput } from "@/components/password-input";
+import { CardArtwork } from "@/components/card-artwork";
+import { getCardImageUrl } from "@/lib/card-image";
 
 type SearchMode = "broad" | "precise";
-type PinSessionState = "checking" | "required" | "authenticated";
+type RegistrationAccess = "checking" | "login_required" | "ready";
 
 type Feedback = {
   kind: "error" | "success";
@@ -94,7 +94,7 @@ function registrationErrorMessage(code: string) {
     referenced_data_changed: "選択したカード・収録版・店舗の情報が更新されました。ページを再読み込みして選び直してください。",
     registration_failed: "サーバーで登録処理に失敗しました。少し時間をおいて再度お試しください。",
     service_unavailable: "接続情報を確認できませんでした。時間をおいて再度お試しください。",
-    session_required: "登録PINの有効時間が切れました。もう一度入力してください。",
+    session_required: "ログイン状態を確認できませんでした。再度ログインしてください。",
     too_long: "入力内容が長すぎます。文字数を減らしてください。",
   };
   return messages[code] ?? "登録できませんでした。時間をおいて再度お試しください。";
@@ -106,6 +106,7 @@ export default function RegisterPage() {
   const [cardQuery, setCardQuery] = useState("");
   const [cardOptions, setCardOptions] = useState<RegistrationCardOption[]>([]);
   const [selectedCard, setSelectedCard] = useState<RegistrationCardOption | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [cardPrints, setCardPrints] = useState<RegistrationCardPrint[]>([]);
   const [selectedPrintId, setSelectedPrintId] = useState("");
   const [loadingPrints, setLoadingPrints] = useState(false);
@@ -123,9 +124,7 @@ export default function RegisterPage() {
   const [searchingCards, setSearchingCards] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeOptionIndex, setActiveOptionIndex] = useState(-1);
-  const [pinSessionState, setPinSessionState] =
-    useState<PinSessionState>("checking");
-  const [pinExpiresAt, setPinExpiresAt] = useState<string | null>(null);
+  const [registrationAccess, setRegistrationAccess] = useState<RegistrationAccess>("checking");
   const [salePriceInput, setSalePriceInput] = useState("");
   const [buyPriceInput, setBuyPriceInput] = useState("");
   const salePriceIsComposing = useRef(false);
@@ -166,7 +165,7 @@ export default function RegisterPage() {
       );
     }
 
-    async function checkPinSession() {
+    async function checkRegistrationAccess() {
       try {
         const response = await fetch("/api/registration-session", {
           cache: "no-store",
@@ -175,15 +174,14 @@ export default function RegisterPage() {
           await response.json(),
         );
         if (cancelled) return;
-        setPinSessionState(result?.authenticated ? "authenticated" : "required");
-        setPinExpiresAt(result?.expiresAt ?? null);
+        setRegistrationAccess(result?.authenticated ? "ready" : "login_required");
       } catch {
-        if (!cancelled) setPinSessionState("required");
+        if (!cancelled) setRegistrationAccess("login_required");
       }
     }
 
     void loadGames();
-    void checkPinSession();
+    void checkRegistrationAccess();
     return () => {
       cancelled = true;
     };
@@ -377,6 +375,7 @@ export default function RegisterPage() {
     let cancelled = false;
 
     if (!selectedCard) {
+      setSelectedImageUrl(null);
       setCardPrints([]);
       setSelectedPrintId("");
       setLoadingPrints(false);
@@ -402,12 +401,25 @@ export default function RegisterPage() {
         setCardPrints(sortCardPrintsOldestFirst(mapRegistrationCardPrints(data)));
       });
 
+    void supabase.from("card_prints")
+      .select("image_key")
+      .eq("canonical_card_id", selectedCard.id)
+      .not("image_key", "is", null)
+      .is("deleted_at", null)
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setSelectedImageUrl(getCardImageUrl(data?.image_key));
+      });
+
     return () => {
       cancelled = true;
     };
   }, [selectedCard]);
 
   function chooseCard(card: RegistrationCardOption) {
+    setSelectedImageUrl(null);
     setSelectedCard(card);
     setCardQuery(card.name);
     setSuggestionsOpen(false);
@@ -476,72 +488,17 @@ export default function RegisterPage() {
     }
   }
 
-  async function establishPinSession(pin: string) {
-    const supabase = createBrowserSupabaseClient();
-    if (!supabase) return { ok: false, message: "接続情報を確認できませんでした。" };
-
-    const { data, error } = await supabase.rpc("create_registration_session", {
-      p_pin: pin,
-    });
-    const session = parseRegistrationSessionRpcResult(data);
-    if (error || !session) {
-      return { ok: false, message: "登録PINを確認できませんでした。" };
-    }
-    if (session.status === "invalid_pin") {
-      return { ok: false, message: "登録PINが違います。入力内容を確認してください。" };
-    }
-    if (session.status === "rate_limited") {
-      return {
-        ok: false,
-        message: "PINの確認回数が上限に達しました。15分ほど待ってください。",
-      };
-    }
-    if (session.status === "not_configured") {
-      return { ok: false, message: "登録PINがまだ設定されていません。" };
-    }
-    if (session.status !== "ok") {
-      return { ok: false, message: "登録PINを確認できませんでした。" };
-    }
-    const response = await fetch("/api/registration-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: session.sessionToken }),
-    });
-    if (!response.ok) {
-      return { ok: false, message: "登録PINの保持設定に失敗しました。" };
-    }
-
-    let responseBody: unknown;
+  async function ensureRegistrationSession() {
     try {
-      responseBody = await response.json();
+      const response = await fetch("/api/registration-session", { cache: "no-store" });
+      const result = parseRegistrationSessionStatusResponse(await response.json());
+      const ready = response.ok && result?.authenticated === true;
+      setRegistrationAccess(ready ? "ready" : "login_required");
+      return ready;
     } catch {
-      responseBody = null;
+      setRegistrationAccess("login_required");
+      return false;
     }
-    const result = parseRegistrationSessionStatusResponse(responseBody);
-    if (!result?.authenticated) {
-      return { ok: false, message: "登録PINの保持設定に失敗しました。" };
-    }
-    setPinSessionState("authenticated");
-    setPinExpiresAt(result.expiresAt);
-    return { ok: true, message: "" };
-  }
-
-  async function clearPinSession() {
-    await fetch("/api/registration-session", { method: "DELETE" });
-    setPinSessionState("required");
-    setPinExpiresAt(null);
-  }
-
-  async function ensureRegistrationSession(formData: FormData) {
-    if (pinSessionState === "authenticated") {
-      return { ok: true, message: "" };
-    }
-
-    const pin = String(formData.get("password") ?? "");
-    if (!pin) {
-      return { ok: false, message: "登録PINを入力してください。" };
-    }
-    return establishPinSession(pin);
   }
 
   async function submitShopCandidate(form: HTMLFormElement) {
@@ -555,10 +512,9 @@ export default function RegisterPage() {
     }
 
     setCandidateSubmitting(true);
-    const sessionResult = await ensureRegistrationSession(formData);
-    if (!sessionResult.ok) {
+    if (!(await ensureRegistrationSession())) {
       setCandidateSubmitting(false);
-      setCandidateFeedback({ kind: "error", text: sessionResult.message });
+      setCandidateFeedback({ kind: "error", text: registrationErrorMessage("session_required") });
       return;
     }
 
@@ -584,8 +540,7 @@ export default function RegisterPage() {
     if (!response.ok) {
       const errorCode = parseApiErrorCode(result) ?? "registration_failed";
       if (errorCode === "session_required") {
-        setPinSessionState("required");
-        setPinExpiresAt(null);
+        setRegistrationAccess("login_required");
       }
       setCandidateFeedback({
         kind: "error",
@@ -648,10 +603,9 @@ export default function RegisterPage() {
     }
 
     setSubmitting(true);
-    const sessionResult = await ensureRegistrationSession(formData);
-    if (!sessionResult.ok) {
+    if (!(await ensureRegistrationSession())) {
       setSubmitting(false);
-      setFeedback({ kind: "error", text: sessionResult.message });
+      setFeedback({ kind: "error", text: registrationErrorMessage("session_required") });
       return;
     }
 
@@ -692,8 +646,7 @@ export default function RegisterPage() {
     if (!response.ok) {
       const errorCode = parseApiErrorCode(result) ?? "registration_failed";
       if (errorCode === "session_required") {
-        setPinSessionState("required");
-        setPinExpiresAt(null);
+        setRegistrationAccess("login_required");
       }
       setFeedback({
         kind: "error",
@@ -743,11 +696,24 @@ export default function RegisterPage() {
           {systemError}
         </p>
       )}
+      {registrationAccess === "login_required" && (
+        <p className="notice warning" role="status">
+          価格の登録と店舗候補の送信にはログインが必要です。 <a href="/login?next=/register">ログインする</a>
+        </p>
+      )}
 
       <form onSubmit={submit}>
-        <details className="registration-section">
-          <summary>カード名</summary>
-          <div className="registration-section-content">
+        <section className="registration-card-panel">
+          <h2>カード情報</h2>
+          {selectedCard && (
+            <div className="registration-card-preview" role="status">
+              <CardArtwork imageUrl={selectedImageUrl} name={selectedCard.name} sizes="76px" />
+              <strong>{selectedCard.name}</strong>
+            </div>
+          )}
+          <div className="registration-card-content">
+        <details className="registration-search-options">
+          <summary>TCG・検索方法</summary>
         <label htmlFor="gameSlug">
           TCG
           <select
@@ -798,6 +764,7 @@ export default function RegisterPage() {
             パーペキ検索 <small>目安90%</small>
           </label>
         </fieldset>
+        </details>
 
         <div
           className="card-combobox"
@@ -858,116 +825,16 @@ export default function RegisterPage() {
                 ))}
             </ul>
           )}
-          {selectedCard && (
-            <p className="selected-card" role="status">
-              選択中：{selectedCard.name}
-            </p>
-          )}
           <p className="form-help">
             ひらがな・カタカナ・漢字、中点「・」の有無、登録済みの別名で検索できます。
           </p>
         </div>
           </div>
-        </details>
+        </section>
 
-        <details className="registration-section registration-details-section">
-          <summary>詳細</summary>
-          <div className="registration-section-content">
-
-        {selectedCard && (
-          <label htmlFor="cardPrintId">
-            収録版
-            <select
-              id="cardPrintId"
-              name="cardPrintId"
-              value={selectedPrintId}
-              onChange={(event) => setSelectedPrintId(event.target.value)}
-              disabled={loadingPrints}
-            >
-              <option value="">
-                {loadingPrints ? "収録版を読み込み中…" : "収録版を定めない（推奨）"}
-              </option>
-              {cardPrints.map((cardPrint) => (
-                <option key={cardPrint.id} value={cardPrint.id}>
-                  {[cardPrint.card_number, cardPrint.product_name]
-                    .filter(Boolean)
-                    .join("｜") || `収録版 #${cardPrint.id}`}
-                </option>
-              ))}
-            </select>
-            <small className="form-help">
-              通常は「収録版を定めない」のままで登録できます。版を区別したい場合だけ選択してください。
-            </small>
-          </label>
-        )}
-
-        <fieldset className="attribute-options">
-          <legend>価格の属性（指定しないが標準）</legend>
-          <p className="form-help">
-            傷あり・特価・ストレージなど、注意が必要な場合だけ選択してください。
-          </p>
-          <div className="attribute-grid">
-            {priceAttributes.map((attribute) => (
-              <label key={attribute.slug}>
-                <input
-                  type="checkbox"
-                  name="attributeSlug"
-                  value={attribute.slug}
-                />
-                {attribute.name}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <label htmlFor="shopPrefecture">
-          都道府県で絞り込む（任意）
-          <select
-            id="shopPrefecture"
-            value={shopPrefecture}
-            onChange={(event) => {
-              setShopPrefecture(event.target.value);
-              setSelectedShop(null);
-              setShopSuggestionsOpen(true);
-            }}
-          >
-            <option value="">すべての地域</option>
-            {prefectures.map((prefecture) => (
-              <option key={prefecture} value={prefecture}>
-                {prefecture}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label htmlFor="stockStatus">
-          在庫状況
-          <select id="stockStatus" name="stockStatus" defaultValue="unknown">
-            {stockStatuses.map(([value, label]) => (
-              <option key={value} value={value}>
-                {value === "unknown" ? "指定しない" : label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label htmlFor="observedOn">
-          調査日
-          <input id="observedOn" name="observedOn" type="date" defaultValue={observedOn} required />
-        </label>
-
-        <label htmlFor="contributorName">
-          登録者名
-          <input id="contributorName" name="contributorName" placeholder="任意のニックネーム" />
-        </label>
-
-        <label htmlFor="note">
-          コメント
-          <textarea id="note" name="note" rows={3} />
-        </label>
-          </div>
-        </details>
-
+        <section className="registration-basic-panel">
+          <h2>基本情報</h2>
+          <div className="registration-basic-content">
         <div
           className="card-combobox shop-combobox"
           onBlur={(event) => {
@@ -1056,80 +923,6 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <details className="shop-candidate-panel compact-candidate-panel">
-          <summary>店舗が見つからない場合：候補を送信</summary>
-          <p className="form-help">
-            店舗情報を確認してから承認します。申請中は価格登録に使用できません。
-          </p>
-          <label htmlFor="candidateName">
-            店舗名
-            <input
-              id="candidateName"
-              name="candidateName"
-              maxLength={200}
-              placeholder="例：カードショップ○○"
-            />
-          </label>
-          <div className="two">
-            <label htmlFor="candidatePrefecture">
-              都道府県
-              <input
-                id="candidatePrefecture"
-                name="candidatePrefecture"
-                maxLength={20}
-                placeholder="例：東京都"
-              />
-            </label>
-            <label htmlFor="candidateMunicipality">
-              市区町村
-              <input
-                id="candidateMunicipality"
-                name="candidateMunicipality"
-                maxLength={100}
-                placeholder="例：千代田区"
-              />
-            </label>
-          </div>
-          <label htmlFor="candidateAddressLine">
-            住所の続き
-            <input
-              id="candidateAddressLine"
-              name="candidateAddressLine"
-              maxLength={300}
-              placeholder="町名・番地・建物名"
-            />
-          </label>
-          <label htmlFor="candidateWebsiteUrl">
-            公式サイト
-            <input
-              id="candidateWebsiteUrl"
-              name="candidateWebsiteUrl"
-              type="url"
-              maxLength={500}
-              placeholder="https://example.com/shop"
-            />
-          </label>
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={candidateSubmitting || pinSessionState === "checking"}
-            onClick={(event) => {
-              const form = event.currentTarget.form;
-              if (form) void submitShopCandidate(form);
-            }}
-          >
-            {candidateSubmitting ? "候補を送信中…" : "店舗候補を送信"}
-          </button>
-          {candidateFeedback && (
-            <p
-              className={`notice ${candidateFeedback.kind}`}
-              role={candidateFeedback.kind === "error" ? "alert" : "status"}
-            >
-              {candidateFeedback.text}
-            </p>
-          )}
-        </details>
-
         <div className="two">
           <label className="sale-price-label" htmlFor="salePrice">
             販売価格
@@ -1189,60 +982,117 @@ export default function RegisterPage() {
           </label>
         </div>
 
-        {pinSessionState === "checking" && (
-          <p className="pin-status">登録PINの認証状態を確認中…</p>
-        )}
-        {pinSessionState === "authenticated" && (
-          <div className="pin-status authenticated">
-            <span>
-              登録PINは認証済みです
-              {pinExpiresAt
-                ? `（${new Date(pinExpiresAt).toLocaleString("ja-JP", {
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}まで）`
-                : "（14日間有効）"}
-            </span>
-            <button type="button" onClick={() => void clearPinSession()}>
-              認証を解除
-            </button>
+        <label className="registration-observed-on" htmlFor="observedOn">
+          調査日
+          <input id="observedOn" name="observedOn" type="date" defaultValue={observedOn} required />
+        </label>
           </div>
-        )}
-        {pinSessionState === "required" && (
-          <>
-            <label className="visually-hidden" htmlFor="sharedPinUsername">
-              ユーザー名
-              <input
-                id="sharedPinUsername"
-                name="username"
-                autoComplete="username"
-                value="TCG 相場チェッカー"
-                readOnly
-                tabIndex={-1}
-              />
+        </section>
+
+        <details className="registration-section registration-details-section">
+          <summary>詳細設定</summary>
+          <div className="registration-section-content">
+            {selectedCard && (
+              <label htmlFor="cardPrintId">
+                収録版
+                <select id="cardPrintId" name="cardPrintId" value={selectedPrintId}
+                  onChange={(event) => setSelectedPrintId(event.target.value)} disabled={loadingPrints}>
+                  <option value="">{loadingPrints ? "収録版を読み込み中…" : "収録版を定めない（推奨）"}</option>
+                  {cardPrints.map((cardPrint) => (
+                    <option key={cardPrint.id} value={cardPrint.id}>
+                      {[cardPrint.card_number, cardPrint.product_name].filter(Boolean).join("｜") || `収録版 #${cardPrint.id}`}
+                    </option>
+                  ))}
+                </select>
+                <small className="form-help">通常は「収録版を定めない」のままで登録できます。版を区別したい場合だけ選択してください。</small>
+              </label>
+            )}
+            <fieldset className="attribute-options">
+              <legend>価格の属性（指定しないが標準）</legend>
+              <p className="form-help">傷あり・特価・ストレージなど、注意が必要な場合だけ選択してください。</p>
+              <div className="attribute-grid">
+                {priceAttributes.map((attribute) => (
+                  <label key={attribute.slug}>
+                    <input type="checkbox" name="attributeSlug" value={attribute.slug} />
+                    {attribute.name}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <label htmlFor="shopPrefecture">
+              都道府県で絞り込む（任意）
+              <select id="shopPrefecture" value={shopPrefecture} onChange={(event) => {
+                setShopPrefecture(event.target.value);
+                setSelectedShop(null);
+                setShopSuggestionsOpen(true);
+              }}>
+                <option value="">すべての地域</option>
+                {prefectures.map((prefecture) => <option key={prefecture} value={prefecture}>{prefecture}</option>)}
+              </select>
             </label>
-            <div className="password-field">
-              <label htmlFor="registrationPin">登録PIN</label>
-              <PasswordInput
-                id="registrationPin"
-                name="password"
-                inputMode="numeric"
-                autoComplete="current-password"
-                required
-              />
-              <small className="form-help">一度認証すると、この端末では14日間入力を省略できます。</small>
-            </div>
-          </>
-        )}
+            <label htmlFor="stockStatus">
+              在庫状況
+              <select id="stockStatus" name="stockStatus" defaultValue="unknown">
+                {stockStatuses.map(([value, label]) => <option key={value} value={value}>{value === "unknown" ? "指定しない" : label}</option>)}
+              </select>
+            </label>
+            <label htmlFor="contributorName">
+              登録者名
+              <input id="contributorName" name="contributorName" placeholder="任意のニックネーム" />
+            </label>
+            <label htmlFor="note">
+              コメント
+              <textarea id="note" name="note" rows={3} />
+            </label>
+          </div>
+        </details>
+
+        <details className="shop-candidate-panel compact-candidate-panel">
+          <summary>店舗が見つからない場合</summary>
+          <p className="form-help">店舗情報を確認してから承認します。申請中は価格登録に使用できません。</p>
+          <label htmlFor="candidateName">
+            店舗名
+            <input id="candidateName" name="candidateName" maxLength={200} placeholder="例：カードショップ○○" />
+          </label>
+          <div className="two">
+            <label htmlFor="candidatePrefecture">
+              都道府県
+              <input id="candidatePrefecture" name="candidatePrefecture" maxLength={20} placeholder="例：東京都" />
+            </label>
+            <label htmlFor="candidateMunicipality">
+              市区町村
+              <input id="candidateMunicipality" name="candidateMunicipality" maxLength={100} placeholder="例：千代田区" />
+            </label>
+          </div>
+          <label htmlFor="candidateAddressLine">
+            住所の続き
+            <input id="candidateAddressLine" name="candidateAddressLine" maxLength={300} placeholder="町名・番地・建物名" />
+          </label>
+          <label htmlFor="candidateWebsiteUrl">
+            公式サイト
+            <input id="candidateWebsiteUrl" name="candidateWebsiteUrl" type="url" maxLength={500} placeholder="https://example.com/shop" />
+          </label>
+          <button className="secondary-button" type="button"
+            disabled={candidateSubmitting || registrationAccess !== "ready"}
+            onClick={(event) => {
+              const form = event.currentTarget.form;
+              if (form) void submitShopCandidate(form);
+            }}>
+            {candidateSubmitting ? "候補を送信中…" : "店舗候補を送信"}
+          </button>
+          {candidateFeedback && (
+            <p className={`notice ${candidateFeedback.kind}`} role={candidateFeedback.kind === "error" ? "alert" : "status"}>
+              {candidateFeedback.text}
+            </p>
+          )}
+        </details>
 
         <button
           className="button"
           type="submit"
           disabled={
             submitting ||
-            pinSessionState === "checking" ||
+            registrationAccess !== "ready" ||
             !selectedCard ||
             !selectedShop
           }

@@ -27,7 +27,7 @@ export default async function OpponentDeckPage({ params }: { params: Promise<{ d
     <section className="opponent-deck-page">
       <header>
         <Link className="back-link" href="/decks">← マイデッキ</Link>
-        <div><p className="eyebrow">一人回し</p><h1>対戦相手のデッキを選択</h1><p>相手側の初期手札・シールド・山札に使用するデッキを選んでください。</p></div>
+        <div><p className="eyebrow">ひとり回し</p><h1>対戦相手のデッキを選択</h1><p>相手側の初期手札・シールド・山札に使用するデッキを選んでください。</p></div>
       </header>
       <div className="opponent-deck-list">
         {decks.map((deck) => {

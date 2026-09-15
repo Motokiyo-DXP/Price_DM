@@ -149,3 +149,15 @@ public/cards/official/
 
 .vercel
 .env*
+
+# Local Codex attachments and generated verification artifacts
+.codex-remote-attachments/
+outputs/
+/desktop-*.png
+/mobile-*.png
+
+# OS and editor-specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

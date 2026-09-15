@@ -28,6 +28,8 @@ export default async function OnlineLobbyPage({ params, searchParams }: { params
     supabase.rpc("list_invitable_lobby_friends", { p_lobby_id: lobbyId }),
   ]);
   if (error || !lobby || !slots) notFound();
+  const roomIds = slots.map((slot) => slot.game_room_id).filter((id): id is string => Boolean(id));
+  const { data: myMatches } = roomIds.length ? await supabase.from("game_rooms").select("id").in("id", roomIds).eq("status", "playing").or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`) : { data: [] };
   const validDecks = (decks ?? []).filter((deck) => deck.deck_cards.filter((card) => card.zone === "main").reduce((sum, card) => sum + card.quantity, 0) === 40);
   const iconIds = [...new Set(validDecks.map((deck) => deck.icon_canonical_card_id ?? deck.deck_cards.find((card) => card.zone === "main")?.canonical_card_id).filter((id): id is number => typeof id === "number"))];
   const { data: iconPrints } = iconIds.length ? await supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", iconIds).not("image_key", "is", null).order("id") : { data: [] };
@@ -44,17 +46,20 @@ export default async function OnlineLobbyPage({ params, searchParams }: { params
     return { id: deck.id, name: deck.name, format: deck.format, imageUrl: getCardImageUrl(imageKey) };
   });
   const isPublic = lobby.kind === "public";
+  const memberCount = members?.length ?? 0;
 
   return <section className="online-lobby-page">
-    <header className="online-lobby-header"><Link aria-label="オンライン対戦メニューへ戻る" href="/rooms">←</Link><div><p>{isPublic ? "PUBLIC ROOM" : "PRIVATE ROOM"}</p><h1>{isPublic ? "公開ルーム" : "作成したルーム"}</h1></div></header>
+    <header className="online-lobby-header"><Link aria-label="オンライン対戦メニューへ戻る" href="/rooms">‹</Link><div><p>{isPublic ? "PUBLIC ROOM" : "PRIVATE ROOM"}</p><h1>{isPublic ? "公開ルーム" : "作成したルーム"}</h1></div>{isPublic ? <span className="online-lobby-member-count"><span aria-hidden="true" className="ui-icon ui-icon-team" />{memberCount}人</span> : null}</header>
     {messages.error ? <p className="notice error">{messages.error}</p> : null}{messages.notice ? <p className="notice success">{messages.notice}</p> : null}
+    {!isPublic ? <section className="private-lobby-summary"><div><small>ルームID</small><strong>{lobby.join_code}</strong><span>参加者へ共有してください</span></div><div><small>メンバー</small><strong><span aria-hidden="true" className="ui-icon ui-icon-team" />{memberCount}人</strong><span>現在の参加人数</span></div></section> : null}
     <section className="online-lobby-controls">
+      <p className="online-lobby-control-label">使用デッキ</p>
       <OnlineLobbyDeckPicker decks={playableDecks} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
       <div className={`online-lobby-secondary-controls ${isPublic ? "public" : ""}`}>
         <OnlineFriendInvite friends={friends ?? []} lobbyId={lobby.id} />
         {!isPublic ? <form action={setOnlineLobbyPassphraseAction} className="online-lobby-passphrase-control"><input name="lobbyId" type="hidden" value={lobby.id} /><label><span>合言葉を入力</span><input aria-label="合言葉" autoComplete="off" maxLength={32} minLength={4} name="passphrase" placeholder="英数字など" required type="text" /></label><button type="submit">OK</button></form> : null}
       </div>
     </section>
-    <OnlineLobbyLive currentUserId={userId} decks={playableDecks} initialMembers={members ?? []} initialSlots={slots} isPublic={isPublic} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
+    <OnlineLobbyLive currentUserId={userId} decks={playableDecks} initialMembers={members ?? []} initialSlots={slots} initialMyMatchIds={(myMatches ?? []).map((room) => room.id)} isPublic={isPublic} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
   </section>;
 }

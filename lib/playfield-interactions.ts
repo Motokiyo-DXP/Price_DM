@@ -115,14 +115,15 @@ export function resolveDropTarget(
   owner: string,
   sourceZone: PlayZone,
   movingCardId: string,
+  allowEmptySameZoneBattle = false,
 ) {
   const ordered = [...candidates];
   const target = ordered.find((candidate) => candidate.owner === owner && (
     candidate.zone !== sourceZone
     || (sourceZone === "battle"
       && candidate.zone === "battle"
-      && Boolean(candidate.cardId)
-      && candidate.cardId !== movingCardId)
+      && ((Boolean(candidate.cardId) && candidate.cardId !== movingCardId)
+        || (allowEmptySameZoneBattle && !candidate.cardId)))
   ));
   if (!target) return null;
   const targetZone = target.zone;
@@ -162,7 +163,7 @@ export function isWithinHorizontalScrollAngle(deltaX: number, deltaY: number) {
 }
 
 export const STACK_HOLD_PROGRESS_MS = 300;
-export const STACK_HOLD_MENU_MS = 1000;
+export const STACK_HOLD_MENU_MS = 500;
 
 export function stackHoldPhase(elapsedMs: number) {
   if (elapsedMs >= STACK_HOLD_MENU_MS) return "menu" as const;
