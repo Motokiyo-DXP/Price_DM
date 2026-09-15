@@ -1,54 +1,81 @@
-# PROJECT_STATE
+# PROJECT_STATE — Rule Automation
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@94b1aae620794b18c6f27052d276886c60933c90`
-Plan: Implementation / Operations Plan v4
-Rule design: Duel Masters Rule Automation v5
+Verified main at handoff: `125bed44cea6f9ea2b6575af8ac689bb2020d1d9`
 
-## Progress
+## Current status
 
-- Stage 0: complete
-- Stage 1 Repository Discovery: complete (read-only)
-- Stage 2 Boundary Design: draft complete
-- Stage 3 Data Acquisition Spike: initial official-source spike complete
-- Stage 4 First Vertical Slice: DRAW Pure Rule Core + test-only Shadow implemented on branch
+Completed:
+- Repository / architecture discovery
+- Rule Engine boundary design
+- Official evidence baseline
+- DRAW Pure Rule Core
+- DRAW unit tests
+- Legacy DRAW test-only Shadow comparison
+- PR #1 merged: Stage 1–3 documentation baseline
+- PR #2 merged: DRAW Rule Core + test-only Shadow
 
-## Key findings
+Current maturity:
+- Base DRAW: `SHADOW`
+- Production DRAW path: still legacy-authoritative
+- Production Shadow connection: not yet implemented
 
-- `components/playtest-board.tsx` is the main manual-play UI/orchestrator.
-- `lib/playfield-board.ts` contains the current `BoardState`, `CardInstance`, and many board transformations.
-- `lib/playfield-interactions.ts` mixes gesture/presentation policy with some game-like policy.
-- `components/online-match-board.tsx` wraps `PlaytestBoard`, keeps `state_version`, and submits whole candidate `BoardState` values to `update_game_room_state`.
-- The server already performs hidden-state redaction/hydration, version conflict handling, server-side initial shuffling, secure shuffle/Yobinion/inspection flows, and before/after-state history.
-- Existing online authority must be preserved during early Rule Core migration.
-- Current manual helpers contain `Math.random()`/`Date.now()` dependencies that must not leak into deterministic Rule Core.
+## Important architecture decisions
 
-## Architecture direction
+- Pure Rule Core stays independent from React / Next.js / Supabase UI.
+- Existing online authority, hidden-info protection, version checks, and current rollback/history remain in place during early migration.
+- Current `BoardState` is transitional; it is not automatically the permanent Rule Engine state.
+- Manual Marker is not Rule Engine truth.
+- Manual Annotation, Manual Override, and Manual Fallback are separate concepts.
+- Rule Engine emits semantic results; Presentation chooses Marker / Badge / Highlight / Modal / Sheet / Toast, etc.
+- Do not build a second Undo system.
+- Do not prebuild a huge Turn State Machine.
+- Unsupported semantics must be explicit and never guessed.
 
-1. Add a Pure Rule Core beside the existing helpers.
-2. Do not replace the current online persistence path during the first slice.
-3. Use Shadow Mode to compare Rule Core predictions with existing manual behavior.
-4. Migrate from full-state submission toward semantic Action submission only after Shadow validation.
-5. Preserve current hidden-information boundaries.
+## Current strategic change
 
-## First vertical slice
+Before moving deeper into Decision System, complex effects, or advanced rule automation, perform a dedicated convenience-feature design phase.
 
-Use **DRAW**.
+This phase is now a required design gate.
 
-Implementation status: **SHADOW ONLY** on `feature/motokiyo-rule-core-draw-shadow`.
-The production DRAW path and online authority remain unchanged.
+The project must deeply examine:
+- existing convenience features
+- missing convenience features
+- interaction-cost reduction
+- error prevention
+- rule explanation / transparency
+- selection assistance
+- online-play clarity
+- current-effect visualization
+- action history
+- mobile ergonomics
+- Manual / Assist / Auto usefulness
 
-Reason:
-- existing small legacy helper `drawRandomCard`
-- official comprehensive rules have explicit draw rules
-- naturally proves Attempt vs Result
-- useful hidden-information boundary case
-- replacement/trigger/stabilization can be exposed as future hooks rather than guessed
+The convenience-feature phase should be completed before finalizing the reusable UI interaction system.
 
-## Current blocker
+## Immediate next task
 
-ChatGPT GitHub read access works, but branch creation returned HTTP 403 (`Resource not accessible by integration`).
-Repository writes should therefore be performed via the user's locally authenticated Codex/Git until that permission changes.
+The next chat should begin with:
+`CONVENIENCE_FEATURE_DEEP_DIVE`
 
-No application code or production Supabase data has been modified by ChatGPT.
+This is design/research first, not implementation.
+
+After that review, update:
+- convenience catalog
+- UI interaction matrix
+- implementation roadmap
+- any affected Effect / Status / Decision / Presentation catalogs
+
+Only then decide whether to proceed first with DRAW Production Shadow, UI foundation, or the next primitive.
+
+## Safety constraints
+
+Do not:
+- switch production DRAW to Rule Core yet
+- change online authority
+- create speculative DB tables for Shadow telemetry
+- treat visual markers as rules
+- implement card-specific popup sprawl
+- let AI guess unknown rulings
+- move into complex Replacement / Trigger UI before the convenience/UI design gate is satisfied
