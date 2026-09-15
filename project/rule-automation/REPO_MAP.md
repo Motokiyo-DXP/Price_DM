@@ -1,0 +1,65 @@
+# REPO_MAP — Rule Automation Scope
+
+Baseline: `main@94b1aae620794b18c6f27052d276886c60933c90`
+
+| Path | Current responsibility | Rule automation role |
+|---|---|---|
+| `app/playtest/[deckId]/page.tsx` | solo entry / deck loading | composition layer |
+| `components/playtest-board.tsx` | manual-play UI, gestures, state orchestration | presentation / compatibility adapter |
+| `lib/playfield-board.ts` | board types + transformations | legacy domain model; extraction source |
+| `lib/playfield-interactions.ts` | zones, move defaults, gestures, mana checks, shortcuts | split UI policy from game policy over time |
+| `lib/playtest-initial-state.ts` | controlled vs initial state | compatibility helper |
+| `app/rooms/[roomId]/battle/page.tsx` | online battle server entry | composition layer |
+| `components/online-match-board.tsx` | realtime, RPC, history, controlled board | online infrastructure adapter |
+| `lib/online-room-snapshot.ts` | versioned snapshot acceptance | snapshot adapter |
+| `lib/online-board-change.ts` | state diff -> human notice | presentation projection |
+| `lib/online-card-operation.ts` | realtime interaction signal parsing | presence/presentation |
+| `app/rooms/actions.ts` | room/lobby server actions | lifecycle outside Rule Core |
+| `supabase/migrations/*online*` | authoritative room state/security/history | persistence/security adapter |
+| `lib/playfield-board.test.mjs` | manual board regression tests | legacy regression oracle |
+| `lib/playfield-interactions.test.mjs` | interaction tests | separate UI-contract tests later |
+| `lib/online-room-snapshot.test.mjs` | snapshot tests | online adapter regression |
+| `CARD_DB_IMPORT_SPEC.md` | card DB/import analysis | reuse data design |
+
+## Primary seam
+
+Current:
+
+```text
+PlaytestBoard
+  -> playfield-board helper
+  -> next BoardState
+```
+
+Target during Shadow:
+
+```text
+UI Intent
+  -> Compatibility Action Adapter
+      -> legacy helper (production)
+      -> Pure Rule Core (shadow)
+  -> Shadow Comparator
+```
+
+## Online compatibility path
+
+Current generic online update:
+
+```text
+PlaytestBoard computes next BoardState
+  -> OnlineMatchBoard.saveState(next)
+  -> update_game_room_state(expectedVersion, whole state)
+  -> server hydrate/check/persist
+  -> state_version++
+  -> realtime refresh
+```
+
+Keep this path during the first Rule Core slice.
+
+## Drift rule
+
+Each future Codex task reports:
+
+`repoMapImpact: NONE | UPDATE_REQUIRED`
+
+Update this file only when responsibilities, public interfaces, dependency directions, or core/online boundaries materially change.
