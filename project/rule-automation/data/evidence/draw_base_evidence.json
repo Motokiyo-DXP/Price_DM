@@ -1,0 +1,67 @@
+{
+  "evidenceSetId": "DRAW_BASE_2026_09_16",
+  "ruleVersion": "1.51",
+  "status": "RULE_VERIFIED_BASE_ONLY",
+  "sources": [
+    {
+      "sourceId": "dm_comprehensive_rules_1_51",
+      "references": [
+        "104.2b",
+        "114.1",
+        "114.2",
+        "114.3",
+        "114.4",
+        "114.5",
+        "114.6",
+        "114.6a"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "DRAW-001",
+      "claim": "A draw takes the top card of the player's own deck into that player's hand.",
+      "supports": [
+        "114.1"
+      ]
+    },
+    {
+      "id": "DRAW-002",
+      "claim": "Multiple draws are repeated single-card draws.",
+      "supports": [
+        "114.2"
+      ]
+    },
+    {
+      "id": "DRAW-003",
+      "claim": "A deck-to-hand move not instructed as a draw is not automatically a draw.",
+      "supports": [
+        "114.3"
+      ]
+    },
+    {
+      "id": "DRAW-004",
+      "claim": "Draw replacement and draw-trigger timing exist and require future hooks.",
+      "supports": [
+        "114.4",
+        "114.5"
+      ]
+    },
+    {
+      "id": "DRAW-005",
+      "claim": "An empty-deck draw may be attempted; normally no card is drawn.",
+      "supports": [
+        "114.6",
+        "114.6a"
+      ]
+    },
+    {
+      "id": "DRAW-006",
+      "claim": "Deck-empty game termination is a separate follow-up concern for full stabilization.",
+      "supports": [
+        "104.2b"
+      ]
+    }
+  ],
+  "scopeLimit": "Base DRAW semantics only; this does not claim replacement, trigger, or stabilization support."
+}
