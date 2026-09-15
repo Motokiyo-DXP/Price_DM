@@ -8,6 +8,10 @@ Baseline: `main@94b1aae620794b18c6f27052d276886c60933c90`
 | `components/playtest-board.tsx` | manual-play UI, gestures, state orchestration | presentation / compatibility adapter |
 | `lib/playfield-board.ts` | board types + transformations | legacy domain model; extraction source |
 | `lib/playfield-interactions.ts` | zones, move defaults, gestures, mana checks, shortcuts | split UI policy from game policy over time |
+| `lib/rule-engine/types.ts`, `actions.ts`, `events.ts`, `engine.ts` | Pure Rule Core contracts and action dispatch | deterministic semantic rule boundary |
+| `lib/rule-engine/primitives/draw.ts` | immutable single-card DRAW primitive | first Vertical Slice |
+| `lib/rule-engine/adapters/legacy-board.ts` | DRAW-only legacy projection, compatibility mapping, Shadow comparison | legacy boundary adapter |
+| `lib/rule-engine/draw*.test.mjs` | DRAW semantics and test-only legacy Shadow checks | Stage 4 validation |
 | `lib/playtest-initial-state.ts` | controlled vs initial state | compatibility helper |
 | `app/rooms/[roomId]/battle/page.tsx` | online battle server entry | composition layer |
 | `components/online-match-board.tsx` | realtime, RPC, history, controlled board | online infrastructure adapter |

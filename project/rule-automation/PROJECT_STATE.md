@@ -12,7 +12,7 @@ Rule design: Duel Masters Rule Automation v5
 - Stage 1 Repository Discovery: complete (read-only)
 - Stage 2 Boundary Design: draft complete
 - Stage 3 Data Acquisition Spike: initial official-source spike complete
-- Stage 4 First Vertical Slice: not implemented
+- Stage 4 First Vertical Slice: DRAW Pure Rule Core + test-only Shadow implemented on branch
 
 ## Key findings
 
@@ -35,6 +35,9 @@ Rule design: Duel Masters Rule Automation v5
 ## First vertical slice
 
 Use **DRAW**.
+
+Implementation status: **SHADOW ONLY** on `feature/motokiyo-rule-core-draw-shadow`.
+The production DRAW path and online authority remain unchanged.
 
 Reason:
 - existing small legacy helper `drawRandomCard`
