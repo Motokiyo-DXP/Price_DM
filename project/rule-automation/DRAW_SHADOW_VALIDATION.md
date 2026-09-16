@@ -45,7 +45,7 @@ The projected Rule Core result strictly matches Legacy DRAW for the relevant dec
 | `npm run typecheck` | PASS |
 | `npm run test:playfield` | PASS |
 | `npm run build` | PASS |
-| Minimal CI / GitHub Actions | PASS — PR #7 run `35044455738` |
+| Minimal CI / GitHub Actions | PASS — PR #7 run `35044549756` |
 
 The local build completed with existing Autoprefixer compatibility warnings and a non-fatal Supabase-not-configured message during static generation.
 
