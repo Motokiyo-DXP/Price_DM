@@ -25,7 +25,6 @@ type DiscardEventBase = Readonly<{
   cardInstanceId: string;
   sourceZone: "hand";
   proposedDestinationZone: "graveyard";
-  finalDestinationZone: "graveyard";
   reason: "DISCARD";
 }>;
 
@@ -35,6 +34,7 @@ export type DiscardAttemptedEvent = DiscardEventBase & Readonly<{
 
 export type CardDiscardedEvent = DiscardEventBase & Readonly<{
   type: "CARD_DISCARDED";
+  finalDestinationZone: "graveyard";
 }>;
 
 export type RuleEvent =

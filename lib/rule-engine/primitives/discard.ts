@@ -14,14 +14,6 @@ export function discardOne<TPayload>(
   if (index < 0) throw new RangeError("DISCARD precondition failed: card is not in actor's hand.");
 
   const card = player.hand[index];
-  const move = {
-    player: action.actor,
-    cardInstanceId: action.cardInstanceId,
-    sourceZone: "hand" as const,
-    proposedDestinationZone: "graveyard" as const,
-    finalDestinationZone: "graveyard" as const,
-    reason: "DISCARD" as const,
-  };
   return {
     state: {
       ...input,
@@ -34,6 +26,21 @@ export function discardOne<TPayload>(
         },
       },
     },
-    events: [{ type: "DISCARD_ATTEMPTED", ...move }, { type: "CARD_DISCARDED", ...move }],
+    events: [{
+      type: "DISCARD_ATTEMPTED",
+      player: action.actor,
+      cardInstanceId: action.cardInstanceId,
+      sourceZone: "hand",
+      proposedDestinationZone: "graveyard",
+      reason: "DISCARD",
+    }, {
+      type: "CARD_DISCARDED",
+      player: action.actor,
+      cardInstanceId: action.cardInstanceId,
+      sourceZone: "hand",
+      proposedDestinationZone: "graveyard",
+      finalDestinationZone: "graveyard",
+      reason: "DISCARD",
+    }],
   };
 }
