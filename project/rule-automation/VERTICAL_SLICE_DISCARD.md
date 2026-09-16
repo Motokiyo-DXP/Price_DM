@@ -1,8 +1,8 @@
 # Next Vertical Slice — DISCARD
 
-Status: PURE CORE + TEST SHADOW IMPLEMENTED
+Status: TEST SHADOW VALIDATED / PRODUCTION SHADOW DEFERRED
 
-The single-card Pure Rule Core, minimal `graveyard` state, and test-only Legacy Shadow are implemented on a feature branch. Production Shadow and PlaytestBoard wiring remain deferred; this slice is not yet production-validated.
+Pure Core: COMPLETE. Test-only Shadow: VALIDATED. Production Shadow: DEFERRED — no explicit semantic DISCARD intent in the existing UI path. See [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md). This slice is not production-validated.
 
 Rule version: Duel Masters Comprehensive Game Rules Ver.1.51
 
@@ -143,6 +143,6 @@ The following are intentionally outside this slice and are not failures:
 
 ## Implementation gate
 
-Next authorized step: **Production Shadow feasibility review + test-shadow validation**. Production Shadow implementation is **not authorized** until an explicit semantic DISCARD intent source exists; PlaytestBoard wiring remains deferred.
+Production Shadow feasibility was reviewed and deferred. Production Shadow implementation is **not authorized** until an explicit semantic DISCARD intent source exists; PlaytestBoard wiring remains deferred. The next Vertical Slice requires a separate `AI_DESIGN + HUMAN_GATE` selection.
 
 `repoMapImpact: UPDATE_REQUIRED` — the Rule Core state, DISCARD primitive/tests, and Legacy adapter responsibilities have been added to `REPO_MAP.md`.

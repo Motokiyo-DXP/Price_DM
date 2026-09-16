@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@9f94e1aacba9cb05da9f715ffbfa0b6159c7439d`
+Baseline: `main@b08d29da68ca82a340fa971d20cd3b302222115e`
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
@@ -20,7 +20,9 @@ Rule design: Duel Masters Rule Automation v5
 - R2 DRAW Shadow Validation: COMPLETE / MAIN via PR #7
 - Rule Source Watcher v1: COMPLETE / MAIN via PR #8
 - R3 Next Vertical Slice: DISCARD SELECTED / DESIGN COMPLETE via PR #9
-- R4 DISCARD Pure Rule Core + test-only Shadow: implemented on feature branch; PR #10 validation passed, merge pending
+- R4 DISCARD Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #10
+- R5 DISCARD Production Shadow feasibility: DEFERRED_NO_SEMANTIC_INTENT
+- R6 DISCARD test-only Shadow Validation: validated on feature branch; PR #11 CI passed, merge pending
 
 ## Key findings
 
@@ -64,9 +66,9 @@ Reason:
 
 Use **DISCARD**: one valid, already-selected card moves from the acting player's hand to that player's graveyard.
 
-Status: Pure Rule Core and test-only Shadow implemented on feature branch. Evidence and scope are defined in [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md) and `data/evidence/discard_base_evidence.json`.
+Status: Pure Rule Core and test-only Shadow validated; Production Shadow deferred because the existing UI path carries no semantic DISCARD intent. See [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md), [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md), and `data/evidence/discard_base_evidence.json`.
 
-Next: PR #10 merge, then Production Shadow feasibility review. Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
+Next: merge validation PR #11, then select a future Vertical Slice separately through `AI_DESIGN + HUMAN_GATE`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
 
 ## Source of truth
 

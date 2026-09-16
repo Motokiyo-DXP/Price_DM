@@ -94,14 +94,17 @@ AIに一度仕組みを作らせる
 - R0 Rebaseline: COMPLETE
 - R1 Stage 4.5 DRAW Production Shadow: COMPLETE
 - R2 DRAW Shadow Validation: COMPLETE
-- R3 Next Vertical Slice Selection: DISCARD SELECTED / DESIGN READY
-- R4 DISCARD Pure Rule Core + test-only Shadow: NEXT
-- R5 DISCARD Production Shadow feasibility: after semantic-intent review
-- R6 DISCARD Validation: after the authorized implementation stages
+- R3 DISCARD Design: COMPLETE
+- R4 DISCARD Pure Rule Core + test-only Shadow: COMPLETE
+- R5 DISCARD Production Shadow feasibility: DEFERRED_NO_SEMANTIC_INTENT
+- R6 DISCARD Test Shadow Validation: validated on feature branch; PR #11 CI passed, merge pending
+- Next: Next Vertical Slice Selection (`AI_DESIGN + HUMAN_GATE`, separate decision)
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
 
 DISCARDは1枚のalready-selected cardについて`hand -> graveyard`のMove Semanticsを検証する。Pure Rule Coreとtest-only Shadowを先行し、generic manual moveとsemantic DISCARD intentを識別できるまでProduction Shadow接続を行わない。
+
+既存Production UIにsemantic DISCARD intentがないため、R5は意図的にDeferredとする。この未実装はRule本筋全体のBlockerではない。次Sliceは本PRで選定せず、別の`AI_DESIGN + HUMAN_GATE`で比較する。
 
 ### Track C — CI
 
@@ -275,13 +278,13 @@ Rule本筋:
 ```text
 DISCARD Design (COMPLETE)
 ↓
-DISCARD Pure Rule Core
+DISCARD Pure Rule Core + test-only Shadow (COMPLETE)
 ↓
-test-only Shadow
+Production Shadow feasibility (DEFERRED_NO_SEMANTIC_INTENT)
 ↓
-Production Shadow feasibility
+Test-only Shadow Validation (feature branch; PR #11 CI passed, merge pending)
 ↓
-Validation
+Next Vertical Slice Selection (separate AI_DESIGN + HUMAN_GATE)
 ```
 
 Parallel infrastructure tracks:
