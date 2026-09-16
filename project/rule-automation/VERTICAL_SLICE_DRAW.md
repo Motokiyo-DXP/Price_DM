@@ -1,6 +1,8 @@
 # Stage 4 Vertical Slice — DRAW
 
-Status: DESIGN READY
+Status: VALIDATED SHADOW SLICE
+
+The Pure Rule Core, test-only Shadow, and Production Shadow are complete. Validation evidence is recorded in [`DRAW_SHADOW_VALIDATION.md`](./DRAW_SHADOW_VALIDATION.md).
 
 ## Scope
 

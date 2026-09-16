@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@fae24652e76f0d9968c6aecfa147b3f47be81679`
+Baseline: `main@fec9564dc5aa254364d6c1196a621e297993527b`
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
@@ -16,7 +16,8 @@ Rule design: Duel Masters Rule Automation v5
 - Stage 4 DRAW test-only Shadow: complete and merged to `main` via PR #2
 - Convenience Architecture Review: complete; no longer a Rule Core blocker
 - Stage 4.5 DRAW Production Shadow: complete and merged to `main` via PR #5
-- Minimal CI: implemented on feature branch; PR validation passed, merge pending
+- Minimal CI: complete and merged to `main` via PR #6
+- R2 DRAW Shadow Validation: validated on feature branch; PR/CI pending
 
 ## Key findings
 
@@ -43,6 +44,8 @@ Rule design: Duel Masters Rule Automation v5
 Use **DRAW**.
 
 Implementation status: the Pure Rule Core and test-only Shadow are complete and merged to `main` via PR #2. Stage 4.5 DRAW Production Shadow is complete and merged to `main` via PR #5.
+
+R2 validation confirms the complete DRAW path from Pure Rule Core through test-only Shadow and Production Shadow. See [`DRAW_SHADOW_VALIDATION.md`](./DRAW_SHADOW_VALIDATION.md) for the evidence record.
 
 During Stage 4.5, only the Legacy result has Production authority. The Rule Core result is comparison-only. The production Online authority and hidden-information boundary remain unchanged.
 
