@@ -46,7 +46,7 @@ The TAP comparator projects mana card orientation and presentation fields; warni
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS |
 | `git diff --check` | PASS |
-| PR GitHub Actions | PASS — PR #16 run `35079481508` (initial validation commit) |
+| PR GitHub Actions | PASS — PR #16 run `35079598627` (initial validation commit) |
 
 One assertion was added to the existing Production Shadow test to verify the exact `MISMATCH` warning payload. No Production code changed.
 
