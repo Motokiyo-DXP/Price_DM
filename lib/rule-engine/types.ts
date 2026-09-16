@@ -8,6 +8,7 @@ export type RuleCard<TPayload = unknown> = Readonly<{
 export type RulePlayerState<TPayload = unknown> = Readonly<{
   deck: readonly RuleCard<TPayload>[];
   hand: readonly RuleCard<TPayload>[];
+  graveyard: readonly RuleCard<TPayload>[];
 }>;
 
 export type RuleState<TPayload = unknown> = Readonly<{

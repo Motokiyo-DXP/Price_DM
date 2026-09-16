@@ -20,7 +20,26 @@ export type DrawFailedNoCardEvent = DrawEventBase & Readonly<{
   type: "DRAW_FAILED_NO_CARD";
 }>;
 
+type DiscardEventBase = Readonly<{
+  player: PlayerId;
+  cardInstanceId: string;
+  sourceZone: "hand";
+  proposedDestinationZone: "graveyard";
+  reason: "DISCARD";
+}>;
+
+export type DiscardAttemptedEvent = DiscardEventBase & Readonly<{
+  type: "DISCARD_ATTEMPTED";
+}>;
+
+export type CardDiscardedEvent = DiscardEventBase & Readonly<{
+  type: "CARD_DISCARDED";
+  finalDestinationZone: "graveyard";
+}>;
+
 export type RuleEvent =
   | DrawAttemptedEvent
   | CardDrawnEvent
-  | DrawFailedNoCardEvent;
+  | DrawFailedNoCardEvent
+  | DiscardAttemptedEvent
+  | CardDiscardedEvent;

@@ -1,6 +1,8 @@
 # Next Vertical Slice — DISCARD
 
-Status: DESIGN READY
+Status: PURE CORE + TEST SHADOW IMPLEMENTED
+
+The single-card Pure Rule Core, minimal `graveyard` state, and test-only Legacy Shadow are implemented on a feature branch. Production Shadow and PlaytestBoard wiring remain deferred; this slice is not yet production-validated.
 
 Rule version: Duel Masters Comprehensive Game Rules Ver.1.51
 
@@ -75,7 +77,7 @@ reason = DISCARD
 
 The first implementation may model only what this primitive needs. It must preserve enough information in the resolution/event boundary to distinguish the proposed and final destination later, but it must not introduce a generic Move Engine at this stage.
 
-Attempt/Result remains explicit: `DISCARD_ATTEMPTED` records the operation intent; `CARD_DISCARDED` records the completed move and the preserved card instance. Replacement could eventually change `finalDestination`, but no Replacement Processor or final representation is selected in this gate.
+Attempt/Result remains explicit: `DISCARD_ATTEMPTED` records only the move proposal (source and proposed destination); `CARD_DISCARDED` records the completed move, its final destination, and the preserved card instance. Replacement could eventually change the final destination, but no Replacement Processor is selected in this gate.
 
 ## RuleState change policy
 
@@ -141,6 +143,6 @@ The following are intentionally outside this slice and are not failures:
 
 ## Implementation gate
 
-The next authorized implementation step is **DISCARD Pure Rule Core + test-only Shadow**. Production code, PlaytestBoard wiring, and Production Shadow are not authorized by this design document.
+Next authorized step: **Production Shadow feasibility review + test-shadow validation**. Production Shadow implementation is **not authorized** until an explicit semantic DISCARD intent source exists; PlaytestBoard wiring remains deferred.
 
-`repoMapImpact: NONE`
+`repoMapImpact: UPDATE_REQUIRED` — the Rule Core state, DISCARD primitive/tests, and Legacy adapter responsibilities have been added to `REPO_MAP.md`.

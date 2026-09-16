@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@f6719988a592a797b7948212d8bad9f794f734c9`
+Baseline: `main@9f94e1aacba9cb05da9f715ffbfa0b6159c7439d`
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
@@ -19,7 +19,8 @@ Rule design: Duel Masters Rule Automation v5
 - Minimal CI: complete and merged to `main` via PR #6
 - R2 DRAW Shadow Validation: COMPLETE / MAIN via PR #7
 - Rule Source Watcher v1: COMPLETE / MAIN via PR #8
-- R3 Next Vertical Slice: DISCARD SELECTED
+- R3 Next Vertical Slice: DISCARD SELECTED / DESIGN COMPLETE via PR #9
+- R4 DISCARD Pure Rule Core + test-only Shadow: implemented on feature branch; PR #10 validation passed, merge pending
 
 ## Key findings
 
@@ -63,9 +64,9 @@ Reason:
 
 Use **DISCARD**: one valid, already-selected card moves from the acting player's hand to that player's graveyard.
 
-Status: DESIGN READY. Evidence and scope are defined in [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md) and `data/evidence/discard_base_evidence.json`.
+Status: Pure Rule Core and test-only Shadow implemented on feature branch. Evidence and scope are defined in [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md) and `data/evidence/discard_base_evidence.json`.
 
-Next: DISCARD Pure Rule Core + test-only Shadow. Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
+Next: PR #10 merge, then Production Shadow feasibility review. Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
 
 ## Source of truth
 

@@ -1,6 +1,7 @@
-import type { DrawAction, RuleAction } from "./actions.ts";
+import type { DiscardAction, DrawAction, RuleAction } from "./actions.ts";
 import type { RuleEvent } from "./events.ts";
 import { drawOne } from "./primitives/draw.ts";
+import { discardOne } from "./primitives/discard.ts";
 import type { ResolutionStatus, RuleState, UnsupportedCapability } from "./types.ts";
 
 export type RuleResolution<TPayload> = Readonly<{
@@ -36,6 +37,14 @@ function resolveDraw<TPayload>(
   };
 }
 
+function resolveDiscard<TPayload>(
+  input: RuleState<TPayload>,
+  action: DiscardAction,
+): RuleResolution<TPayload> {
+  const result = discardOne(input, action);
+  return { action, ...result, status: "RESOLVED", unsupported: [] };
+}
+
 export function resolveRuleAction<TPayload>(
   input: RuleState<TPayload>,
   action: RuleAction,
@@ -43,5 +52,7 @@ export function resolveRuleAction<TPayload>(
   switch (action.type) {
     case "DRAW":
       return resolveDraw(input, action);
+    case "DISCARD":
+      return resolveDiscard(input, action);
   }
 }

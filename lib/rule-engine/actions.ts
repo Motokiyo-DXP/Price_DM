@@ -7,4 +7,11 @@ export type DrawAction = Readonly<{
   cause: RuleCause;
 }>;
 
-export type RuleAction = DrawAction;
+export type DiscardAction = Readonly<{
+  type: "DISCARD";
+  actor: PlayerId;
+  cardInstanceId: string;
+  cause: RuleCause;
+}>;
+
+export type RuleAction = DrawAction | DiscardAction;
