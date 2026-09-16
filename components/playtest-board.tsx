@@ -49,6 +49,7 @@ import {
   shuffleSelectedCards,
   shuffleStackCards,
   stackOnHorizontalRoot,
+  toggleLegacyCardTapState,
   untapZoneCards,
   unbundleStack,
   type BoardState,
@@ -1620,7 +1621,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   function toggleTap(owner: PlayerId, zone: PlayZone, cardId: string) {
     if (localPlayer && owner !== localPlayer) setInteractionNotice("相手のカードを操作しています");
     if (zone === "deck" || zone === "hand" || zone === "shield") return;
-    commit((current) => ({ ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: current.players[owner][zone].map((card) => card.instanceId === cardId ? { ...card, tapped: !card.tapped, markers: card.tapped ? card.markers?.filter((marker) => marker !== "keep_tapped") : card.markers } : card) } } }));
+    commit((current) => toggleLegacyCardTapState(current, owner, zone, cardId, { clearKeepTappedOnUntap: true }));
   }
 
   function executeYobinion(owner: PlayerId, sourceId: string, dragonOnly: boolean) {
@@ -1720,7 +1721,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     if (action === "details") setDetail(markingMenu.card);
     if (action === "inspect") setInspectionConfirm({ cardId: markingMenu.card.instanceId, owner: markingMenu.owner });
     if (action === "publish") setCardFace(markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, "face_up");
-    if (action === "toggle_tap") commit((current) => ({ ...current, players: { ...current.players, [markingMenu.owner]: { ...current.players[markingMenu.owner], [markingMenu.zone]: current.players[markingMenu.owner][markingMenu.zone].map((card) => card.instanceId === markingMenu.card.instanceId ? { ...card, tapped: !card.tapped } : card) } } }));
+    if (action === "toggle_tap") commit((current) => toggleLegacyCardTapState(current, markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, { clearKeepTappedOnUntap: false }));
     if (action === "face_up") setCardFace(markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, "face_up");
     if (action === "face_down") setCardFace(markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, "face_down");
     if (action === "flip") {
