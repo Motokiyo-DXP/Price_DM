@@ -16,7 +16,7 @@ Rule design: Duel Masters Rule Automation v5
 - Stage 4 DRAW test-only Shadow: complete and merged to `main` via PR #2
 - Convenience Architecture Review: complete; no longer a Rule Core blocker
 - Stage 4.5 DRAW Production Shadow: complete and merged to `main` via PR #5
-- Minimal CI: implemented on feature branch; PR validation pending
+- Minimal CI: implemented on feature branch; PR validation passed, merge pending
 
 ## Key findings
 
