@@ -26,7 +26,8 @@ Rule design: Duel Masters Rule Automation v5
 - R7 TAP Design Gate: COMPLETE / MAIN via PR #12
 - R8 TAP Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #13
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
-- R10 TAP Production Shadow: implemented on `feature/motokiyo-tap-production-shadow` from `main@39cb2a99d5f8cad77142bb337a1933cf997c0d90`; validation pending
+- R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
+- R11 TAP Production Shadow Validation: validated on `feature/motokiyo-tap-validation`; PR #16 validation passed, merge pending
 
 ## Key findings
 
@@ -72,7 +73,7 @@ Reason:
 
 Status: Pure Rule Core **COMPLETE**; test-only Shadow **VALIDATED**; Production Shadow **DEFERRED_NO_SEMANTIC_INTENT**. R6 validation is on `main` via PR #11. See [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md), [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md), and `data/evidence/discard_base_evidence.json`.
 
-Next Vertical Slice: **TAP PURE CORE + TEST SHADOW COMPLETE / MAIN** via PR #13. Initial scope is one already-selected card in the actor's mana zone. R9 extracts the behavior-preserving Legacy TAP helper on its feature branch; R10 Production Shadow remains pending. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md) and `data/evidence/tap_base_evidence.json`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
+TAP Vertical Slice: Production Shadow validation is complete on the R11 feature branch for one existing, untapped mana card's explicit single-card TAP. Legacy remains Production authority; Rule Core is comparison-only. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md), [`TAP_SHADOW_VALIDATION.md`](./TAP_SHADOW_VALIDATION.md), and `data/evidence/tap_base_evidence.json`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move. Next Vertical Slice Selection requires a separate AI_DESIGN + HUMAN_GATE decision.
 
 ## Source of truth
 
