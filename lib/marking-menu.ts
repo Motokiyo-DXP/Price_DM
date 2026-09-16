@@ -17,6 +17,7 @@ export type MarkingMenuAction =
   | "effect_warning"
   | "deselect"
   | "inspect"
+  | "view_deck"
   | "publish"
   | "open_stack"
   | "unbundle_stack"
