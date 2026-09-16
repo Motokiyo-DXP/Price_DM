@@ -37,9 +37,24 @@ export type CardDiscardedEvent = DiscardEventBase & Readonly<{
   finalDestinationZone: "graveyard";
 }>;
 
+type TapEventBase = Readonly<{
+  player: PlayerId;
+  cardInstanceId: string;
+  zone: "mana";
+}>;
+
+export type TapAttemptedEvent = TapEventBase & Readonly<{ type: "TAP_ATTEMPTED" }>;
+export type CardTappedEvent = TapEventBase & Readonly<{ type: "CARD_TAPPED" }>;
+export type TapNoStateChangeAlreadyTappedEvent = TapEventBase & Readonly<{
+  type: "TAP_NO_STATE_CHANGE_ALREADY_TAPPED";
+}>;
+
 export type RuleEvent =
   | DrawAttemptedEvent
   | CardDrawnEvent
   | DrawFailedNoCardEvent
   | DiscardAttemptedEvent
-  | CardDiscardedEvent;
+  | CardDiscardedEvent
+  | TapAttemptedEvent
+  | CardTappedEvent
+  | TapNoStateChangeAlreadyTappedEvent;

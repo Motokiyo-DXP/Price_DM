@@ -23,7 +23,10 @@ Rule design: Duel Masters Rule Automation v5
 - R4 DISCARD Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #10
 - R5 DISCARD Production Shadow feasibility: DEFERRED_NO_SEMANTIC_INTENT
 - R6 DISCARD Test Shadow Validation: COMPLETE / MAIN via PR #11
-- R7 TAP Vertical Slice Design Gate: TAP SELECTED / DESIGN READY
+- R7 TAP Design Gate: COMPLETE / MAIN via PR #12
+- R8 TAP Pure Rule Core + test-only Shadow: implemented on feature branch; PR/CI pending
+- R9 behavior-preserving Legacy TAP helper extraction: next
+- R10 TAP Production Shadow: after R9
 
 ## Key findings
 
@@ -69,7 +72,7 @@ Reason:
 
 Status: Pure Rule Core **COMPLETE**; test-only Shadow **VALIDATED**; Production Shadow **DEFERRED_NO_SEMANTIC_INTENT**. R6 validation is on `main` via PR #11. See [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md), [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md), and `data/evidence/discard_base_evidence.json`.
 
-Next Vertical Slice: **TAP SELECTED / DESIGN READY**. Initial scope is one already-selected card in the actor's mana zone. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md) and `data/evidence/tap_base_evidence.json`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
+Next Vertical Slice: **TAP PURE CORE + TEST SHADOW IMPLEMENTED** on the feature branch. Initial scope is one already-selected card in the actor's mana zone. R9 extracts the behavior-preserving Legacy TAP helper, then R10 adds Production Shadow. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md) and `data/evidence/tap_base_evidence.json`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
 
 ## Source of truth
 

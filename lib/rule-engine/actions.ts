@@ -14,4 +14,12 @@ export type DiscardAction = Readonly<{
   cause: RuleCause;
 }>;
 
-export type RuleAction = DrawAction | DiscardAction;
+export type TapAction = Readonly<{
+  type: "TAP";
+  actor: PlayerId;
+  cardInstanceId: string;
+  zone: "mana";
+  cause: RuleCause;
+}>;
+
+export type RuleAction = DrawAction | DiscardAction | TapAction;

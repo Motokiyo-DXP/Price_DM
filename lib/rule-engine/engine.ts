@@ -1,7 +1,8 @@
-import type { DiscardAction, DrawAction, RuleAction } from "./actions.ts";
+import type { DiscardAction, DrawAction, RuleAction, TapAction } from "./actions.ts";
 import type { RuleEvent } from "./events.ts";
 import { drawOne } from "./primitives/draw.ts";
 import { discardOne } from "./primitives/discard.ts";
+import { tapOne } from "./primitives/tap.ts";
 import type { ResolutionStatus, RuleState, UnsupportedCapability } from "./types.ts";
 
 export type RuleResolution<TPayload> = Readonly<{
@@ -45,6 +46,11 @@ function resolveDiscard<TPayload>(
   return { action, ...result, status: "RESOLVED", unsupported: [] };
 }
 
+function resolveTap<TPayload>(input: RuleState<TPayload>, action: TapAction): RuleResolution<TPayload> {
+  const result = tapOne(input, action);
+  return { action, ...result, status: "RESOLVED", unsupported: [] };
+}
+
 export function resolveRuleAction<TPayload>(
   input: RuleState<TPayload>,
   action: RuleAction,
@@ -54,5 +60,7 @@ export function resolveRuleAction<TPayload>(
       return resolveDraw(input, action);
     case "DISCARD":
       return resolveDiscard(input, action);
+    case "TAP":
+      return resolveTap(input, action);
   }
 }

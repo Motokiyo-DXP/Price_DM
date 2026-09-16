@@ -8,11 +8,12 @@ Current implementation baseline: see `PROJECT_STATE.md`.
 | `components/playtest-board.tsx` | manual-play UI, gestures, state orchestration | presentation / compatibility adapter |
 | `lib/playfield-board.ts` | board types + transformations | legacy domain model; extraction source |
 | `lib/playfield-interactions.ts` | zones, move defaults, gestures, mana checks, shortcuts | split UI policy from game policy over time |
-| `lib/rule-engine/types.ts`, `actions.ts`, `events.ts`, `engine.ts` | Pure Rule Core contracts, explicit deck/hand/graveyard state, and DRAW/DISCARD dispatch | deterministic semantic rule boundary |
+| `lib/rule-engine/types.ts`, `actions.ts`, `events.ts`, `engine.ts` | Pure Rule Core contracts, explicit deck/hand/graveyard and mana-only wrapper state, and DRAW/DISCARD/TAP dispatch | deterministic semantic rule boundary |
 | `lib/rule-engine/primitives/draw.ts` | immutable single-card DRAW primitive | first Vertical Slice |
 | `lib/rule-engine/primitives/discard.ts` | immutable, already-selected single-card DISCARD primitive | second Vertical Slice |
-| `lib/rule-engine/adapters/legacy-board.ts` | DRAW/DISCARD legacy projection, presentation normalization, Shadow comparison | legacy boundary adapter |
-| `lib/rule-engine/draw*.test.mjs`, `discard*.test.mjs` | DRAW/DISCARD semantics and test-only Legacy Shadow checks | Vertical Slice validation |
+| `lib/rule-engine/primitives/tap.ts` | immutable mana-only TAP primitive preserving card identity | third Vertical Slice |
+| `lib/rule-engine/adapters/legacy-board.ts` | DRAW/DISCARD/TAP legacy projection, TAP result application, presentation normalization, Shadow comparison | legacy boundary adapter |
+| `lib/rule-engine/draw*.test.mjs`, `discard*.test.mjs`, `tap*.test.mjs` | DRAW/DISCARD/TAP semantics and test-only Legacy Shadow checks | Vertical Slice validation |
 | `scripts/check-dm-rule-source.mjs` | official Rule Index metadata fetch, extraction, and manifest comparison | Rule Source Watcher v1 |
 | `scripts/check-dm-rule-source.test.mjs`, `scripts/fixtures/rule-source/*` | deterministic Rule Source Watcher validation | CI-safe source monitoring fixtures |
 | `lib/playtest-initial-state.ts` | controlled vs initial state | compatibility helper |
