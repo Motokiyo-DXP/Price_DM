@@ -6,7 +6,8 @@ import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-export default async function DeckSearchPage() {
+export default async function DeckSearchPage({ searchParams }: { searchParams: Promise<{ share?: string }> }) {
+  const { share } = await searchParams;
   const supabase = createServerSupabaseClient();
   const { data: decks, error } = supabase
     ? await supabase.from("decks").select("id, owner_id, name, description, format, updated_at, icon_canonical_card_id, deck_cards(canonical_card_id, card_print_id, quantity, zone, canonical_cards(name))").eq("visibility", "public").order("updated_at", { ascending: false }).limit(100)
@@ -45,5 +46,5 @@ export default async function DeckSearchPage() {
       updatedAt: deck.updated_at,
     };
   });
-  return <section className="directory-page deck-search-page"><div className="primary-page-title"><h1>デッキ検索</h1><p className="directory-lead">公開デッキを、デッキ名や収録カードから検索できます。</p><div className="directory-accent" aria-hidden="true" /></div>{error ? <p className="notice error">公開デッキを読み込めませんでした。</p> : <PublicDeckSearch decks={items} />}</section>;
+  return <section className="directory-page deck-search-page"><div className="primary-page-title"><h1>デッキ検索</h1><p className="directory-lead">公開デッキを、デッキ名や収録カードから検索できます。</p><div className="directory-accent" aria-hidden="true" /></div>{error ? <p className="notice error">公開デッキを読み込めませんでした。</p> : null}<PublicDeckSearch decks={items} shareToken={share ?? null} /></section>;
 }

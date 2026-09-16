@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { importPublicDeckAction } from "@/app/decks/actions";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { importPublicDeckAction, importSharedDeckAction } from "@/app/decks/actions";
 import { CardArtwork } from "@/components/card-artwork";
 import { resolveCardArtworkUrl } from "@/lib/card-image";
 
@@ -34,7 +35,8 @@ function formatName(format: string) {
   return "オリジナル";
 }
 
-export function PublicDeckSearch({ decks }: { decks: PublicDeckItem[] }) {
+export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[]; shareToken: string | null }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [format, setFormat] = useState("all");
   const [sort, setSort] = useState<"popular" | "updated">("popular");
@@ -44,9 +46,32 @@ export function PublicDeckSearch({ decks }: { decks: PublicDeckItem[] }) {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [otherOpen, setOtherOpen] = useState(false);
   const selectedId = useRef<string | null>(null);
+  const [sharedOpen, setSharedOpen] = useState(false);
+  useEffect(() => {
+    if (!shareToken) return;
+    let active = true;
+    selectedId.current = shareToken;
+    setSharedOpen(true);
+    setSelected({ id: shareToken, name: "共有デッキ", description: "", format: "", ownerName: "", cardNames: [], cardCount: 0, imageUrl: null, popularityScore: 0, updatedAt: "" });
+    setPreview(null);
+    setPreviewError("");
+    setOtherOpen(false);
+    fetch(`/api/shared-decks/${encodeURIComponent(shareToken)}/preview`).then(async (response) => {
+      if (!response.ok) throw new Error();
+      return response.json() as Promise<DeckPreview>;
+    }).then((data) => { if (active && selectedId.current === shareToken) setPreview(data); }).catch(() => { if (active && selectedId.current === shareToken) setPreviewError("デッキを読み込めませんでした。"); });
+    return () => { active = false; };
+  }, [shareToken]);
+  function closePreview() {
+    selectedId.current = null;
+    setSelected(null);
+    setExpandedImage(null);
+    if (sharedOpen) { setSharedOpen(false); router.replace("/deck-search"); }
+  }
   const otherZones = useMemo(() => [...new Set(preview?.cards.filter((card) => card.zone !== "main").map((card) => card.zone) ?? [])], [preview]);
   const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 40) ?? [];
   async function openPreview(deck: PublicDeckItem) {
+    setSharedOpen(false);
     selectedId.current = deck.id;
     setSelected(deck);
     setPreview(previewCache.get(deck.id) ?? null);
@@ -105,19 +130,17 @@ export function PublicDeckSearch({ decks }: { decks: PublicDeckItem[] }) {
                 <input name="destination" type="hidden" value="edit" />
                 <button aria-label={`${deck.name}をマイデッキに保存して編集`} type="submit"><span aria-hidden="true" className="ui-icon ui-icon-edit" />編集</button>
               </form>
-              <form action={importPublicDeckAction}>
-                <input name="deckId" type="hidden" value={deck.id} />
-                <input name="destination" type="hidden" value="solo" />
-                <button aria-label={`${deck.name}をマイデッキに保存してひとり回し`} type="submit"><span aria-hidden="true" className="ui-icon ui-icon-my-decks" />ひとり回し</button>
+              <form onSubmit={(event) => { event.preventDefault(); router.push(`/playtest/${deck.id}/opponent?source=public`); }}>
+                <button aria-label={`${deck.name}でひとり回し`} type="submit"><span aria-hidden="true" className="ui-icon ui-icon-my-decks" />ひとり回し</button>
               </form>
             </div>
           </article>
         ))}
       </div>
       {!shown.length ? <div className="history-empty"><strong>該当する公開デッキがありません</strong><p>デッキ名、カード名またはフォーマットを変えて検索してください。</p></div> : null}
-      {selected ? <div className="public-deck-preview-backdrop" onClick={(event) => { if (event.target === event.currentTarget) { selectedId.current = null; setSelected(null); } }}>
+      {selected ? <div className="public-deck-preview-backdrop" onClick={(event) => { if (event.target === event.currentTarget) closePreview(); }}>
         <section aria-label={`${selected.name}のデッキ確認`} aria-modal="true" className="public-deck-preview" role="dialog">
-          <header><h2>{preview?.name ?? selected.name}</h2><button aria-label="閉じる" onClick={() => { selectedId.current = null; setSelected(null); }} type="button">×</button></header>
+          <header><h2>{preview?.name ?? selected.name}</h2><button aria-label="閉じる" onClick={closePreview} type="button">×</button></header>
           {previewError ? <p role="alert">{previewError}</p> : null}
           {!preview && !previewError ? <p role="status">読み込み中…</p> : null}
           {preview ? <>
@@ -126,6 +149,9 @@ export function PublicDeckSearch({ decks }: { decks: PublicDeckItem[] }) {
               return card ? <button aria-label={`${card.name}を拡大`} key={index} onClick={(event) => { event.stopPropagation(); if (card.imageUrl) setExpandedImage(card.imageUrl); }} type="button"><CardArtwork imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 600px) 12vw, 100px" /></button> : <span className="public-deck-preview-empty" key={index} />;
             })}</div>
             <details onToggle={(event) => setOtherOpen(event.currentTarget.open)} open={otherOpen} className="public-deck-preview-other"><summary>その他</summary><div className="public-deck-preview-other-scroll">{otherZones.map((zone) => <section key={zone}><h3>{zoneName(zone)}</h3><div className="public-deck-preview-grid">{preview.cards.filter((card) => card.zone === zone).map((card, index) => <button aria-label={`${card.name}を拡大`} key={index} onClick={(event) => { event.stopPropagation(); if (card.imageUrl) setExpandedImage(card.imageUrl); }} type="button"><CardArtwork imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 600px) 12vw, 100px" /></button>)}</div></section>)}</div></details>
+            {sharedOpen && shareToken ? <div className="public-deck-preview-actions">
+              {(["edit", "solo"] as const).map((destination) => <form action={importSharedDeckAction} key={destination}><input name="shareToken" type="hidden" value={shareToken}/><input name="destination" type="hidden" value={destination}/><button type="submit"><span aria-hidden="true" className={`ui-icon ${destination === "edit" ? "ui-icon-edit" : "ui-icon-my-decks"}`}/>{destination === "edit" ? "編集" : "ひとり回し"}</button></form>)}
+            </div> : null}
           </> : null}
         </section>
       </div> : null}

@@ -100,6 +100,7 @@ export type Database = {
       }
       decks: {
         Row: {
+          share_token: string | null
           folder_id: string | null
           icon_canonical_card_id: number | null
           user_sort_order: number
@@ -113,6 +114,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          share_token?: string | null
           folder_id?: string | null
           icon_canonical_card_id?: number | null
           user_sort_order?: number
@@ -126,6 +128,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          share_token?: string | null
           folder_id?: string | null
           icon_canonical_card_id?: number | null
           user_sort_order?: number
@@ -1215,6 +1218,8 @@ export type Database = {
       }
     }
     Functions: {
+      get_or_create_deck_share_token: { Args: { p_deck_id: string }; Returns: string | null }
+      get_shared_deck: { Args: { p_share_token: string }; Returns: Json | null }
       deck_filter_options: {
         Args: Record<PropertyKey, never>
         Returns: Json

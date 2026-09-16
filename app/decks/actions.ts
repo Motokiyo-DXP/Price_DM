@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { parseDeckInput } from "@/lib/deck-validation";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 import type { DeckActionState } from "./action-state";
+import { isUuid as isShareUuid, parseSharedDeck, type SharedDeck } from "@/lib/shared-deck";
 
 export async function createDeckAction(
   _previousState: DeckActionState,
@@ -312,9 +313,12 @@ export async function moveDeckToFolderAction(formData: FormData) {
 
 export async function toggleDeckVisibilityAction(formData: FormData) {
   const deckId=formData.get("deckId"), visibility=formData.get("visibility")==="public"?"public":"private";
-  if(typeof deckId!=="string"||!/^[0-9a-f-]{36}$/i.test(deckId))return;
-  const auth=await authenticatedClient(); if(!auth)return;
-  await auth.supabase.from("decks").update({visibility,updated_at:new Date().toISOString()}).eq("id",deckId).eq("owner_id",auth.userId); revalidatePath("/decks");
+  if(typeof deckId!=="string"||!/^[0-9a-f-]{36}$/i.test(deckId))return {ok:false};
+  const auth=await authenticatedClient(); if(!auth)return {ok:false};
+  const {data,error}=await auth.supabase.from("decks").update({visibility,updated_at:new Date().toISOString()}).eq("id",deckId).eq("owner_id",auth.userId).select("id").maybeSingle();
+  if(error||!data)return {ok:false};
+  revalidatePath("/decks");
+  return {ok:true};
 }
 
 export async function setDeckIconAction(formData: FormData) {
@@ -348,7 +352,7 @@ export async function importPublicDeckAction(formData: FormData) {
   const deckId = formData.get("deckId");
   const destination = formData.get("destination");
   if (typeof deckId !== "string" || !/^[0-9a-f-]{36}$/i.test(deckId)) return;
-  if (destination !== "edit" && destination !== "solo") return;
+  if (destination !== "edit") return;
 
   const auth = await authenticatedClient();
   if (!auth) redirect(`/login?next=${encodeURIComponent("/deck-search")}`);
@@ -361,6 +365,14 @@ export async function importPublicDeckAction(formData: FormData) {
     .single();
   if (!source) return;
 
+  await importDeckCopy(auth, source, destination);
+}
+
+type ImportSource = Pick<SharedDeck, "name" | "format" | "description" | "icon_canonical_card_id"> & {
+  deck_cards: Pick<SharedDeck["cards"][number], "canonical_card_id" | "card_print_id" | "zone" | "quantity" | "sort_order">[];
+};
+
+async function importDeckCopy(auth: NonNullable<Awaited<ReturnType<typeof authenticatedClient>>>, source: ImportSource, destination: "edit" | "solo") {
   const { data: copy } = await auth.supabase
     .from("decks")
     .insert({
@@ -388,6 +400,26 @@ export async function importPublicDeckAction(formData: FormData) {
   revalidatePath("/decks");
   revalidatePath("/solo");
   redirect(destination === "edit" ? `/decks/${copy.id}/edit` : `/playtest/${copy.id}/opponent`);
+}
+
+export async function getOrCreateDeckShareTokenAction(deckId: string): Promise<string | null> {
+  if (!isShareUuid(deckId)) return null;
+  const auth = await authenticatedClient();
+  if (!auth) return null;
+  const { data, error } = await auth.supabase.rpc("get_or_create_deck_share_token", { p_deck_id: deckId });
+  return error || !isShareUuid(data) ? null : data;
+}
+
+export async function importSharedDeckAction(formData: FormData) {
+  const token = formData.get("shareToken");
+  const destination = formData.get("destination");
+  if (!isShareUuid(token) || (destination !== "edit" && destination !== "solo")) return;
+  const auth = await authenticatedClient();
+  if (!auth) redirect(`/login?next=${encodeURIComponent(`/deck-search?share=${token}`)}`);
+  const { data, error } = await auth.supabase.rpc("get_shared_deck", { p_share_token: token });
+  const source = error ? null : parseSharedDeck(data);
+  if (!source) return;
+  await importDeckCopy(auth, { ...source, deck_cards: source.cards.map(({ canonical_card_id, card_print_id, zone, quantity, sort_order }) => ({ canonical_card_id, card_print_id, zone, quantity, sort_order })) }, destination);
 }
 
 export async function signOutAction() {

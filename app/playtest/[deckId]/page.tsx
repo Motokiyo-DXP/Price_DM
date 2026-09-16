@@ -13,23 +13,25 @@ export default async function PlaytestPage({
   searchParams,
 }: {
   params: Promise<{ deckId: string }>;
-  searchParams: Promise<{ opponent?: string }>;
+  searchParams: Promise<{ opponent?: string; source?: string }>;
 }) {
   const { deckId } = await params;
-  const { opponent: opponentDeckId } = await searchParams;
+  const { opponent: opponentDeckId, source } = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(deckId)) notFound();
   if (opponentDeckId && !/^[0-9a-f-]{36}$/i.test(opponentDeckId)) notFound();
   const supabase = await createAuthServerSupabaseClient();
   if (!supabase) redirect("/login");
   const { data: claims, error: authError } = await supabase.auth.getClaims();
   if (authError || typeof claims?.claims?.sub !== "string") redirect("/login");
+  if (source === "public" && !opponentDeckId) redirect(`/playtest/${deckId}/opponent?source=public`);
 
-  const { data: deck, error } = await supabase
+  const playerDeckQuery = supabase
     .from("decks")
     .select("id, name, format, deck_cards(canonical_card_id, card_print_id, quantity, sort_order, canonical_cards(name, cost, civilizations, card_types, card_prints(id, image_key, product_name, card_number, official_card_id)))")
-    .eq("id", deckId)
-    .eq("owner_id", claims.claims.sub)
-    .single();
+    .eq("id", deckId);
+  const { data: deck, error } = await (source === "public"
+    ? playerDeckQuery.eq("visibility", "public")
+    : playerDeckQuery.eq("owner_id", claims.claims.sub)).single();
   if (error || !deck) notFound();
 
   const { data: opponentDeck, error: opponentError } = opponentDeckId
