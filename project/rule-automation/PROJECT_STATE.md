@@ -20,7 +20,7 @@ Rule design: Duel Masters Rule Automation v5
 - R2 DRAW Shadow Validation: COMPLETE / MAIN via PR #7
 - Rule Source Watcher v1: COMPLETE / MAIN via PR #8
 - R3 Next Vertical Slice: DISCARD SELECTED / DESIGN COMPLETE via PR #9
-- R4 DISCARD Pure Rule Core + test-only Shadow: implemented on feature branch; PR/CI validation pending
+- R4 DISCARD Pure Rule Core + test-only Shadow: implemented on feature branch; PR #10 validation passed, merge pending
 
 ## Key findings
 
@@ -66,7 +66,7 @@ Use **DISCARD**: one valid, already-selected card moves from the acting player's
 
 Status: Pure Rule Core and test-only Shadow implemented on feature branch. Evidence and scope are defined in [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md) and `data/evidence/discard_base_evidence.json`.
 
-Next: PR/CI validation, then Production Shadow feasibility review. Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
+Next: PR #10 merge, then Production Shadow feasibility review. Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
 
 ## Source of truth
 
