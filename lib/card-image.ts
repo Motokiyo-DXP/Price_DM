@@ -5,6 +5,14 @@ export function resolveCardArtworkUrl(imageUrl: string) {
   if (process.env.NODE_ENV === "development" && remote && imageUrl.startsWith(remote + "/")) {
     return "/cards/" + imageUrl.slice(remote.length + 1);
   }
+  if (
+    process.env.NODE_ENV !== "development"
+    && remote
+    && remote !== DEFAULT_CARD_IMAGE_BASE_URL
+    && imageUrl.startsWith(DEFAULT_CARD_IMAGE_BASE_URL + "/")
+  ) {
+    return remote + imageUrl.slice(DEFAULT_CARD_IMAGE_BASE_URL.length);
+  }
   return imageUrl;
 }
 
