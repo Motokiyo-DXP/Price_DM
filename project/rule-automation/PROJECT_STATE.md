@@ -22,7 +22,8 @@ Rule design: Duel Masters Rule Automation v5
 - R3 Next Vertical Slice: DISCARD SELECTED / DESIGN COMPLETE via PR #9
 - R4 DISCARD Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #10
 - R5 DISCARD Production Shadow feasibility: DEFERRED_NO_SEMANTIC_INTENT
-- R6 DISCARD test-only Shadow Validation: validated on feature branch; PR #11 CI passed, merge pending
+- R6 DISCARD Test Shadow Validation: COMPLETE / MAIN via PR #11
+- R7 TAP Vertical Slice Design Gate: TAP SELECTED / DESIGN READY
 
 ## Key findings
 
@@ -64,11 +65,11 @@ Reason:
 
 ## Next vertical slice
 
-Use **DISCARD**: one valid, already-selected card moves from the acting player's hand to that player's graveyard.
+**DISCARD** is closed for this stage: one valid, already-selected card moves from the acting player's hand to that player's graveyard.
 
-Status: Pure Rule Core and test-only Shadow validated; Production Shadow deferred because the existing UI path carries no semantic DISCARD intent. See [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md), [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md), and `data/evidence/discard_base_evidence.json`.
+Status: Pure Rule Core **COMPLETE**; test-only Shadow **VALIDATED**; Production Shadow **DEFERRED_NO_SEMANTIC_INTENT**. R6 validation is on `main` via PR #11. See [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md), [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md), and `data/evidence/discard_base_evidence.json`.
 
-Next: merge validation PR #11, then select a future Vertical Slice separately through `AI_DESIGN + HUMAN_GATE`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
+Next Vertical Slice: **TAP SELECTED / DESIGN READY**. Initial scope is one already-selected card in the actor's mana zone. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md) and `data/evidence/tap_base_evidence.json`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
 
 ## Source of truth
 
