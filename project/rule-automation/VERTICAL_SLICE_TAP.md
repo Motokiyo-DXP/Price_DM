@@ -1,6 +1,6 @@
 # Next Vertical Slice — TAP
 
-Status: **DESIGN READY**. Production implementation is outside this gate.
+Status: **PURE CORE + TEST SHADOW IMPLEMENTED** on `feature/motokiyo-tap-pure-shadow`. Production Shadow and Production validation remain pending.
 
 Design baseline: `main@e05609904771e588a2b9be814c3aae97713773bd` (after PR #11). Rule source: [official Comprehensive Game Rules Ver.1.51, updated 2026-07-23](https://dm.takaratomy.co.jp/img/dm_rule_20260723_5.pdf). Evidence set: `TAP_BASE_2026_09_16` (`data/evidence/tap_base_evidence.json`).
 
@@ -89,6 +89,6 @@ There is no exported single-card legacy tap helper today. A behavior-preserving 
 
 UNTAP; battle-zone TAP; creature/Tamaseed eligibility; stacked/evolution object TAP; attack declaration TAP; mana payment; multiple simultaneous TAP; tap replacement; tap triggers; `keep_tapped` policy; Generic GameObject; Generic ZonePresence. No Generic Zone Map, Relation Graph, CompositionTransition, or generic permanent-state framework is introduced.
 
-`repoMapImpact: NONE` — this PR changes docs, evidence, and progress state only.
+`repoMapImpact: UPDATE_REQUIRED` — `RuleManaCardState`, TAP primitive/tests, and the Legacy TAP adapter responsibility are recorded in `REPO_MAP.md`.
 
 `BLOCKED_SPEC: NONE` — the official mana rule, narrow state wrapper, semantic UI `false -> true` path, and future legacy comparison seam are identifiable.

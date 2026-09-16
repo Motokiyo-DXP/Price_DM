@@ -5,10 +5,16 @@ export type RuleCard<TPayload = unknown> = Readonly<{
   payload: TPayload;
 }>;
 
+export type RuleManaCardState<TPayload = unknown> = Readonly<{
+  card: RuleCard<TPayload>;
+  tapped: boolean;
+}>;
+
 export type RulePlayerState<TPayload = unknown> = Readonly<{
   deck: readonly RuleCard<TPayload>[];
   hand: readonly RuleCard<TPayload>[];
   graveyard: readonly RuleCard<TPayload>[];
+  mana: readonly RuleManaCardState<TPayload>[];
 }>;
 
 export type RuleState<TPayload = unknown> = Readonly<{

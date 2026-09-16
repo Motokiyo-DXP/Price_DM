@@ -98,7 +98,11 @@ AIに一度仕組みを作らせる
 - R4 DISCARD Pure Rule Core + test-only Shadow: COMPLETE
 - R5 DISCARD Production Shadow feasibility: DEFERRED_NO_SEMANTIC_INTENT
 - R6 DISCARD Test Shadow Validation: COMPLETE / MAIN via PR #11
-- R7 TAP Design Gate: TAP SELECTED / DESIGN READY (current)
+- R7 TAP Design: COMPLETE / MAIN via PR #12
+- R8 TAP Pure Core + test-only Shadow: implemented on feature branch; PR/CI pending
+- R9 behavior-preserving Legacy TAP helper extraction: next
+- R10 TAP Production Shadow: after R9
+- R11 TAP Validation: after R10
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
 
@@ -284,17 +288,15 @@ Production Shadow feasibility (DEFERRED_NO_SEMANTIC_INTENT)
 ↓
 Test-only Shadow Validation (COMPLETE / MAIN via PR #11)
 ↓
-TAP Design (DESIGN READY; current gate)
+TAP Design (COMPLETE / MAIN via PR #12)
 ↓
-TAP Pure Rule Core
+TAP Pure Rule Core + test-only Shadow (R8; implemented on feature branch)
 ↓
-TAP test-only Shadow
+Behavior-preserving Legacy TAP helper extraction (R9)
 ↓
-Production Shadow feasibility / behavior-preserving Legacy helper extraction
+TAP Production Shadow (R10)
 ↓
-TAP Production Shadow
-↓
-TAP Validation
+TAP Validation (R11)
 ```
 
 Parallel infrastructure tracks:
