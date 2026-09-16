@@ -27,7 +27,7 @@ Rule design: Duel Masters Rule Automation v5
 - R8 TAP Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #13
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
 - R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
-- R11 TAP Production Shadow Validation: validated on `feature/motokiyo-tap-validation`; PR/CI pending
+- R11 TAP Production Shadow Validation: validated on `feature/motokiyo-tap-validation`; PR #16 validation passed, merge pending
 
 ## Key findings
 
