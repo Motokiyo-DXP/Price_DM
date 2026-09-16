@@ -23,9 +23,10 @@ export default async function RoomsPage({ searchParams }: { searchParams: Search
   // Apply retention on entry as a recoverable soft retirement. The same
   // worker can later be scheduled without changing room semantics.
   await supabase.rpc("retire_stale_game_rooms");
-  const [{ count: inviteCount }, { data: activeMatches }] = await Promise.all([
+  const [{ count: inviteCount }, { data: activeMatches }, { data: readyRooms }] = await Promise.all([
     supabase.from("online_lobby_invitations").select("id", { count: "exact", head: true }).eq("invitee_user_id", userId).is("accepted_at", null).is("dismissed_at", null),
     supabase.from("game_rooms").select("id").eq("status", "playing").or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`).order("updated_at", { ascending: false }).limit(1),
+    supabase.from("game_rooms").select("id").in("status", ["waiting", "ready"]).gt("expires_at", new Date().toISOString()).or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`).order("updated_at", { ascending: false }).limit(1),
   ]);
 
   return <section className="online-entry-page">
@@ -43,6 +44,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Search
       </div>
       <Link className="online-friends-link" href="/friends"><span aria-hidden="true" className="ui-icon ui-icon-team" /><strong>フレンドを探す・フレンド一覧</strong><b aria-hidden="true">›</b></Link>
       {activeMatches?.[0] ? <Link className="online-friends-link online-return-link" href={`/rooms/${activeMatches[0].id}/battle`}><span aria-hidden="true" className="online-return-icon">↩</span><span><strong>対戦に戻る</strong><small>進行中の対戦があります</small></span><b aria-hidden="true">›</b></Link> : null}
+      {!activeMatches?.[0] && readyRooms?.[0] ? <Link className="online-friends-link online-return-link" href={`/rooms/${readyRooms[0].id}`}><span aria-hidden="true" className="online-return-icon">↩</span><span><strong>ルームに戻る</strong><small>対戦準備中のルームがあります</small></span><b aria-hidden="true">›</b></Link> : null}
     </div>
     {dialog === "passphrase" ? <OnlineRouteDialog dismissHref="/rooms"><form action={joinOnlineLobbyWithPassphraseAction} className="online-dialog"><div className="online-dialog-title"><div><p>合言葉で参加</p><h2>ルーム情報を入力</h2></div><Link aria-label="閉じる" href="/rooms">×</Link></div><label>ルームID<input autoCapitalize="characters" autoComplete="off" maxLength={6} minLength={6} name="joinCode" pattern="[A-Fa-f0-9]{6}" placeholder="A1B2C3" required /></label><div className="password-field"><label htmlFor="roomPassphrase">合言葉</label><PasswordInput autoComplete="off" id="roomPassphrase" maxLength={32} minLength={4} name="passphrase" placeholder="4〜32文字" required /></div><button className="button" type="submit">ルームへ入る</button></form></OnlineRouteDialog> : null}
   </section>;

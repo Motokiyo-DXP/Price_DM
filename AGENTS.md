@@ -1,5 +1,14 @@
 # Codex Project Instructions
 
+## Local preview and deployment
+
+- Unless the user explicitly requests deployment, phrases such as "reflect changes", "preview", "make it available for review", and "show the fix" mean run the local development server and provide its localhost URL.
+- The standard local preview is `npm run dev` at `http://localhost:3000`. Confirm the server actually started on port 3000 before reporting that URL. If the port is occupied, report the conflict; do not silently substitute another URL.
+- `npm run preview:local` on port 3001 is reserved for checking from another device on the same Wi-Fi network and existing image measurement scripts. It is not the default preview.
+- Create a Vercel Preview Deployment only when the user explicitly asks for "Vercel Preview". The word "preview" alone does not authorize it.
+- Deploy to Vercel Production or update the production URL only when the user explicitly requests deployment or production release.
+- Push to GitHub, update a production branch, or publish to any other external environment only when the user explicitly requests that action. Local preview does not require any of these actions.
+
 ## Bug fixing
 
 When fixing bugs, do not make speculative changes.

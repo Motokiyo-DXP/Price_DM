@@ -37,7 +37,7 @@
     "test:rule": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test \"lib/rule-engine/**/*.test.mjs\"",
     "rules:check": "node scripts/check-dm-rule-source.mjs",
     "test:rule-source": "node --test scripts/check-dm-rule-source.test.mjs",
-    "test:playfield": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/playfield-interactions.test.mjs lib/playfield-board.test.mjs lib/playtest-initial-state.test.mjs lib/playfield-visibility.test.mjs lib/marking-menu.test.mjs lib/play-context-actions.test.mjs lib/circle-gesture.test.mjs lib/card-stage.test.mjs lib/stack-layout-css.test.mjs",
+    "test:playfield": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/playfield-interactions.test.mjs lib/playfield-board.test.mjs lib/playtest-initial-state.test.mjs lib/playfield-visibility.test.mjs lib/marking-menu.test.mjs lib/play-context-actions.test.mjs lib/circle-gesture.test.mjs lib/card-stage.test.mjs lib/stack-layout-css.test.mjs lib/stack-operation-scope.test.mjs",
     "test:images": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/card-image.test.mjs lib/card-print-order.test.mjs && npm run test:images:sync",
     "images:prepare": "node scripts/prepare-card-images.mjs",
     "images:sync:dm": "node scripts/sync-dm-card-images.mjs",
