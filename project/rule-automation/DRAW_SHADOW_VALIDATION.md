@@ -45,7 +45,7 @@ The projected Rule Core result strictly matches Legacy DRAW for the relevant dec
 | `npm run typecheck` | PASS |
 | `npm run test:playfield` | PASS |
 | `npm run build` | PASS |
-| Minimal CI / GitHub Actions | PENDING PR |
+| Minimal CI / GitHub Actions | PASS — PR #7 run `35044455738` |
 
 The local build completed with existing Autoprefixer compatibility warnings and a non-fatal Supabase-not-configured message during static generation.
 
@@ -94,4 +94,4 @@ The following remain intentionally deferred and are not validation failures:
 
 `DRAW_SHADOW_VALIDATED`
 
-The DRAW Vertical Slice is validated from Pure Rule Core through test-only Shadow, Production Shadow, and local CI-equivalent checks. Selection of the next Vertical Slice may proceed after PR CI succeeds.
+The DRAW Vertical Slice is validated from Pure Rule Core through test-only Shadow, Production Shadow, and Minimal CI. Selection of the next Vertical Slice may proceed after this validation PR is merged.
