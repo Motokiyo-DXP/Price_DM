@@ -1,0 +1,36 @@
+{
+  "evidenceSetId": "CHARGE_BASE_2026_09_16",
+  "ruleVersion": "1.51",
+  "status": "RULE_VERIFIED_DESIGN_ONLY",
+  "sources": [
+    {
+      "sourceId": "dm_comprehensive_rules_1_51",
+      "url": "https://dm.takaratomy.co.jp/img/dm_rule_20260723_5.pdf",
+      "updated": "2026-07-23",
+      "references": ["503.1", "503.2", "405.1", "701.8", "701.8a"]
+    }
+  ],
+  "claims": [
+    {
+      "id": "CHARGE-001",
+      "claim": "During the mana charge step the turn player may, but need not, put one card from hand into their mana zone upside down.",
+      "supports": ["503.1"]
+    },
+    {
+      "id": "CHARGE-002",
+      "claim": "Normally one charge is allowed during that player's mana charge step; continuous effects can increase or decrease that number. This slice does not enforce timing or count.",
+      "supports": ["503.2"]
+    },
+    {
+      "id": "CHARGE-003",
+      "claim": "To charge means to put a card from that player's hand into that player's mana zone upside down.",
+      "supports": ["701.8", "701.8a"]
+    },
+    {
+      "id": "CHARGE-004",
+      "claim": "Cards entering the mana zone are placed upside down; multicolor cards enter tapped. Upside-down placement and tap are distinct states.",
+      "supports": ["405.1"]
+    }
+  ],
+  "scopeLimit": "Design only: one valid already-selected card from actor hand to actor mana, with base entry tapped state derived from card civilizations. Timing, charge count, effects, replacement and triggers are deferred."
+}

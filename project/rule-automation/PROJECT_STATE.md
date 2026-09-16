@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@b08d29da68ca82a340fa971d20cd3b302222115e`
+Baseline: `main@fd3b82f44e7229e1adfddfd0d70b651bf93e5fd6` (R12 start, after PR #16)
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
@@ -27,7 +27,8 @@ Rule design: Duel Masters Rule Automation v5
 - R8 TAP Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #13
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
 - R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
-- R11 TAP Production Shadow Validation: validated on `feature/motokiyo-tap-validation`; PR #16 validation passed, merge pending
+- R11 TAP Production Shadow Validation: COMPLETE / MAIN via PR #16
+- R12 CHARGE Design Gate: CHARGE SELECTED / DESIGN READY
 
 ## Key findings
 
@@ -73,7 +74,9 @@ Reason:
 
 Status: Pure Rule Core **COMPLETE**; test-only Shadow **VALIDATED**; Production Shadow **DEFERRED_NO_SEMANTIC_INTENT**. R6 validation is on `main` via PR #11. See [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md), [`DISCARD_SHADOW_VALIDATION.md`](./DISCARD_SHADOW_VALIDATION.md), and `data/evidence/discard_base_evidence.json`.
 
-TAP Vertical Slice: Production Shadow validation is complete on the R11 feature branch for one existing, untapped mana card's explicit single-card TAP. Legacy remains Production authority; Rule Core is comparison-only. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md), [`TAP_SHADOW_VALIDATION.md`](./TAP_SHADOW_VALIDATION.md), and `data/evidence/tap_base_evidence.json`. DISCARD Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move. Next Vertical Slice Selection requires a separate AI_DESIGN + HUMAN_GATE decision.
+TAP Vertical Slice: Production Shadow validation is complete on main via PR #16, limited to `mana`, one existing card, `untapped -> tapped`, explicit TAP. Legacy remains Production authority; Rule Core is comparison-only. UNTAP, battle TAP, and attack TAP remain outside validation. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md), [`TAP_SHADOW_VALIDATION.md`](./TAP_SHADOW_VALIDATION.md), and `data/evidence/tap_base_evidence.json`.
+
+CHARGE is selected as R12, design ready for one already-selected card from actor hand to actor mana. Entry state derives from Rule-side civilization characteristics. Production Shadow is `DEFERRED_NO_SEMANTIC_INTENT`; test-only Shadow is planned. See [`VERTICAL_SLICE_CHARGE.md`](./VERTICAL_SLICE_CHARGE.md) and `data/evidence/charge_base_evidence.json`. DISCARD Production Shadow remains deferred for the same semantic-intent distinction.
 
 ## Source of truth
 
