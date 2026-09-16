@@ -1,0 +1,17 @@
+version: 1
+updated_at: 2026-09-16
+
+sources:
+  - source_id: dm_comprehensive_rules_index
+    authority: TIER_A_OFFICIAL
+    type: rules_index
+    url: https://dm.takaratomy.co.jp/rule/rulechange/
+    current_observed_version: "1.51"
+    current_observed_date: "2026-07-23"
+
+  - source_id: dm_comprehensive_rules_1_51
+    authority: TIER_A_OFFICIAL
+    type: pdf
+    url: https://dm.takaratomy.co.jp/img/dm_rule_20260723_5.pdf
+    rule_version: "1.51"
+    published_or_updated: "2026-07-23"

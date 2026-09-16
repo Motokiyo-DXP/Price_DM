@@ -35,6 +35,8 @@
     "test:decks": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/deck-validation.test.mjs lib/deck-sorting.test.mjs lib/local-card-metadata.test.mjs lib/deck-icon.test.mjs lib/my-decks-browser.test.mjs",
     "test:rooms": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/game-room-validation.test.mjs lib/online-card-operation.test.mjs lib/online-board-change.test.mjs lib/online-room-snapshot.test.mjs lib/online-lobby-deck-picker.test.mjs lib/online-lobby-presence.test.mjs lib/battle-notification-dismissal.test.mjs lib/profile-icon.test.mjs",
     "test:rule": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test \"lib/rule-engine/**/*.test.mjs\"",
+    "rules:check": "node scripts/check-dm-rule-source.mjs",
+    "test:rule-source": "node --test scripts/check-dm-rule-source.test.mjs",
     "test:playfield": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/playfield-interactions.test.mjs lib/playfield-board.test.mjs lib/playtest-initial-state.test.mjs lib/playfield-visibility.test.mjs lib/marking-menu.test.mjs lib/play-context-actions.test.mjs lib/circle-gesture.test.mjs lib/card-stage.test.mjs lib/stack-layout-css.test.mjs",
     "test:images": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/card-image.test.mjs lib/card-print-order.test.mjs && npm run test:images:sync",
     "images:prepare": "node scripts/prepare-card-images.mjs",

@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@fec9564dc5aa254364d6c1196a621e297993527b`
+Baseline: `main@df16441b52a7ad358a29248f63de595d1cbb6629`
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
@@ -17,7 +17,8 @@ Rule design: Duel Masters Rule Automation v5
 - Convenience Architecture Review: complete; no longer a Rule Core blocker
 - Stage 4.5 DRAW Production Shadow: complete and merged to `main` via PR #5
 - Minimal CI: complete and merged to `main` via PR #6
-- R2 DRAW Shadow Validation: validated on feature branch; PR #7 CI passed, merge pending
+- R2 DRAW Shadow Validation: complete and merged to `main` via PR #7
+- Rule Source Watcher v1: locally validated on feature branch; PR/CI pending
 
 ## Key findings
 
@@ -67,3 +68,7 @@ Reason:
 6. individual older specs
 
 For official Duel Masters rule content, official evidence takes precedence.
+
+## Rule source automation
+
+`scripts/check-dm-rule-source.mjs` compares the official comprehensive-rules Version, update date, and PDF URL against `source_manifest.yaml` without AI. Live fetch is local-only; CI uses deterministic fixtures. See [`RULE_SOURCE_WATCHER.md`](./RULE_SOURCE_WATCHER.md).

@@ -12,6 +12,8 @@ Baseline: `main@94b1aae620794b18c6f27052d276886c60933c90`
 | `lib/rule-engine/primitives/draw.ts` | immutable single-card DRAW primitive | first Vertical Slice |
 | `lib/rule-engine/adapters/legacy-board.ts` | DRAW-only legacy projection, compatibility mapping, Shadow comparison | legacy boundary adapter |
 | `lib/rule-engine/draw*.test.mjs` | DRAW semantics and test-only legacy Shadow checks | Stage 4 validation |
+| `scripts/check-dm-rule-source.mjs` | official Rule Index metadata fetch, extraction, and manifest comparison | Rule Source Watcher v1 |
+| `scripts/check-dm-rule-source.test.mjs`, `scripts/fixtures/rule-source/*` | deterministic Rule Source Watcher validation | CI-safe source monitoring fixtures |
 | `lib/playtest-initial-state.ts` | controlled vs initial state | compatibility helper |
 | `app/rooms/[roomId]/battle/page.tsx` | online battle server entry | composition layer |
 | `components/online-match-board.tsx` | realtime, RPC, history, controlled board | online infrastructure adapter |
