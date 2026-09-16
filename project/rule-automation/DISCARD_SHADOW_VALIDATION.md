@@ -46,7 +46,7 @@ Verdict: `PRODUCTION_SHADOW_DEFERRED_NO_SEMANTIC_INTENT`. This is an intentional
 | `npm run typecheck` | PASS |
 | `npm run test:playfield` | PASS — 101 tests |
 | `npm run build` | PASS; Supabase-not-configured log is non-fatal in this local environment |
-| GitHub Actions | PR/CI pending |
+| GitHub Actions | PASS — PR #11 run `35073232966` |
 
 The Acceptance Criteria are directly covered by existing Pure DISCARD, DRAW regression, and p1/p2 Shadow tests; no additional test was needed in this validation PR.
 

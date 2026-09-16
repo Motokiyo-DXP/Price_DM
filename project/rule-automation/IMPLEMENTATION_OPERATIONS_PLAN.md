@@ -97,7 +97,7 @@ AIに一度仕組みを作らせる
 - R3 DISCARD Design: COMPLETE
 - R4 DISCARD Pure Rule Core + test-only Shadow: COMPLETE
 - R5 DISCARD Production Shadow feasibility: DEFERRED_NO_SEMANTIC_INTENT
-- R6 DISCARD Test Shadow Validation: validated on feature branch; PR/CI pending
+- R6 DISCARD Test Shadow Validation: validated on feature branch; PR #11 CI passed, merge pending
 - Next: Next Vertical Slice Selection (`AI_DESIGN + HUMAN_GATE`, separate decision)
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
@@ -282,7 +282,7 @@ DISCARD Pure Rule Core + test-only Shadow (COMPLETE)
 ↓
 Production Shadow feasibility (DEFERRED_NO_SEMANTIC_INTENT)
 ↓
-Test-only Shadow Validation (feature branch; PR/CI pending)
+Test-only Shadow Validation (feature branch; PR #11 CI passed, merge pending)
 ↓
 Next Vertical Slice Selection (separate AI_DESIGN + HUMAN_GATE)
 ```
