@@ -18,7 +18,7 @@ Rule design: Duel Masters Rule Automation v5
 - Stage 4.5 DRAW Production Shadow: complete and merged to `main` via PR #5
 - Minimal CI: complete and merged to `main` via PR #6
 - R2 DRAW Shadow Validation: complete and merged to `main` via PR #7
-- Rule Source Watcher v1: locally validated on feature branch; PR/CI pending
+- Rule Source Watcher v1: validated on feature branch; PR #8 CI passed, merge pending
 
 ## Key findings
 

@@ -1,6 +1,6 @@
 # Rule Source Watcher v1
 
-Status: LOCALLY VALIDATED — PR/CI PENDING
+Status: VALIDATED ON FEATURE BRANCH — PR #8 MERGE PENDING
 
 ## Purpose
 
@@ -52,7 +52,7 @@ The watcher selects the anchor whose visible text identifies `デュエル・マ
 - Invalid manifest -> `MANIFEST_ERROR`
 - Fetch failure -> `NETWORK_ERROR`
 - Live official Rule Index check: `NO_CHANGE` (`1.51`, `2026-07-23`, `https://dm.takaratomy.co.jp/img/dm_rule_20260723_5.pdf`)
-- Pull-request CI: pending
+- Pull-request CI: PASS — run `35050706318`
 
 ## Deferred scope
 
