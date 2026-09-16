@@ -149,6 +149,35 @@ export function advanceTurn(current: BoardState): BoardState {
   };
 }
 
+export function toggleLegacyCardTapState(
+  current: BoardState,
+  owner: PlayerId,
+  zone: PlayZone,
+  cardId: string,
+  options: Readonly<{ clearKeepTappedOnUntap: boolean }>,
+): BoardState {
+  const cards = current.players[owner][zone];
+  if (!cards.some((card) => card.instanceId === cardId)) return current;
+  return {
+    ...current,
+    players: {
+      ...current.players,
+      [owner]: {
+        ...current.players[owner],
+        [zone]: cards.map((card) => card.instanceId === cardId
+          ? {
+            ...card,
+            tapped: !card.tapped,
+            ...(card.tapped && options.clearKeepTappedOnUntap
+              ? { markers: card.markers?.filter((marker) => marker !== "keep_tapped") }
+              : {}),
+          }
+          : card),
+      },
+    },
+  };
+}
+
 export function setCardMarker(current: BoardState, owner: PlayerId, zone: PlayZone, cardId: string, marker: CardMarker, enabled: boolean): BoardState {
   const cards = current.players[owner][zone];
   const target = cards.find((card) => card.instanceId === cardId);

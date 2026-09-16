@@ -6,7 +6,7 @@ Current implementation baseline: see `PROJECT_STATE.md`.
 |---|---|---|
 | `app/playtest/[deckId]/page.tsx` | solo entry / deck loading | composition layer |
 | `components/playtest-board.tsx` | manual-play UI, gestures, state orchestration | presentation / compatibility adapter |
-| `lib/playfield-board.ts` | board types + transformations | legacy domain model; extraction source |
+| `lib/playfield-board.ts` | board types + transformations; behavior-preserving Legacy TAP transformation seam with explicit UNTAP marker policy | legacy domain model; R10 Production comparison source |
 | `lib/playfield-interactions.ts` | zones, move defaults, gestures, mana checks, shortcuts | split UI policy from game policy over time |
 | `lib/rule-engine/types.ts`, `actions.ts`, `events.ts`, `engine.ts` | Pure Rule Core contracts, explicit deck/hand/graveyard and mana-only wrapper state, and DRAW/DISCARD/TAP dispatch | deterministic semantic rule boundary |
 | `lib/rule-engine/primitives/draw.ts` | immutable single-card DRAW primitive | first Vertical Slice |
@@ -71,3 +71,5 @@ Each future Codex task reports:
 `repoMapImpact: NONE | UPDATE_REQUIRED`
 
 Update this file only when responsibilities, public interfaces, dependency directions, or core/online boundaries materially change.
+
+R9 `repoMapImpact: UPDATE_REQUIRED` — the exported Legacy TAP helper is now shared by normal tap and marking-menu entry points; Rule Core and Online boundaries remain unchanged.
