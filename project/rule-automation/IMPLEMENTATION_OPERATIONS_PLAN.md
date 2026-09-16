@@ -102,13 +102,14 @@ AIに一度仕組みを作らせる
 - R8 TAP Pure Core + test-only Shadow: COMPLETE / MAIN via PR #13
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
 - R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
-- R11 TAP Validation: validated on feature branch; COMPLETE after merge
+- R11 TAP Validation: COMPLETE / MAIN via PR #16
+- R12 CHARGE Design: CURRENT / CHARGE SELECTED / DESIGN READY
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
 
 DISCARDは1枚のalready-selected cardについて`hand -> graveyard`のMove Semanticsを検証する。Pure Rule Coreとtest-only Shadowを先行し、generic manual moveとsemantic DISCARD intentを識別できるまでProduction Shadow接続を行わない。
 
-既存Production UIにsemantic DISCARD intentがないため、R5は意図的にDeferredとする。この未実装はRule本筋全体のBlockerではない。次SliceはTAPを選定し、mana zoneのalready-selected 1枚に限定したDesign Gateを完了した。設計根拠と将来のProduction Shadow条件は`VERTICAL_SLICE_TAP.md`を参照する。
+既存Production UIにsemantic DISCARD intentがないため、R5は意図的にDeferredとする。この未実装はRule本筋全体のBlockerではない。TAPはmana zoneの既存untapped 1枚に対する明示的TAPまでProduction Shadow Validationを完了した。次SliceはCHARGEを選定し、`VERTICAL_SLICE_CHARGE.md`で設計を確定した。Track RはDRAW COMPLETE、DISCARD Pure/Test COMPLETE（Production deferred）、TAP COMPLETE through Production Shadow Validation、CHARGE Design CURRENT。
 
 ### Track C — CI
 
@@ -296,9 +297,19 @@ Behavior-preserving Legacy TAP helper extraction (R9; COMPLETE / MAIN via PR #14
 ↓
 TAP Production Shadow (R10; COMPLETE / MAIN via PR #15)
 ↓
-TAP Validation (R11; validated on feature branch, COMPLETE after merge)
+TAP Validation (R11; COMPLETE / MAIN via PR #16)
 ↓
-Next Vertical Slice Selection (separate AI_DESIGN + HUMAN_GATE)
+CHARGE Design (R12; CURRENT / DESIGN READY)
+↓
+CHARGE Pure Core
+↓
+CHARGE test-only Shadow
+↓
+CHARGE Production feasibility
+↓
+CHARGE Production Shadow if safe
+↓
+CHARGE Validation
 ```
 
 Parallel infrastructure tracks:
