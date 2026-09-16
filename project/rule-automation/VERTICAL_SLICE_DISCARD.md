@@ -1,6 +1,8 @@
 # Next Vertical Slice — DISCARD
 
-Status: DESIGN READY
+Status: PURE CORE + TEST SHADOW IMPLEMENTED
+
+The single-card Pure Rule Core, minimal `graveyard` state, and test-only Legacy Shadow are implemented on a feature branch. Production Shadow and PlaytestBoard wiring remain deferred; this slice is not yet production-validated.
 
 Rule version: Duel Masters Comprehensive Game Rules Ver.1.51
 
@@ -143,4 +145,4 @@ The following are intentionally outside this slice and are not failures:
 
 The next authorized implementation step is **DISCARD Pure Rule Core + test-only Shadow**. Production code, PlaytestBoard wiring, and Production Shadow are not authorized by this design document.
 
-`repoMapImpact: NONE`
+`repoMapImpact: UPDATE_REQUIRED` — the Rule Core state, DISCARD primitive/tests, and Legacy adapter responsibilities have been added to `REPO_MAP.md`.

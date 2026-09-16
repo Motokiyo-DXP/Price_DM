@@ -39,6 +39,7 @@ export function drawOne<TPayload>(
       players: {
         ...input.players,
         [player]: {
+          ...input.players[player],
           deck: input.players[player].deck.slice(1),
           hand: [...input.players[player].hand, card],
         },
