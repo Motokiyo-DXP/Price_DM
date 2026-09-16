@@ -100,7 +100,7 @@ const auxiliaryZones: PlayZone[] = ["reveal", "graveyard"];
 const externalZones: PlayZone[] = ["hyperspatial", "gr", "abyss"];
 const nonStackableZones: PlayZone[] = ["mana", "graveyard", "hyperspatial", "gr", "abyss"];
 const delayedStackPreviewZones: PlayZone[] = ["battle", "shield", "reveal", "hand"];
-const cardSwipeScrollableZones: PlayZone[] = ["battle", "mana", "shield", "hand", "reveal", "graveyard", "hyperspatial", "gr", "abyss"];
+const cardSwipeScrollableZones: PlayZone[] = ["battle", "mana", "shield", "hand", "reveal", "graveyard", "hyperspatial", "gr", "abyss", "deck"];
 const zoneInertiaFrames = new WeakMap<HTMLElement, number>();
 const shuffleFeedbackTimers = new WeakMap<HTMLElement, number>();
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
