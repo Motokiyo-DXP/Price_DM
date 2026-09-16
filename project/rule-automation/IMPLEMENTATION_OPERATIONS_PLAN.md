@@ -100,8 +100,8 @@ AIに一度仕組みを作らせる
 - R6 DISCARD Test Shadow Validation: COMPLETE / MAIN via PR #11
 - R7 TAP Design: COMPLETE / MAIN via PR #12
 - R8 TAP Pure Core + test-only Shadow: COMPLETE / MAIN via PR #13
-- R9 behavior-preserving Legacy TAP helper extraction: CURRENT; PR #14 validation passed, merge pending
-- R10 TAP Production Shadow: NEXT after R9
+- R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
+- R10 TAP Production Shadow: implemented on feature branch; validation pending
 - R11 TAP Validation: after R10
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。

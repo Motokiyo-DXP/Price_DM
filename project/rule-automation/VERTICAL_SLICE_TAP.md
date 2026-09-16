@@ -1,6 +1,6 @@
 # Next Vertical Slice — TAP
 
-Status: **PURE CORE + TEST-ONLY SHADOW COMPLETE / MAIN** via PR #13. R9 Legacy helper extraction is implemented on `feature/motokiyo-legacy-tap-helper`; Production Shadow and Production validation remain pending.
+Status: **PURE CORE + TEST-ONLY SHADOW COMPLETE / MAIN** via PR #13. R9 Legacy helper extraction merged via PR #14. R10 Production Shadow is implemented on `feature/motokiyo-tap-production-shadow`; Production validation remains pending.
 
 Design baseline: `main@e05609904771e588a2b9be814c3aae97713773bd` (after PR #11). Rule source: [official Comprehensive Game Rules Ver.1.51, updated 2026-07-23](https://dm.takaratomy.co.jp/img/dm_rule_20260723_5.pdf). Evidence set: `TAP_BASE_2026_09_16` (`data/evidence/tap_base_evidence.json`).
 

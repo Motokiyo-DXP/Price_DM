@@ -25,8 +25,8 @@ Rule design: Duel Masters Rule Automation v5
 - R6 DISCARD Test Shadow Validation: COMPLETE / MAIN via PR #11
 - R7 TAP Design Gate: COMPLETE / MAIN via PR #12
 - R8 TAP Pure Rule Core + test-only Shadow: COMPLETE / MAIN via PR #13
-- R9 behavior-preserving Legacy TAP helper extraction: PR #14 validation passed; merge pending
-- R10 TAP Production Shadow: next after R9
+- R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
+- R10 TAP Production Shadow: implemented on `feature/motokiyo-tap-production-shadow` from `main@39cb2a99d5f8cad77142bb337a1933cf997c0d90`; validation pending
 
 ## Key findings
 
