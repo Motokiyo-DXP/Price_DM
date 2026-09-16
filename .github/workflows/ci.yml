@@ -28,6 +28,9 @@ jobs:
       - name: Test Rule Engine
         run: npm run test:rule
 
+      - name: Test Rule Source Watcher
+        run: npm run test:rule-source
+
       - name: Test playfield
         run: npm run test:playfield
 
