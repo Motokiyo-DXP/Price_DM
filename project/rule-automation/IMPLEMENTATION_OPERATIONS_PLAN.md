@@ -101,8 +101,8 @@ AIに一度仕組みを作らせる
 - R7 TAP Design: COMPLETE / MAIN via PR #12
 - R8 TAP Pure Core + test-only Shadow: COMPLETE / MAIN via PR #13
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
-- R10 TAP Production Shadow: implemented on feature branch; validation pending
-- R11 TAP Validation: after R10
+- R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
+- R11 TAP Validation: validated on feature branch; COMPLETE after merge
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
 
@@ -292,11 +292,13 @@ TAP Design (COMPLETE / MAIN via PR #12)
 ↓
 TAP Pure Rule Core + test-only Shadow (R8; COMPLETE / MAIN via PR #13)
 ↓
-Behavior-preserving Legacy TAP helper extraction (R9; CURRENT)
+Behavior-preserving Legacy TAP helper extraction (R9; COMPLETE / MAIN via PR #14)
 ↓
-TAP Production Shadow (R10)
+TAP Production Shadow (R10; COMPLETE / MAIN via PR #15)
 ↓
-TAP Validation (R11)
+TAP Validation (R11; validated on feature branch, COMPLETE after merge)
+↓
+Next Vertical Slice Selection (separate AI_DESIGN + HUMAN_GATE)
 ```
 
 Parallel infrastructure tracks:

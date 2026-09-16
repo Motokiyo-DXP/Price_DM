@@ -1,6 +1,6 @@
 # Next Vertical Slice — TAP
 
-Status: **PURE CORE + TEST-ONLY SHADOW COMPLETE / MAIN** via PR #13. R9 Legacy helper extraction merged via PR #14. R10 Production Shadow is implemented on `feature/motokiyo-tap-production-shadow`; Production validation remains pending.
+Status: **VALIDATED PRODUCTION SHADOW SLICE** on the R11 feature branch. Pure Core: COMPLETE; test-only Shadow: VALIDATED; Legacy helper: VALIDATED; Production Shadow: VALIDATED for one existing, untapped mana card's explicit single-card `false -> true` TAP. R8, R9, and R10 are on main via PRs #13, #14, and #15. See [`TAP_SHADOW_VALIDATION.md`](./TAP_SHADOW_VALIDATION.md).
 
 Design baseline: `main@e05609904771e588a2b9be814c3aae97713773bd` (after PR #11). Rule source: [official Comprehensive Game Rules Ver.1.51, updated 2026-07-23](https://dm.takaratomy.co.jp/img/dm_rule_20260723_5.pdf). Evidence set: `TAP_BASE_2026_09_16` (`data/evidence/tap_base_evidence.json`).
 
@@ -69,21 +69,21 @@ An ID absent from the actor's mana zone is instead an internal precondition viol
 
 ## Legacy and Production feasibility
 
-`CardView` single tap reaches `handleCardTap`, then `toggleTap(owner, zone, cardId)` when selection, pending move, and Yobinion modes do not intercept it. `toggleTap` rejects deck/hand/shield and otherwise toggles a matching card inline. The `mana` + `tapped === false` branch yields `false -> true`, so its semantic TAP intent is identifiable. The `tapped === true` branch is UNTAP and excluded. Other zones are excluded even though the legacy helper may toggle them.
+`CardView` single tap reaches `handleCardTap`, then `toggleTap(owner, zone, cardId)` when selection, pending move, and Yobinion modes do not intercept it. `toggleTap` rejects deck/hand/shield and sends the remaining single-card operation through `toggleCardTapWithProductionShadow`. The `mana` + existing target + `tapped === false` branch yields `false -> true` and enters Shadow. The `tapped === true` branch is UNTAP and excluded. Other zones use the Legacy helper directly.
 
-The marking menu has a separate `toggle_tap` entry point. In mana on an untapped card it can also mean TAP. Both entry points need the same semantic mapping before Production Shadow, but their present behaviors differ on UNTAP: single tap removes `keep_tapped`, whereas the marking-menu branch only toggles `tapped`. R9 preserves those distinct behaviors through an explicit caller policy.
+The marking menu has a separate `toggle_tap` entry point and uses the same routing helper. Its UNTAP policy differs: normal single tap removes `keep_tapped`, whereas the marking-menu branch only toggles `tapped`. R9 and R10 preserve those distinct behaviors through the explicit caller policy.
 
-R9 exports `toggleLegacyCardTapState` from `lib/playfield-board.ts` for both UI entry points, with an explicit `clearKeepTappedOnUntap` caller policy preserving their different UNTAP behavior. The verdict remains **`PRODUCTION_SHADOW_FEASIBLE_AFTER_LEGACY_HELPER_EXTRACTION`** (`LIKELY_FEASIBLE` at the Design Gate). The future Shadow target is only one mana card currently untapped. Legacy still returns the Production BoardState; Rule Core remains comparison-only. Production Shadow wiring is pending.
+R9 exports `toggleLegacyCardTapState` from `lib/playfield-board.ts` for both UI entry points, with an explicit `clearKeepTappedOnUntap` caller policy preserving their different UNTAP behavior. R10 routes only one existing, untapped mana card's explicit TAP through Production Shadow. Legacy returns the Production BoardState; Rule Core remains comparison-only. R11 validation evidence is recorded in [`TAP_SHADOW_VALIDATION.md`](./TAP_SHADOW_VALIDATION.md).
 
-## Initial implementation and validation plan
+## Implementation and validation criteria
 
 1. Pure Core: one untapped mana card changes `false -> true`; preserve `cardInstanceId`, payload, mana order, and every other mana card.
 2. Leave actor deck/hand/graveyard, other player, and unrelated state unchanged. Verify input immutability and deterministic repeated resolution.
 3. Verify event order `TAP_ATTEMPTED`, `CARD_TAPPED`.
 4. For already-tapped mana, verify unchanged state, `TAP_ATTEMPTED` plus `TAP_NO_STATE_CHANGE_ALREADY_TAPPED`, and no `CARD_TAPPED`.
 5. For absent ID, verify internal precondition failure and no Rule Events.
-6. Test-only Shadow: strict-match targeted Legacy mana tapped state, card identity, other mana cards, other zones, and other player. Include both UI entry points when extracting their seams; verify no Legacy UNTAP behavior changes.
-7. Before Production Shadow, test the single-card legacy helper extraction, then compare only mana `false -> true`. Preserve online authority and hidden-information boundaries.
+6. Test-only Shadow: strict-match targeted Legacy mana tapped state, card identity, other mana cards, other zones, and other player. Both UI entry points retain their different Legacy UNTAP policies.
+7. Production Shadow compares only mana `false -> true`, preserving online authority and hidden-information boundaries.
 
 ## Deferred
 
