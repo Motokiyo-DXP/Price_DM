@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-16
 Repository: `Motokiyo-DXP/Price_DM`
-Baseline: `main@df16441b52a7ad358a29248f63de595d1cbb6629`
+Baseline: `main@f6719988a592a797b7948212d8bad9f794f734c9`
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
 Rule design: Duel Masters Rule Automation v5
 
@@ -17,8 +17,9 @@ Rule design: Duel Masters Rule Automation v5
 - Convenience Architecture Review: complete; no longer a Rule Core blocker
 - Stage 4.5 DRAW Production Shadow: complete and merged to `main` via PR #5
 - Minimal CI: complete and merged to `main` via PR #6
-- R2 DRAW Shadow Validation: complete and merged to `main` via PR #7
-- Rule Source Watcher v1: validated on feature branch; PR #8 CI passed, merge pending
+- R2 DRAW Shadow Validation: COMPLETE / MAIN via PR #7
+- Rule Source Watcher v1: COMPLETE / MAIN via PR #8
+- R3 Next Vertical Slice: DISCARD SELECTED
 
 ## Key findings
 
@@ -40,7 +41,7 @@ Rule design: Duel Masters Rule Automation v5
 6. Do not turn the Convenience Layer into a Rule Engine or Workflow Engine.
 7. Apply Automation First to repeatable work and leave a reusable mechanism.
 
-## Current vertical slice
+## Completed vertical slice
 
 Use **DRAW**.
 
@@ -57,6 +58,14 @@ Reason:
 - naturally proves Attempt vs Result
 - useful hidden-information boundary case
 - replacement/trigger/stabilization can be exposed as future hooks rather than guessed
+
+## Next vertical slice
+
+Use **DISCARD**: one valid, already-selected card moves from the acting player's hand to that player's graveyard.
+
+Status: DESIGN READY. Evidence and scope are defined in [`VERTICAL_SLICE_DISCARD.md`](./VERTICAL_SLICE_DISCARD.md) and `data/evidence/discard_base_evidence.json`.
+
+Next: DISCARD Pure Rule Core + test-only Shadow. Production Shadow remains deferred until semantic DISCARD intent can be distinguished from a generic manual hand-to-graveyard move.
 
 ## Source of truth
 

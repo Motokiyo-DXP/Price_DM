@@ -1,0 +1,51 @@
+{
+  "evidenceSetId": "DISCARD_BASE_2026_09_16",
+  "ruleVersion": "1.51",
+  "status": "RULE_VERIFIED_DESIGN_ONLY",
+  "sources": [
+    {
+      "sourceId": "dm_comprehensive_rules_1_51",
+      "references": [
+        "400.7",
+        "402.3",
+        "404.1",
+        "404.2",
+        "701.7a",
+        "701.7b"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "DISCARD-001",
+      "claim": "To discard a card is to move it from that player's hand to that player's graveyard.",
+      "supports": [
+        "701.7a",
+        "404.1"
+      ]
+    },
+    {
+      "id": "DISCARD-002",
+      "claim": "Normally the affected player chooses the card to discard, while random selection and selection by another player are explicit exceptions.",
+      "supports": [
+        "701.7b"
+      ]
+    },
+    {
+      "id": "DISCARD-003",
+      "claim": "Discard moves a card from a private hand to a graveyard whose cards may be viewed.",
+      "supports": [
+        "402.3",
+        "404.2"
+      ]
+    },
+    {
+      "id": "DISCARD-004",
+      "claim": "When multiple cards move from a non-battle zone, they move simultaneously; this initial slice intentionally handles one already-selected card only.",
+      "supports": [
+        "400.7"
+      ]
+    }
+  ],
+  "scopeLimit": "One valid, already-selected card discarded from the acting player's hand to that player's graveyard; selection, random choice, multi-card movement, replacement, and triggers are deferred."
+}

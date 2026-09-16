@@ -91,16 +91,21 @@ AIに一度仕組みを作らせる
 
 ### Track R — Rule Automation
 
-- R0 Rebaseline: 今回
-- R1 Stage 4.5 DRAW Production Shadow: **NEXT**
-- R2 DRAW Shadow Validation
-- R3 Next Vertical Slice Selection: `AI_DESIGN + HUMAN_GATE`
+- R0 Rebaseline: COMPLETE
+- R1 Stage 4.5 DRAW Production Shadow: COMPLETE
+- R2 DRAW Shadow Validation: COMPLETE
+- R3 Next Vertical Slice Selection: DISCARD SELECTED / DESIGN READY
+- R4 DISCARD Pure Rule Core + test-only Shadow: NEXT
+- R5 DISCARD Production Shadow feasibility: after semantic-intent review
+- R6 DISCARD Validation: after the authorized implementation stages
 
-Stage 4.5ではLegacy結果のみをProduction authorityとして利用する。Rule Core結果は比較専用とする。
+DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
+
+DISCARDは1枚のalready-selected cardについて`hand -> graveyard`のMove Semanticsを検証する。Pure Rule Coreとtest-only Shadowを先行し、generic manual moveとsemantic DISCARD intentを識別できるまでProduction Shadow接続を行わない。
 
 ### Track C — CI
 
-Near-term。
+COMPLETE。Minimal CIはPR #6でmainへ導入済み。
 
 目標：
 
@@ -116,7 +121,7 @@ relevant tests
 build
 ```
 
-Rule Engine用に将来、`npm run test:rule` のような安定entry pointを用意する。ただし今回のPRではCIを実装しない。
+Rule Engineの安定入口は`npm run test:rule`として運用中。
 
 ### Track D — Card Data Pipeline
 
@@ -135,7 +140,7 @@ Rule Engine用に将来、`npm run test:rule` のような安定entry pointを�
 
 ### Track S — Rule Source Automation
 
-現在の `source_manifest.yaml` を将来的に実行可能なWatcherへ発展させる。
+Rule Source Watcher v1はCOMPLETE、PR #8でmainへmerge済み。Version / 更新日 / PDF URLをfixture CIとlocal live checkで比較できる。
 
 目標：
 
@@ -156,6 +161,8 @@ changed sectionsのみAI
 ```
 
 公式Q&Aもincrementalにする。
+
+Q&A incremental watcher、PDF section diff、scheduler、notificationはparallel infrastructure trackとして継続するが、Rule Core本筋を不要にBlockしない。
 
 ### Track O — Operations
 
@@ -263,17 +270,28 @@ Codexへ毎回、次をさせない。
 
 ## 11. 次工程順
 
-1. STEP 1 Rebaseline — 今回
-2. STEP 2 Stage 4.5 DRAW Production Shadow
-3. STEP 3 Minimal CI
-4. STEP 4 DRAW Shadow Validation
-5. STEP 5 Rule Source Watcher
-6. STEP 6 Next Rule Vertical Slice Selection
-7. STEP 7 Incremental Card Importer
-8. STEP 8 Scheduler / Notification
-9. STEP 9 Backup / Restore Policy
+Rule本筋:
 
-STEP 2が本筋。STEP 3以降のインフラ整備によってSTEP 2を不必要にBlockしない。
+```text
+DISCARD Design (COMPLETE)
+↓
+DISCARD Pure Rule Core
+↓
+test-only Shadow
+↓
+Production Shadow feasibility
+↓
+Validation
+```
+
+Parallel infrastructure tracks:
+
+- Incremental Card Importer
+- Rule Source Watcher follow-ups
+- Scheduler / Notification
+- Backup / Restore Policy
+
+Parallel infrastructure tracksはRule Core本筋を不要にBlockしない。
 
 ## 12. Source of Truth
 
