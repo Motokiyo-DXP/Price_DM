@@ -1,0 +1,29 @@
+{
+  "evidenceSetId": "TAP_BASE_2026_09_16",
+  "ruleVersion": "1.51",
+  "status": "RULE_VERIFIED_DESIGN_ONLY",
+  "sources": [
+    {
+      "sourceId": "dm_comprehensive_rules_1_51",
+      "references": ["105.1", "105.4", "105.4a", "105.6", "701.2", "701.2a"]
+    }
+  ],
+  "claims": [
+    {
+      "id": "TAP-001",
+      "claim": "Tap and untap are card orientations; tapping rotates a card 90 degrees from its upright position.",
+      "supports": ["105.1", "701.2", "701.2a"]
+    },
+    {
+      "id": "TAP-002",
+      "claim": "A card's orientation cannot be changed arbitrarily; a card in the mana zone may be tapped without a card-type eligibility check.",
+      "supports": ["105.4", "105.4a"]
+    },
+    {
+      "id": "TAP-003",
+      "claim": "A card already tapped cannot be made tapped again; selecting or attempting to tap it is distinct from a completed tap state change.",
+      "supports": ["105.6"]
+    }
+  ],
+  "scopeLimit": "Design only: one already-selected card in the acting player's mana zone; no untap, battle-zone eligibility, mana payment, replacement, or trigger processing."
+}
