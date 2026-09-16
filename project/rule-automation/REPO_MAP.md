@@ -1,6 +1,6 @@
 # REPO_MAP — Rule Automation Scope
 
-Baseline: `main@94b1aae620794b18c6f27052d276886c60933c90`
+Current implementation baseline: see `PROJECT_STATE.md`.
 
 | Path | Current responsibility | Rule automation role |
 |---|---|---|
