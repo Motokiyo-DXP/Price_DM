@@ -33,7 +33,6 @@ import {
   bundleSelectedCards,
   clearCardMarkers,
   countZoneCards,
-  drawRandomCard,
   detachCardFromStack,
   flipStackCards,
   findAttachedSpreadStackId,
@@ -57,6 +56,7 @@ import {
   type DeckCard,
   type PlayerId,
 } from "@/lib/playfield-board";
+import { runDrawProductionShadow } from "@/lib/rule-engine/shadow/draw";
 import { isCardFaceVisible } from "@/lib/playfield-visibility";
 import {
   calculateMarkingMenuPositions,
@@ -1869,7 +1869,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
 
   function draw(owner: PlayerId) {
     if (localPlayer && owner !== localPlayer) return;
-    commit((current) => drawRandomCard(current, owner));
+    commit((current) => runDrawProductionShadow(current, owner).board);
   }
 
   function shuffleDeck(owner: PlayerId) {
