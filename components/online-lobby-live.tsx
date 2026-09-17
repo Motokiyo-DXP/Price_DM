@@ -36,7 +36,7 @@ export function OnlineLobbyLive({
     ]);
     if (nextSlots) {
       const roomIds = nextSlots.map((slot) => slot.game_room_id).filter((id): id is string => Boolean(id));
-      const { data: matches } = roomIds.length ? await supabase.from("game_rooms").select("id").in("id", roomIds).eq("status", "playing").or(`host_user_id.eq.${currentUserId},guest_user_id.eq.${currentUserId}`) : { data: [] };
+      const { data: matches } = roomIds.length ? await supabase.from("game_rooms").select("id").in("id", roomIds).or(`host_user_id.eq.${currentUserId},guest_user_id.eq.${currentUserId}`) : { data: [] };
       setMyMatchIds((matches ?? []).map((room) => room.id));
       setSlots(nextSlots);
     }

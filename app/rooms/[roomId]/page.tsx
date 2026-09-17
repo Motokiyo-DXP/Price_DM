@@ -6,7 +6,7 @@ import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 import type { OnlineDeckSnapshot } from "@/components/online-match-board";
 import { RoomWaitingRefresh } from "@/components/room-waiting-refresh";
-import { setRoomReadyAction } from "../actions";
+import { RoomDeckReadyForm } from "@/components/room-deck-ready-form";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +65,6 @@ export default async function RoomPage({ params, searchParams }: { params: Promi
       <article className={isGuest ? "my-seat" : ""}><header><span>{isGuest ? "自分（02）" : "対戦相手（02）"}</span><strong className={room.guest_ready ? "ready" : "waiting"}>{room.guest_ready ? "準備完了" : "準備中"}</strong></header>{guestDeck ? <div><span aria-label={`${guestProfile?.display_name ?? "ゲスト"}のアカウントアイコン`} className={`room-player-avatar ${guestProfile?.avatar_url ? "has-image" : ""}`} style={guestProfile?.avatar_url ? { backgroundImage: `url("${guestProfile.avatar_url}")` } : undefined}>{guestProfile?.avatar_url ? null : (guestProfile?.display_name ?? (isGuest ? "自分" : "相手")).slice(0, 1).toUpperCase()}</span><CardArtwork className="room-deck-artwork" imageUrl={isGuest ? selectedDeckImageUrl : null} name={`${guestDeck.name ?? "ゲストのデッキ"}のアイコン`} sizes="62px" /><span><h2>{guestDeck.name ?? "ゲストのデッキ"}</h2><p>{room.format === "advanced" ? "アドバンス" : "オリジナル"}・40枚</p></span></div> : <div className="room-seat-empty"><span aria-hidden="true" className="room-player-avatar">?</span><span><h2>参加者を待っています</h2><p>ルームIDを対戦相手へ共有してください。</p></span></div>}</article>
     </div>
     <div className={`room-status ${room.status}`}><span aria-hidden="true" className="room-status-indicator" /><strong>{room.status === "waiting" ? "対戦準備中" : room.status === "ready" ? "対戦を開始しています" : room.status === "playing" ? "対戦中" : "対戦終了"}</strong>{lobbyOpen ? <RoomWaitingRefresh /> : null}</div>
-    {!isSpectator && lobbyOpen && selectedDeckId ? <form action={setRoomReadyAction} className="room-next-step"><input name="roomId" type="hidden" value={room.id} /><input name="ready" type="hidden" value={myReady ? "false" : "true"} />{myReady ? <input name="deckId" type="hidden" value={selectedDeckId} /> : null}<label><span>使用デッキ</span><select defaultValue={selectedDeckId} disabled={myReady} name="deckId" required>{playableDecks.map((deck) => <option key={deck.id} value={deck.id}>{deck.name}</option>)}</select></label><button className={myReady ? "secondary-button" : "button"} type="submit">{myReady ? "準備完了を取り消す" : "準備完了"}</button><p>対戦者2名が準備完了すると、自動的に対戦が始まります。</p></form> : null}
+    {!isSpectator && lobbyOpen && selectedDeckId ? <RoomDeckReadyForm key={`${selectedDeckId}-${myReady}`} roomId={room.id} selectedDeckId={selectedDeckId} myReady={myReady} decks={playableDecks} /> : null}
   </section>;
 }

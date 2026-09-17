@@ -78,6 +78,19 @@ export async function setRoomReadyAction(formData: FormData) {
   redirect(`/rooms/${roomId}`);
 }
 
+export async function setRoomDeckAction(formData: FormData) {
+  const roomId = typeof formData.get("roomId") === "string" ? String(formData.get("roomId")) : "";
+  const deckId = parseDeckId(formData.get("deckId"));
+  if (!/^[0-9a-f-]{36}$/i.test(roomId) || !deckId) redirect("/rooms");
+  const supabase = await createAuthServerSupabaseClient();
+  if (!supabase) redirect(`/rooms/${roomId}?error=${encodeURIComponent("接続設定を確認してください。")}`);
+  const { error } = await supabase.rpc("set_game_room_ready", {
+    p_room_id: roomId, p_deck_id: deckId, p_ready: false,
+  });
+  if (error) redirect(`/rooms/${roomId}?error=${encodeURIComponent(gameRoomErrorMessage(error.message))}`);
+  redirect(`/rooms/${roomId}`);
+}
+
 export async function enterPublicRoomAction(formData: FormData) {
   const deckId = parseDeckId(formData.get("deckId"));
   const slotNumber = Number(formData.get("slotNumber"));
@@ -171,6 +184,17 @@ export async function enterOnlineMatchSlotAction(formData: FormData) {
     p_time_limit_minutes: timeLimit,
   });
   if (error || !data?.[0]) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent(gameRoomErrorMessage(error?.message))}`);
+  if (role === "player" && deckId && (data[0].member_role === "host" || data[0].member_role === "guest")) {
+    const roomId = data[0].game_room_id;
+    const { data: labels, error: labelsError } = await supabase.rpc("get_game_room_deck_labels", { p_room_id: roomId });
+    if (labelsError) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent(gameRoomErrorMessage(labelsError.message))}`);
+    if (labels?.[0]?.selected_deck_id !== deckId) {
+      const { error: deckError } = await supabase.rpc("set_game_room_ready", {
+        p_room_id: roomId, p_deck_id: deckId, p_ready: false,
+      });
+      if (deckError) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent(gameRoomErrorMessage(deckError.message))}`);
+    }
+  }
   redirect(`/rooms/${data[0].game_room_id}`);
 }
 

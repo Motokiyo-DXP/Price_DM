@@ -29,7 +29,7 @@ export default async function OnlineLobbyPage({ params, searchParams }: { params
   ]);
   if (error || !lobby || !slots) notFound();
   const roomIds = slots.map((slot) => slot.game_room_id).filter((id): id is string => Boolean(id));
-  const { data: myMatches } = roomIds.length ? await supabase.from("game_rooms").select("id").in("id", roomIds).eq("status", "playing").or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`) : { data: [] };
+  const { data: myMatches } = roomIds.length ? await supabase.from("game_rooms").select("id").in("id", roomIds).or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`) : { data: [] };
   const validDecks = (decks ?? []).filter((deck) => deck.deck_cards.filter((card) => card.zone === "main").reduce((sum, card) => sum + card.quantity, 0) === 40);
   const iconIds = [...new Set(validDecks.map((deck) => deck.icon_canonical_card_id ?? deck.deck_cards.find((card) => card.zone === "main")?.canonical_card_id).filter((id): id is number => typeof id === "number"))];
   const { data: iconPrints } = iconIds.length ? await supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", iconIds).not("image_key", "is", null).order("id") : { data: [] };
