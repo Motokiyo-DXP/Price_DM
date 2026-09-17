@@ -1281,12 +1281,8 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: { id: string }[]
       }
-      set_online_lobby_passphrase: {
-        Args: { p_lobby_id: string; p_passphrase: string }
-        Returns: undefined
-      }
-      join_online_lobby_with_passphrase: {
-        Args: { p_join_code: string; p_passphrase: string }
+      join_online_lobby_by_code: {
+        Args: { p_join_code: string }
         Returns: { id: string }[]
       }
       enter_online_match_slot: {

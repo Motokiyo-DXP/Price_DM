@@ -3,10 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { OnlineLobbyLive } from "@/components/online-lobby-live";
 import { OnlineLobbyDeckPicker } from "@/components/online-lobby-deck-picker";
 import { OnlineFriendInvite } from "@/components/online-friend-invite";
+import { OnlineLobbyCodeCopyButton } from "@/components/online-lobby-code-copy-button";
 import { getCardImageUrl } from "@/lib/card-image";
 import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
-import { setOnlineLobbyPassphraseAction } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -51,14 +51,11 @@ export default async function OnlineLobbyPage({ params, searchParams }: { params
   return <section className="online-lobby-page">
     <header className="online-lobby-header"><Link aria-label="オンライン対戦メニューへ戻る" href="/rooms">‹</Link><div><p>{isPublic ? "PUBLIC ROOM" : "PRIVATE ROOM"}</p><h1>{isPublic ? "公開ルーム" : "作成したルーム"}</h1></div>{isPublic ? <span className="online-lobby-member-count"><span aria-hidden="true" className="ui-icon ui-icon-team" />{memberCount}人</span> : null}</header>
     {messages.error ? <p className="notice error">{messages.error}</p> : null}{messages.notice ? <p className="notice success">{messages.notice}</p> : null}
-    {!isPublic ? <section className="private-lobby-summary"><div><small>ルームID</small><strong>{lobby.join_code}</strong><span>参加者へ共有してください</span></div><div><small>メンバー</small><strong><span aria-hidden="true" className="ui-icon ui-icon-team" />{memberCount}人</strong><span>現在の参加人数</span></div></section> : null}
+    {!isPublic ? <section className="private-lobby-summary"><div><small>ルームID</small><strong className="private-lobby-room-code"><span>{lobby.join_code}</span><OnlineLobbyCodeCopyButton joinCode={lobby.join_code} /></strong><span>参加者へ共有してください</span></div><div><small>メンバー</small><strong><span aria-hidden="true" className="ui-icon ui-icon-team" />{memberCount}人</strong><span>現在の参加人数</span></div></section> : null}
     <section className="online-lobby-controls">
       <p className="online-lobby-control-label">使用デッキ</p>
       <OnlineLobbyDeckPicker decks={playableDecks} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
-      <div className={`online-lobby-secondary-controls ${isPublic ? "public" : ""}`}>
-        <OnlineFriendInvite friends={friends ?? []} lobbyId={lobby.id} />
-        {!isPublic ? <form action={setOnlineLobbyPassphraseAction} className="online-lobby-passphrase-control"><input name="lobbyId" type="hidden" value={lobby.id} /><label><span>合言葉を入力</span><input aria-label="合言葉" autoComplete="off" maxLength={32} minLength={4} name="passphrase" placeholder="英数字など" required type="text" /></label><button type="submit">OK</button></form> : null}
-      </div>
+      <OnlineFriendInvite friends={friends ?? []} lobbyId={lobby.id} />
     </section>
     <OnlineLobbyLive currentUserId={userId} decks={playableDecks} initialMembers={members ?? []} initialSlots={slots} initialMyMatchIds={(myMatches ?? []).map((room) => room.id)} isPublic={isPublic} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
   </section>;

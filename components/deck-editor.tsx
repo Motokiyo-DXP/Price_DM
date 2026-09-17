@@ -57,10 +57,11 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [deckSortDirection, setDeckSortDirection] = useState<SortDirection>("asc");
   const total = useMemo(() => cards.reduce((sum, card) => sum + card.quantity, 0), [cards]);
   const deckLimit = format === "duel_party" ? 60 : 40;
-  const expandedCards = useMemo(() => {
-    const ordered = sortDeckCards(cards, deckSort, deckSortDirection);
-    return ordered.flatMap((card) => Array.from({ length: card.quantity }, (_, copyIndex) => ({ ...card, copyIndex })));
-  }, [cards, deckSort, deckSortDirection]);
+  const orderedCards = useMemo(() => sortDeckCards(cards, deckSort, deckSortDirection), [cards, deckSort, deckSortDirection]);
+  const expandedCards = useMemo(
+    () => orderedCards.flatMap((card) => Array.from({ length: card.quantity }, (_, copyIndex) => ({ ...card, copyIndex }))),
+    [orderedCards],
+  );
   const productOptions = allProductNames;
   const matchingProducts = productOptions.filter((name) => {
     const term = productQuery.trim().toLocaleLowerCase();
@@ -321,7 +322,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </section>
       </div> : null}
 
-      <input name="cards" type="hidden" value={JSON.stringify(cards)} />
+      <input name="cards" type="hidden" value={JSON.stringify(orderedCards)} />
       {state.status === "error" ? <p className="notice error deck-maker-error" role="alert">{state.message}</p> : null}
     </form>
   );

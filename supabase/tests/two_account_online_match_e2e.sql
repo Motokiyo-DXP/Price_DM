@@ -37,7 +37,6 @@ begin
 
   perform pg_catalog.set_config('request.jwt.claim.sub',v_host::text,true);
   select created.id,created.join_code into v_lobby,v_join_code from public.create_online_lobby() created;
-  perform public.set_online_lobby_passphrase(v_lobby,'e2e-passphrase');
   select slots.id into v_slot from public.list_online_match_slots(v_lobby) slots where slots.slot_number=1;
   select entered.game_room_id,entered.member_role into v_room,v_role
   from public.enter_online_match_slot(v_slot,'player',v_host_deck,
@@ -45,7 +44,7 @@ begin
   if v_role <> 'host' or v_room is null then raise exception 'host could not create match'; end if;
 
   perform pg_catalog.set_config('request.jwt.claim.sub',v_guest::text,true);
-  select joined.id into v_joined_lobby from public.join_online_lobby_with_passphrase(v_join_code,'e2e-passphrase') joined;
+  select joined.id into v_joined_lobby from public.join_online_lobby_by_code(v_join_code) joined;
   if v_joined_lobby <> v_lobby then raise exception 'guest could not join private lobby'; end if;
   select entered.game_room_id,entered.member_role into v_room,v_role
   from public.enter_online_match_slot(v_slot,'player',v_guest_deck,

@@ -131,26 +131,14 @@ export async function openPublicLobbyAction() {
   redirect(`/rooms/lobbies/${data[0].id}`);
 }
 
-export async function joinOnlineLobbyWithPassphraseAction(formData: FormData) {
+export async function joinOnlineLobbyByCodeAction(formData: FormData) {
   const joinCode = normalizeRoomCode(formData.get("joinCode"));
-  const passphrase = typeof formData.get("passphrase") === "string" ? String(formData.get("passphrase")).trim() : "";
-  if (!joinCode || passphrase.length < 4) roomsError("ルームIDと4文字以上の合言葉を入力してください。");
+  if (!joinCode) roomsError("ルームIDが正しくありません。");
   const supabase = await createAuthServerSupabaseClient();
   if (!supabase) roomsError("接続設定を確認してください。");
-  const { data, error } = await supabase.rpc("join_online_lobby_with_passphrase", { p_join_code: joinCode, p_passphrase: passphrase });
-  if (error || !data?.[0]) roomsError("ルームIDまたは合言葉が正しくありません。");
+  const { data, error } = await supabase.rpc("join_online_lobby_by_code", { p_join_code: joinCode });
+  if (error || !data?.[0]) roomsError("ルームIDが正しくありません。");
   redirect(`/rooms/lobbies/${data[0].id}`);
-}
-
-export async function setOnlineLobbyPassphraseAction(formData: FormData) {
-  const lobbyId = typeof formData.get("lobbyId") === "string" ? String(formData.get("lobbyId")) : "";
-  const passphrase = typeof formData.get("passphrase") === "string" ? String(formData.get("passphrase")).trim() : "";
-  if (!/^[0-9a-f-]{36}$/i.test(lobbyId) || passphrase.length < 4 || passphrase.length > 32) redirect("/rooms");
-  const supabase = await createAuthServerSupabaseClient();
-  if (!supabase) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent("接続設定を確認してください。")}`);
-  const { error } = await supabase.rpc("set_online_lobby_passphrase", { p_lobby_id: lobbyId, p_passphrase: passphrase });
-  if (error) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent("合言葉を設定できませんでした。")}`);
-  redirect(`/rooms/lobbies/${lobbyId}?notice=${encodeURIComponent("合言葉を設定しました。")}`);
 }
 
 export async function setOnlineLobbySelectedDeckAction(formData: FormData) {
