@@ -1,0 +1,4 @@
+-- History marker only: production already applied this migration.
+-- Corresponds to Git migration 20260829012111_online_match_foundation.sql.
+-- Remote saved SQL and Git SQL were verified equivalent after normalization.
+-- Intentionally no DDL/DML: prevents re-execution during history recovery.

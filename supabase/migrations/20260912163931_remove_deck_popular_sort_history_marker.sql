@@ -1,0 +1,4 @@
+-- History marker only: production already applied this migration.
+-- Corresponds to Git migration 20260913000000_remove_deck_popular_sort.sql.
+-- Remote saved SQL and Git SQL were verified equivalent after normalization.
+-- Intentionally no DDL/DML: prevents re-execution during history recovery.

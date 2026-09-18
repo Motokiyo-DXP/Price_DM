@@ -1,0 +1,5 @@
+-- Historical migration compatibility marker.
+-- Remote version 20260909190511 was already applied before this repository recorded
+-- the identical SQL as Git migration 20260909185521.
+-- The remote saved SQL and Git migration SQL match after SQL normalization.
+-- This marker intentionally contains no DDL or DML, preventing duplicate execution.

@@ -1,0 +1,4 @@
+-- History marker only: production already applied this migration.
+-- Corresponds to Git migration 20260828172028_user_decks_foundation.sql.
+-- Remote saved SQL and Git SQL were verified equivalent after normalization.
+-- Intentionally no DDL/DML: prevents re-execution during history recovery.
