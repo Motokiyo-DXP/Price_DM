@@ -1,0 +1,4 @@
+-- History marker only: production already applied this DM26-RP3 migration.
+-- Its SQL has production-specific data preconditions and is archived under supabase/migration-archive/remote.
+-- Fresh local construction is performed safely by the later canonical reconciliation migration.
+-- Intentionally no DDL/DML: do not replay the production-specific source SQL.
