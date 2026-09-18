@@ -25,6 +25,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Test production DB safety
+        run: npm run test:db-safety
+
       - name: Test Rule Engine
         run: npm run test:rule
 

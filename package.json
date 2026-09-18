@@ -12,6 +12,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "db:prod:dry-run": "node scripts/production-db-guard.mjs --dry-run",
+    "db:prod:push": "node scripts/production-db-guard.mjs --push",
+    "test:db-safety": "node --test scripts/production-db-guard.test.mjs scripts/migration-safety.test.mjs",
     "import:dm:sample": "node scripts/import-dm-cards-sample.mjs",
     "import:dm:full": "node scripts/import-dm-cards-full.mjs",
     "import:dm:aliases": "node scripts/fetch-dm-card-aliases.mjs",
@@ -45,7 +48,7 @@
     "test:images:sync": "node --test scripts/sync-dm-card-images.test.mjs",
     "audit:shops": "node scripts/audit-shop-manifest.mjs",
     "test:shops:audit": "node --test scripts/audit-shop-manifest.test.mjs",
-    "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:card-detail && npm run test:favorites && npm run test:friends && npm run test:routes && npm run test:maps && npm run test:commerce-links && npm run test:search && npm run test:decks && npm run test:rooms && npm run test:playfield && npm run test:images && npm run test:shops:audit && npm run test:import:dm"
+    "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:card-detail && npm run test:favorites && npm run test:friends && npm run test:routes && npm run test:maps && npm run test:commerce-links && npm run test:search && npm run test:decks && npm run test:rooms && npm run test:playfield && npm run test:images && npm run test:shops:audit && npm run test:import:dm && npm run test:db-safety"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",

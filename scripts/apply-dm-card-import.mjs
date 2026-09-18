@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { assertProductionDbRelease } from "./production-db-guard.mjs";
 
 const MANIFEST_PATH = ".local/dm-import-sql/manifest.json";
 const CHECKPOINT_PATH = ".local/dm-import-apply-checkpoint.json";
@@ -115,6 +116,7 @@ async function main() {
     linkedRef,
     manifest,
   });
+  assertProductionDbRelease(process.cwd());
   const applied = new Set(resolveAppliedFiles(previous, request));
 
   for (const [index, file] of request.files.entries()) {

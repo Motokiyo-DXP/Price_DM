@@ -22,9 +22,14 @@ GitHub Desktopを使う場合は、スタートメニューから起動できる
 ```powershell
 gh auth status
 gh auth login
-git clone https://github.com/Motokiyo-DXP/dm-price-tracker.git
-cd dm-price-tracker
+git clone https://github.com/Motokiyo-DXP/Price_DM.git
+cd Price_DM
+git remote rename origin price-dm
+git config remote.pushDefault price-dm
+git branch --set-upstream-to=price-dm/main main
 ```
+
+These commands are for a new standalone Price_DM clone. Do not rename remotes in a shared multi-worktree Git directory; use the existing explicit `price-dm` remote there.
 
 既存の共有GitHubアカウントを使用します。アクセストークンやワンタイムコードをチャット・スクリーンショット・GitHubへ記録しません。
 
@@ -59,27 +64,25 @@ npm run test:import:dm
 ```powershell
 git status --short --branch
 git remote -v
-git fetch origin --prune
+git fetch price-dm --prune
 git log -1 --oneline
-git rev-list --left-right --count main...origin/main
+git rev-list --left-right --count main...price-dm/main
 ```
 
 `main`へ直接変更せず、最新の`main`から`motokiyo`を含む機能ブランチを作ります。
 
 ```powershell
 git switch main
-git pull --ff-only origin main
+git pull --ff-only price-dm main
 git switch -c motokiyo/<作業名>
 ```
 
 ## 6. Supabase・Vercelの扱い
 
-- Supabase project ref: `fxhlobydispnbywxhirn`
-- Vercel公開URL: <https://dm-price-tracker.vercel.app>
-- GitHub: `Motokiyo-DXP/dm-price-tracker`
+- GitHub: `Motokiyo-DXP/Price_DM`
 - 本番ブランチ: `main`
 
-適用済みマイグレーションは編集しません。DB変更は新しいマイグレーションとして追加し、ローカル検査・差分確認・Pull Requestを経て適用します。VercelとSupabaseの新規プロジェクトは作成しません。
+`price-dm` がPrice_DMのremoteです。`origin`は別リポジトリを指し得るため、Price_DMでは使用しません。適用済みマイグレーションは編集しません。DB変更は新しいマイグレーションとして追加し、ローカル検査・差分確認・Pull Requestを経て専用release sessionで適用します。VercelとSupabaseの新規プロジェクトは作成しません。
 
 ## 7. 引継ぎ完了チェック
 
@@ -88,6 +91,6 @@ git switch -c motokiyo/<作業名>
 - [ ] 必須文書をすべて読んだ
 - [ ] 秘密情報がGit管理外であることを確認した
 - [ ] `npm ci`と指定された検査が成功した
-- [ ] `main`と`origin/main`が同期している
+- [ ] `main`と`price-dm/main`が同期している
 - [ ] `motokiyo`を含む機能ブランチで作業している
 

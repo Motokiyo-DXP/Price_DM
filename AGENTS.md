@@ -44,3 +44,15 @@ Report that it could not be reproduced and explain what was investigated.
 When a previous fix has already failed, inspect git diff/history and previous changes related to the bug before adding another workaround.
 
 Prefer root-cause fixes over CSS offsets, delays, arbitrary conditionals, or other symptom-hiding patches.
+
+## Production DB Safety
+
+This repository is developed by multiple Codex sessions and worktrees. Parallel feature development is allowed; production Supabase mutation is a single dedicated integration/release-session operation.
+
+- Feature sessions must not modify production Supabase. They may create a migration, validate it locally, and keep it with the feature; production application remains pending.
+- Do not run `supabase db push --linked`, `supabase migration repair`, `supabase db reset --linked`, production SQL/DDL/DML, or direct `supabase_migrations.schema_migrations` changes from a normal feature session.
+- A migration must be committed to Git before production application. Never apply it first and commit its source later.
+- Before creating a migration, check `price-dm/main`, the current worktree, and relevant visible worktrees for the same version or purpose. Reuse an existing migration or stop and report; choose an unused timestamp on a collision.
+- Use `price-dm` explicitly for this repository. `origin` and `origin/main` are not the Price_DM source of truth. Never apply another repository's migrations to Price_DM production.
+- Only the designated release session may write production DB, and only one session may do so at a time. Stop if remote migration history changes unexpectedly.
+- Production migration repair requires the exact version and status plus explicit user approval; do not provide it as a convenience command.

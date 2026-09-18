@@ -6,8 +6,9 @@
 
 ## 固定ルール
 
-- GitHubリポジトリは `Motokiyo-DXP/dm-price-tracker`
-- Clone URLは `https://github.com/Motokiyo-DXP/dm-price-tracker.git`
+- GitHubリポジトリは `Motokiyo-DXP/Price_DM`
+- Clone URLは `https://github.com/Motokiyo-DXP/Price_DM.git`
+- Price_DMのGit remoteは `price-dm` を明示して使う。共有Git管理領域の `origin` は別リポジトリを指し得るため、Source of Truthではない。
 - GitHub・Supabase・Vercelは既存の共有アカウントと既存プロジェクトを使う
 - 新しいSupabase・Vercel・GitHubプロジェクトを作らない
 - `main`へ直接変更せず、`motokiyo`を含む機能ブランチとPull Requestを使う
@@ -29,8 +30,8 @@
 
 ## 変更前の確認
 
-1. 現在のブランチ、`origin`、変更状態
-2. `main`と`origin/main`の同期
+1. 現在のブランチ、`price-dm`、変更状態
+2. `main`と`price-dm/main`の同期
 3. 最新コミット
 4. Next.jsとSupabaseの構成
 5. ローカルと本番のマイグレーション履歴

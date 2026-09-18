@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { assertProductionDbRelease } from "./production-db-guard.mjs";
 
 const DIRECTORY = ".local/dm-card-metadata-sql";
 const MANIFEST_PATH = `${DIRECTORY}/manifest.json`;
@@ -33,6 +34,7 @@ async function main() {
     readFile(CHECKPOINT_PATH, "utf8").then(JSON.parse).catch((error) => error?.code === "ENOENT" ? { applied: [] } : Promise.reject(error)),
   ]);
   const request = validateMetadataApply({ argv: process.argv.slice(2), linkedRef, manifest });
+  assertProductionDbRelease(process.cwd());
   const applied = new Set(previous?.project_ref === request.expectedRef && previous?.records === request.records ? previous.applied ?? [] : []);
   for (const [index, file] of request.files.entries()) {
     if (applied.has(file)) continue;
