@@ -180,6 +180,41 @@ export function resolveDeckDragRelease(
   return null;
 }
 
+export type DeckDropRect = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
+
+export type DeckDropArea = "top" | "deck" | "bottom" | null;
+
+/**
+ * Resolve the one deck-related area under a pointer.  The upper and lower
+ * hit targets deliberately use half-open intervals, while the actual deck
+ * rect remains a cancellation area.  This keeps the three areas disjoint at
+ * every boundary instead of relying on overlay stacking order.
+ */
+export function resolveDeckDropArea(input: {
+  deckRect: DeckDropRect;
+  pointX: number;
+  pointY: number;
+  horizontalPadding: number;
+  verticalHitHeight: number;
+}): DeckDropArea {
+  const { deckRect, pointX, pointY, horizontalPadding, verticalHitHeight } = input;
+  if (![deckRect.left, deckRect.right, deckRect.top, deckRect.bottom, pointX, pointY, horizontalPadding, verticalHitHeight].every(Number.isFinite)) return null;
+  if (deckRect.right <= deckRect.left || deckRect.bottom <= deckRect.top || horizontalPadding < 0 || verticalHitHeight <= 0) return null;
+
+  const insideHitColumn = pointX >= deckRect.left - horizontalPadding && pointX <= deckRect.right + horizontalPadding;
+  if (!insideHitColumn) return null;
+
+  if (pointX >= deckRect.left && pointX <= deckRect.right && pointY >= deckRect.top && pointY <= deckRect.bottom) return "deck";
+  if (pointY >= deckRect.top - verticalHitHeight && pointY < deckRect.top) return "top";
+  if (pointY > deckRect.bottom && pointY <= deckRect.bottom + verticalHitHeight) return "bottom";
+  return null;
+}
+
 export type ManaCard = {
   id: string;
   civilizations: string[];

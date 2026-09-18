@@ -15,6 +15,7 @@ import {
   getMoveRule,
   isWithinHorizontalScrollAngle,
   resolveCenteredHandCardId,
+  resolveDeckDropArea,
   resolveDeckDragRelease,
   resolveDropTarget,
   resolvePointerReleaseGesture,
@@ -170,8 +171,28 @@ function readDropHit(elements: Element[], owner: PlayerId, sourceZone: PlayZone,
   return { targetCard, targetZone: resolved.targetZone, targetZoneElement };
 }
 
+type DeckPlacementPreviewState = {
+  activeArea: "top" | "deck" | "bottom" | null;
+  deckRect: { left: number; right: number; top: number; bottom: number };
+  horizontalPadding: number;
+  verticalHitHeight: number;
+};
+
+function toDeckPlacementPreviewState(bounds: DOMRect): DeckPlacementPreviewState {
+  const width = bounds.width;
+  const height = bounds.height;
+  return {
+    activeArea: null,
+    deckRect: { left: bounds.left, right: bounds.right, top: bounds.top, bottom: bounds.bottom },
+    // The wider touch target makes the narrow mobile deck usable, but nearby
+    // zones are still resolved before this target is considered.
+    horizontalPadding: Math.min(48, Math.max(18, width * 0.45)),
+    verticalHitHeight: Math.min(96, Math.max(54, height * 0.8)),
+  };
+}
+
 function clearDropGuide() {
-  document.querySelectorAll<HTMLElement>(".drop-guide-active").forEach((element) => element.classList.remove("drop-guide-active"));
+  document.querySelectorAll<HTMLElement>(".drop-guide-active,.deck-drop-cancel").forEach((element) => element.classList.remove("drop-guide-active", "deck-drop-cancel"));
 }
 
 function showDropGuide(owner: PlayerId, zone: PlayZone | undefined, elements: Element[] = []) {
@@ -184,6 +205,14 @@ function showDropGuide(owner: PlayerId, zone: PlayZone | undefined, elements: El
     .map((element) => element.closest<HTMLElement>("[data-deck-placement]"))
     .find((element) => element?.dataset.deckPlacement)
     ?.classList.add("drop-guide-active");
+}
+
+function showDeckPlacementGuide(owner: PlayerId, area: DeckPlacementPreviewState["activeArea"]) {
+  clearDropGuide();
+  const deck = document.querySelector<HTMLElement>(`[data-drop-owner="${owner}"][data-drop-zone="deck"]`);
+  if (!deck) return;
+  if (area === "deck") deck.classList.add("deck-drop-cancel");
+  else if (area) deck.classList.add("drop-guide-active");
 }
 const zoneLabels: Record<PlayZone, string> = {
   deck: "山札", hand: "手札", shield: "シールド", mana: "マナ",
@@ -223,12 +252,15 @@ function StackHoldProgress({ point }: { point: { x: number; y: number } | null }
   return <LongPressProgress durationMs={STACK_HOLD_MENU_MS - STACK_HOLD_PROGRESS_MS} label="重ね方パネルを開くまでの残り時間" point={point} />;
 }
 
-function DeckPlacementPreview({ owner, preview }: { owner: PlayerId; preview: { centerX: number; centerY: number } | null }) {
+function DeckPlacementPreview({ owner, preview }: { owner: PlayerId; preview: DeckPlacementPreviewState | null }) {
   if (!preview || typeof document === "undefined") return null;
+  const { deckRect, activeArea } = preview;
+  const width = deckRect.right - deckRect.left;
+  const height = deckRect.bottom - deckRect.top;
   return createPortal(
-    <span className="special-preview deck" data-drop-owner={owner} data-drop-zone="deck" style={{ left: preview.centerX, top: preview.centerY }}>
-      <i className="choice top" data-deck-placement="deck_top">山札の上</i>
-      <i className="choice bottom" data-deck-placement="deck_bottom">山札の下</i>
+    <span aria-hidden="true" className="special-preview deck" data-deck-drop-area={activeArea ?? undefined} data-deck-preview-owner={owner} style={{ "--deck-height": `${height}px`, "--deck-width": `${width}px`, left: deckRect.left + width / 2, top: deckRect.top } as CSSProperties}>
+      <span className={`choice top ${activeArea === "top" ? "active" : ""}`}>↑ 山札の上</span>
+      <span className={`choice bottom ${activeArea === "bottom" ? "active" : ""}`}>↓ 山札の下</span>
     </span>,
     document.body,
   );
@@ -287,7 +319,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
   const visible = zone === "reveal" && privateReveal
     ? owner === view || revealPublic
     : isCardFaceVisible({ face: card.face, inspected, inspectionViewer, owner, revealHiddenCards, deckDrawer: revealDeckToOwner, view, zone });
-  const [specialPreview, setSpecialPreview] = useState<{ centerX: number; centerY: number; kind: "deck" | "stack"; targetCardId?: string; targetZone: PlayZone } | null>(null);
+  const [specialPreview, setSpecialPreview] = useState<{ centerX: number; centerY: number; kind: "deck" | "stack"; targetCardId?: string; targetZone: PlayZone; deckPlacement?: DeckPlacementPreviewState } | null>(null);
   const specialPreviewRef = useRef<typeof specialPreview>(null);
   const [stackHoldProgress, setStackHoldProgress] = useState<{ x: number; y: number } | null>(null);
   const [holdActive, setHoldActive] = useState(false);
@@ -465,14 +497,29 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     if (Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > 8) {
       const elements = document.elementsFromPoint(event.clientX, event.clientY);
       const movingCardId = interactionCardId.current;
-      const { targetCard, targetZone, targetZoneElement } = readDropHit(elements, owner, zone, movingCardId, individualFromStack);
-      showDropGuide(owner, targetZone, elements);
-      const deckTarget = targetZone === "deck" ? targetZoneElement : null;
+      const { targetCard, targetZone } = readDropHit(elements, owner, zone, movingCardId, individualFromStack);
+      const deckElement = document.querySelector<HTMLElement>(`[data-drop-owner="${owner}"][data-drop-zone="deck"]`);
+      const deckPlacement = deckElement && zone !== "deck"
+        ? toDeckPlacementPreviewState(deckElement.getBoundingClientRect())
+        : null;
+      const deckArea = deckPlacement
+        ? resolveDeckDropArea({ ...deckPlacement, pointX: event.clientX, pointY: event.clientY })
+        : null;
+      // The selection targets may visually occupy the battle or mana
+      // background.  While dragging, top/bottom therefore deliberately win
+      // there; graveyard keeps its own drop priority so its adjacent pile is
+      // never captured by the wider mobile target.
+      const deckTarget = deckPlacement && deckArea && targetZone !== "graveyard" ? deckPlacement : null;
+      if (deckTarget) showDeckPlacementGuide(owner, deckArea);
+      else showDropGuide(owner, targetZone, elements);
       const targetBounds = targetCard?.dataset.cardId ? targetCard.getBoundingClientRect() : null;
       const candidate = targetCard?.dataset.cardId && targetBounds && targetZone
         ? { centerX: targetBounds.left + targetBounds.width / 2, centerY: targetBounds.top + targetBounds.height / 2, holdX: event.clientX, holdY: event.clientY, targetCardId: targetCard.dataset.cardId, targetZone }
         : null;
-      if (targetZone && nonStackableZones.includes(targetZone)) {
+      if (deckTarget) {
+        clearStackPreviewTimer();
+        updateSpecialPreview({ centerX: (deckTarget.deckRect.left + deckTarget.deckRect.right) / 2, centerY: (deckTarget.deckRect.top + deckTarget.deckRect.bottom) / 2, deckPlacement: { ...deckTarget, activeArea: deckArea }, kind: "deck", targetZone: "deck" });
+      } else if (targetZone && nonStackableZones.includes(targetZone)) {
         clearStackPreviewTimer();
         updateSpecialPreview(null);
       } else if (targetZone && delayedStackPreviewZones.includes(targetZone)) {
@@ -504,10 +551,6 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       } else if (targetCard?.dataset.cardId && candidate) {
         clearStackPreviewTimer();
         updateSpecialPreview({ ...candidate, kind: "stack" });
-      } else if (deckTarget && zone !== "deck") {
-        clearStackPreviewTimer();
-        const bounds = deckTarget.getBoundingClientRect();
-        updateSpecialPreview({ centerX: bounds.left + bounds.width / 2, centerY: bounds.top + bounds.height / 2, kind: "deck", targetZone: "deck" });
       } else {
         clearStackPreviewTimer();
         updateSpecialPreview(null);
@@ -593,13 +636,25 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       if (activeSpecialPreview) {
         if (activeSpecialPreview.kind === "deck") {
           const elements = document.elementsFromPoint(event.clientX, event.clientY);
-          const placementElement = elements
-            .map((element) => element.closest<HTMLElement>("[data-deck-placement]"))
-            .find((element) => element?.dataset.deckPlacement);
-          const placement = placementElement?.dataset.deckPlacement === "deck_top" || placementElement?.dataset.deckPlacement === "deck_bottom"
-            ? placementElement.dataset.deckPlacement
-            : null;
           const { targetZone } = readDropHit(elements, owner, zone, movingCardId, individualFromStack);
+          const deckArea = activeSpecialPreview.deckPlacement
+            ? resolveDeckDropArea({ ...activeSpecialPreview.deckPlacement, pointX: event.clientX, pointY: event.clientY })
+            : null;
+          if (targetZone === "graveyard") {
+            onMove(owner, zone, movingCardId, targetZone);
+            updateSpecialPreview(null);
+            return;
+          }
+          if (deckArea === "deck") {
+            updateSpecialPreview(null);
+            return;
+          }
+          if (!deckArea && targetZone && targetZone !== "deck") {
+            onMove(owner, zone, movingCardId, targetZone);
+            updateSpecialPreview(null);
+            return;
+          }
+          const placement = deckArea === "top" ? "deck_top" : deckArea === "bottom" ? "deck_bottom" : null;
           const release = resolveDeckDragRelease(placement, targetZone ?? null);
           if (release?.kind === "deck") onMove(owner, zone, movingCardId, "deck", undefined, release.choice);
           else if (release?.kind === "zone") onMove(owner, zone, movingCardId, release.zone);
@@ -697,7 +752,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       </button>
       <LongPressProgress durationMs={readLongPressMs()} label="長押し操作が有効になるまでの残り時間" point={holdActive ? holdPoint : null} />
       <CardDragPreview preview={dragPreview} />
-      <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview : null} />
+      <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} />
       <StackHoldProgress point={stackHoldProgress} />
       {specialPreview?.kind === "stack" ? <StackDestinationMarkingMenu menu={{ pointerX: dragPreview?.x ?? specialPreview.centerX, pointerY: dragPreview?.y ?? specialPreview.centerY, x: specialPreview.centerX, y: specialPreview.centerY }} /> : null}
     </>
