@@ -1,0 +1,4 @@
+-- External history marker only: this migration originated in dm-price-tracker, not Price_DM.
+-- It already ran in production and was DML-only, updating public.deck_cards.sort_order.
+-- Price_DM fresh local construction does not require that update.
+-- Intentionally no DML: preserves production migration-history compatibility without re-execution.

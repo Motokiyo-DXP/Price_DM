@@ -1,0 +1,4 @@
+-- History compatibility marker only: production already applied this migration.
+-- The remote SQL is not textually identical to the Git migration sequence.
+-- Its required final RPC and ACL effects are reproduced by the current Git migrations.
+-- Intentionally no DDL/DML: do not re-execute production SQL during history recovery.
