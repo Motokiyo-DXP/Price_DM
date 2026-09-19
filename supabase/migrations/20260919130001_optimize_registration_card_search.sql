@@ -31,7 +31,6 @@ language sql
 stable
 security invoker
 set search_path = ''
-set pg_trgm.similarity_threshold = '0.6'
 as $$
   with search_input as materialized (
     select
