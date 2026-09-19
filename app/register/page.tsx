@@ -129,7 +129,12 @@ export default function RegisterPage() {
   const [buyPriceInput, setBuyPriceInput] = useState("");
   const salePriceIsComposing = useRef(false);
   const buyPriceIsComposing = useRef(false);
+  const cardQueryIsComposing = useRef(false);
+  const cardSearchAbortController = useRef<AbortController | null>(null);
+  const cardSearchRequestSequence = useRef(0);
+  const cardSearchInputStartedAt = useRef<number | null>(null);
   const prefillAttempted = useRef(false);
+  const [cardQueryCompositionRevision, setCardQueryCompositionRevision] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -251,8 +256,11 @@ export default function RegisterPage() {
   useEffect(() => {
     let cancelled = false;
     const query = cardQuery.trim();
+    const requestSequence = ++cardSearchRequestSequence.current;
 
-    if (!gameSlug || query.length === 0) {
+    cardSearchAbortController.current?.abort();
+
+    if (!gameSlug || query.length === 0 || cardQueryIsComposing.current) {
       setCardOptions([]);
       setSearchingCards(false);
       setActiveOptionIndex(-1);
@@ -261,6 +269,12 @@ export default function RegisterPage() {
 
     setSearchingCards(true);
     const timer = window.setTimeout(async () => {
+      if (
+        cardQueryIsComposing.current ||
+        requestSequence !== cardSearchRequestSequence.current
+      ) {
+        return;
+      }
       const supabase = createBrowserSupabaseClient();
       if (!supabase) {
         setSystemError("Supabase の接続情報が設定されていません。");
@@ -268,14 +282,22 @@ export default function RegisterPage() {
         return;
       }
 
-      const { data, error } = await supabase.rpc("search_canonical_cards", {
-        p_game_slug: gameSlug,
-        p_limit: 30,
-        p_mode: searchMode,
-        p_query: query,
-      });
+      const controller = new AbortController();
+      cardSearchAbortController.current = controller;
+      const { data, error } = await supabase
+        .rpc("search_registration_cards", {
+          p_game_slug: gameSlug,
+          p_limit: 30,
+          p_mode: searchMode,
+          p_query: query,
+        })
+        .abortSignal(controller.signal);
 
-      if (cancelled) return;
+      if (
+        cancelled ||
+        controller.signal.aborted ||
+        requestSequence !== cardSearchRequestSequence.current
+      ) return;
       setSearchingCards(false);
       if (error) {
         setSystemError("カード候補を読み込めませんでした。");
@@ -285,13 +307,24 @@ export default function RegisterPage() {
       setSystemError(null);
       setCardOptions(mapRegistrationCardOptions(data));
       setActiveOptionIndex(-1);
+      window.requestAnimationFrame(() => {
+        if (requestSequence !== cardSearchRequestSequence.current) return;
+        const startedAt = cardSearchInputStartedAt.current;
+        if (startedAt === null) return;
+        performance.clearMeasures("register-card-search-input-to-render");
+        performance.measure("register-card-search-input-to-render", {
+          start: startedAt,
+          end: performance.now(),
+        });
+      });
     }, CARD_SEARCH_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      cardSearchAbortController.current?.abort();
     };
-  }, [cardQuery, gameSlug, searchMode]);
+  }, [cardQuery, cardQueryCompositionRevision, gameSlug, searchMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -791,7 +824,26 @@ export default function RegisterPage() {
             value={cardQuery}
             onFocus={() => setSuggestionsOpen(true)}
             onKeyDown={handleCardKeyDown}
+            onCompositionStart={() => {
+              cardQueryIsComposing.current = true;
+              cardSearchAbortController.current?.abort();
+              setSearchingCards(false);
+            }}
+            onCompositionEnd={(event) => {
+              cardQueryIsComposing.current = false;
+              cardSearchInputStartedAt.current = performance.now();
+              performance.clearMeasures("register-card-search-input-to-render");
+              setCardQuery(event.currentTarget.value);
+              setSelectedCard(null);
+              setSuggestionsOpen(true);
+              setCardQueryCompositionRevision((current) => current + 1);
+            }}
             onChange={(event) => {
+              cardSearchAbortController.current?.abort();
+              if (!cardQueryIsComposing.current) {
+                cardSearchInputStartedAt.current = performance.now();
+                performance.clearMeasures("register-card-search-input-to-render");
+              }
               setCardQuery(event.target.value);
               setSelectedCard(null);
               setSuggestionsOpen(true);

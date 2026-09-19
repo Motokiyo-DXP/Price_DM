@@ -1711,6 +1711,22 @@ export type Database = {
           print_count: number
         }[]
       }
+      search_registration_cards: {
+        Args: {
+          p_game_slug?: string
+          p_limit?: number
+          p_mode?: string
+          p_query: string
+        }
+        Returns: {
+          game_name: string
+          game_slug: string
+          id: number
+          name: string
+          name_kana: string
+          print_count: number
+        }[]
+      }
       search_cards: {
         Args: {
           p_game_slug?: string
