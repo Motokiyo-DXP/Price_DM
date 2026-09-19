@@ -161,6 +161,7 @@ export type Database = {
           host_rematch_ready: boolean
           guest_rematch_ready: boolean
           format: string
+          deck_is_public: boolean
           guest_deck_snapshot: Json | null
           guest_ready: boolean
           guest_user_id: string | null
@@ -185,6 +186,7 @@ export type Database = {
           host_rematch_ready?: boolean
           guest_rematch_ready?: boolean
           format: string
+          deck_is_public?: boolean
           guest_deck_snapshot?: Json | null
           guest_ready?: boolean
           guest_user_id?: string | null
@@ -209,6 +211,7 @@ export type Database = {
           host_rematch_ready?: boolean
           guest_rematch_ready?: boolean
           format?: string
+          deck_is_public?: boolean
           guest_deck_snapshot?: Json | null
           guest_ready?: boolean
           guest_user_id?: string | null
@@ -1286,12 +1289,12 @@ export type Database = {
         Returns: { id: string }[]
       }
       enter_online_match_slot: {
-        Args: { p_slot_id: string; p_role: string; p_deck_id: string | null; p_format: string; p_time_limit_minutes: number }
+        Args: { p_slot_id: string; p_role: string; p_deck_id: string | null; p_format: string; p_time_limit_minutes: number; p_deck_is_public: boolean }
         Returns: { game_room_id: string; member_role: string }[]
       }
       list_online_match_slots: {
         Args: { p_lobby_id: string }
-        Returns: { id: string; slot_number: number; format: string; time_limit_minutes: number; game_room_id: string | null; status: string; player_count: number; spectator_count: number; host_display_name: string | null; host_avatar_url: string | null; guest_display_name: string | null; guest_avatar_url: string | null }[]
+        Returns: { id: string; slot_number: number; format: string; time_limit_minutes: number; game_room_id: string | null; status: string; player_count: number; spectator_count: number; host_display_name: string | null; host_avatar_url: string | null; guest_display_name: string | null; guest_avatar_url: string | null; deck_is_public: boolean }[]
       }
       list_online_lobby_members: {
         Args: { p_lobby_id: string }
@@ -1393,7 +1396,7 @@ export type Database = {
       }
       get_game_room_deck_labels: {
         Args: { p_room_id: string }
-        Returns: { host_name: string; guest_name: string | null; selected_deck_id: string | null }[]
+        Returns: { host_name: string; guest_name: string | null; selected_deck_id: string | null; host_icon_image_key: string | null; guest_icon_image_key: string | null }[]
       }
       shuffle_game_cards: {
         Args: { p_room_id: string; p_expected_version: number; p_owner: string; p_zone: string; p_mode: string; p_card_ids?: string[] | null; p_stack_id?: string | null }
