@@ -412,7 +412,7 @@ body:has(.online-entry-page),body:has(.online-lobby-page),body:has(.online-invit
 .battle-history-actions .battle-primary-actions{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.battle-history-actions .battle-primary-actions button{height:auto}.battle-player-top .zone-battle>.battle-deck-name{bottom:auto;left:auto;right:0;top:0}
 .battle-player-bottom .zone-hand .play-zone-cards{align-items:flex-start;overflow-y:hidden;padding-top:10px;scroll-padding-inline:20%}.battle-player-bottom .zone-hand .play-card{transform-origin:50% 180%}.battle-player-bottom .zone-hand .play-card:nth-child(7n+1){transform:translateY(13px) rotate(-12deg)}.battle-player-bottom .zone-hand .play-card:nth-child(7n+2){transform:translateY(7px) rotate(-8deg)}.battle-player-bottom .zone-hand .play-card:nth-child(7n+3){transform:translateY(3px) rotate(-4deg)}.battle-player-bottom .zone-hand .play-card:nth-child(7n+4){transform:translateY(1px)}.battle-player-bottom .zone-hand .play-card:nth-child(7n+5){transform:translateY(3px) rotate(4deg)}.battle-player-bottom .zone-hand .play-card:nth-child(7n+6){transform:translateY(7px) rotate(8deg)}.battle-player-bottom .zone-hand .play-card:nth-child(7n){transform:translateY(13px) rotate(12deg)}
 .battle-player-bottom .zone-hand .play-zone-cards>.play-card,.battle-player-bottom .zone-hand .play-zone-cards>.card-stack{transform:translateX(var(--fan-x,0px)) translateY(calc(var(--fan-y,0px) + 8px)) rotate(var(--fan-angle,0deg)) scale(var(--fan-scale,2));transform-origin:50% 50%;transition:none;will-change:transform}
-.rough-battle-board .battle-player-bottom .zone-hand{background:transparent;border-color:transparent;box-shadow:none;z-index:31}
+.rough-battle-board .battle-player-bottom .zone-hand{background:transparent;border-color:transparent;box-shadow:none;pointer-events:none;z-index:31}
 .battle-player-bottom .zone-hand .play-zone-label,.battle-player-bottom .zone-hand .play-zone-count{display:none}
 .battle-player-bottom .zone-hand .play-zone-cards{scrollbar-width:none}
 .battle-player-bottom .zone-hand .play-zone-cards::-webkit-scrollbar{display:none}
@@ -422,7 +422,8 @@ body:has(.online-entry-page),body:has(.online-lobby-page),body:has(.online-invit
 .rough-battle-board .battle-player-bottom .zone-hand{overflow:visible}
 .battle-player-bottom .zone-hand .play-zone-cards{align-items:center;bottom:0;height:340px;left:0;overflow-x:auto;overflow-y:hidden;pointer-events:none;position:absolute;right:0}
 .battle-player-bottom .zone-hand.fan-collapsed .play-zone-cards{height:230px}
-.battle-player-bottom .zone-hand .play-zone-cards>.play-card,.battle-player-bottom .zone-hand .play-zone-cards>.card-stack{pointer-events:auto}
+.battle-player-bottom .zone-hand .play-zone-cards .card-stack,.battle-player-bottom .zone-hand .play-zone-cards .connected-stacks{pointer-events:none}
+.battle-player-bottom .zone-hand .play-zone-cards .play-card,.battle-player-bottom .zone-hand .play-zone-cards>.empty-hand-target{pointer-events:auto}
 @media(max-width:700px){.battle-player-bottom .zone-hand .play-zone-cards{height:220px}.battle-player-bottom .zone-hand.fan-collapsed .play-zone-cards{height:150px}}
 @media(max-width:700px){.rough-battle-board.opponent-collapsed .battle-player-bottom{flex:0 0 auto}}
 @media(max-width:700px){.rough-battle-board.opponent-collapsed,.rough-battle-board.opponent-collapsed .battle-fields{min-height:0}}

@@ -5,10 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { importPublicDeckAction, importSharedDeckAction } from "@/app/decks/actions";
 import { CardArtwork } from "@/components/card-artwork";
 import { resolveCardArtworkUrl } from "@/lib/card-image";
-
-type PreviewCard = { zone: string; name: string; imageUrl: string | null };
-type DeckPreview = { name: string; cards: PreviewCard[] };
-const previewCache = new Map<string, DeckPreview>();
+import { getDeckPreview, hasDeckPreview, setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
 
 function zoneName(zone: string) {
   if (zone === "gr") return "超GRゾーン";
@@ -56,7 +53,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
     setPreview(null);
     setPreviewError("");
     setOtherOpen(false);
-    fetch(`/api/shared-decks/${encodeURIComponent(shareToken)}/preview`).then(async (response) => {
+    fetch(`/api/shared-decks/${encodeURIComponent(shareToken)}/preview`, { cache: "no-store" }).then(async (response) => {
       if (!response.ok) throw new Error();
       return response.json() as Promise<DeckPreview>;
     }).then((data) => { if (active && selectedId.current === shareToken) setPreview(data); }).catch(() => { if (active && selectedId.current === shareToken) setPreviewError("デッキを読み込めませんでした。"); });
@@ -74,15 +71,15 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
     setSharedOpen(false);
     selectedId.current = deck.id;
     setSelected(deck);
-    setPreview(previewCache.get(deck.id) ?? null);
+    setPreview(getDeckPreview("public", deck.id) ?? null);
     setPreviewError("");
     setOtherOpen(false);
-    if (previewCache.has(deck.id)) return;
+    if (hasDeckPreview("public", deck.id)) return;
     try {
-      const response = await fetch(`/api/public-decks/${encodeURIComponent(deck.id)}/preview`);
+      const response = await fetch(`/api/public-decks/${encodeURIComponent(deck.id)}/preview`, { cache: "no-store" });
       if (!response.ok) throw new Error();
       const data: DeckPreview = await response.json();
-      previewCache.set(deck.id, data);
+      setDeckPreview("public", deck.id, data);
       if (selectedId.current === deck.id) setPreview(data);
     } catch {
       if (selectedId.current === deck.id) setPreviewError("デッキを読み込めませんでした。");

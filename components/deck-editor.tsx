@@ -6,6 +6,7 @@ import { initialDeckActionState } from "@/app/decks/action-state";
 import { CardArtwork } from "@/components/card-artwork";
 import { getCardImageUrl } from "@/lib/card-image";
 import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
+import { invalidateDeckPreviewCache } from "@/lib/deck-preview-cache";
 import { sortDeckCards, sortSearchCards, type DeckSortKey, type SearchSortKey, type SortDirection } from "@/lib/deck-sorting";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
@@ -53,11 +54,13 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [imageFilter, setImageFilter] = useState<"all" | "with" | "without">("all");
   const [searchSort, setSearchSort] = useState<SearchSortKey>("usage");
   const [searchSortDirection, setSearchSortDirection] = useState<SortDirection>("desc");
-  const [deckSort, setDeckSort] = useState<DeckSortKey>("cost");
+  // A new deck has no persisted order yet, so keep the historical cost-ascending default.
+  // Existing decks continue to render their saved sort_order unchanged.
+  const [deckSort, setDeckSort] = useState<DeckSortKey | null>(initialDeck ? null : "cost");
   const [deckSortDirection, setDeckSortDirection] = useState<SortDirection>("asc");
   const total = useMemo(() => cards.reduce((sum, card) => sum + card.quantity, 0), [cards]);
   const deckLimit = format === "duel_party" ? 60 : 40;
-  const orderedCards = useMemo(() => sortDeckCards(cards, deckSort, deckSortDirection), [cards, deckSort, deckSortDirection]);
+  const orderedCards = useMemo(() => deckSort ? sortDeckCards(cards, deckSort, deckSortDirection) : cards, [cards, deckSort, deckSortDirection]);
   const expandedCards = useMemo(
     () => orderedCards.flatMap((card) => Array.from({ length: card.quantity }, (_, copyIndex) => ({ ...card, copyIndex }))),
     [orderedCards],
@@ -229,7 +232,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   }
 
   return (
-    <form action={formAction} className="deck-maker-form">
+    <form action={formAction} className="deck-maker-form" onSubmit={() => { if (initialDeck) invalidateDeckPreviewCache(initialDeck.id); }}>
       <header className="deck-maker-toolbar">
         <label className="deck-maker-name">デッキ名<input defaultValue={initialDeck?.name} maxLength={60} name="name" placeholder="デッキ名を入力" required /></label>
         <div className="deck-maker-actions">
@@ -295,7 +298,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </section> : null}
         {sortOpen ? <section className="deck-sort-modal-backdrop" onClick={() => setSortOpen(false)} role="presentation"><div aria-label="並べ替え方法選択" aria-modal="true" className="deck-sort-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-popover-heading"><strong>並べ替え方法選択</strong><button aria-label="並べ替えを閉じる" onClick={() => setSortOpen(false)} type="button">×</button></div>
-          <div className="deck-sort-section-heading"><h3>デッキ並べ替え</h3><button aria-label="デッキの昇順と降順を切り替える" className="deck-sort-direction" onClick={() => setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc")} type="button">{deckSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options"><button className={deckSort === "cost" ? "active" : ""} onClick={() => setDeckSort("cost")} type="button">コスト順</button><button className={deckSort === "added" ? "active" : ""} onClick={() => setDeckSort("added")} type="button">追加順</button><button className={deckSort === "name" ? "active" : ""} onClick={() => setDeckSort("name")} type="button">カード名順</button><button className={deckSort === "quantity" ? "active" : ""} onClick={() => setDeckSort("quantity")} type="button">枚数順</button></div>
+          <div className="deck-sort-section-heading"><h3>デッキ並べ替え</h3><button aria-label="デッキの昇順と降順を切り替える" className="deck-sort-direction" onClick={() => { setDeckSort((current) => current ?? "cost"); setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc"); }} type="button">{deckSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options"><button className={deckSort === "cost" ? "active" : ""} onClick={() => setDeckSort("cost")} type="button">コスト順</button><button className={deckSort === "added" ? "active" : ""} onClick={() => setDeckSort("added")} type="button">追加順</button><button className={deckSort === "name" ? "active" : ""} onClick={() => setDeckSort("name")} type="button">カード名順</button><button className={deckSort === "quantity" ? "active" : ""} onClick={() => setDeckSort("quantity")} type="button">枚数順</button></div>
           <div className="deck-sort-section-heading"><h3>検索結果並べ替え</h3><button aria-label="検索結果の昇順と降順を切り替える" className="deck-sort-direction" onClick={() => setSearchSortDirection((direction) => direction === "asc" ? "desc" : "asc")} type="button">{searchSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options search"><button className={searchSort === "relevance" ? "active" : ""} onClick={() => setSearchSort("relevance")} type="button">検索順</button><button className={searchSort === "name" ? "active" : ""} onClick={() => setSearchSort("name")} type="button">カード名順</button><button className={searchSort === "prints" ? "active" : ""} onClick={() => setSearchSort("prints")} type="button">収録数順</button><button className={searchSort === "usage" ? "active" : ""} onClick={() => { setSearchSort("usage"); setSearchSortDirection("desc"); }} type="button">使用数順</button></div>
         </div></section> : null}
       </section>
