@@ -47,6 +47,32 @@ export type Database = {
           },
         ]
       }
+      account_recent_registration_shops: {
+        Row: {
+          last_registered_at: string
+          shop_id: number
+          user_id: string
+        }
+        Insert: {
+          last_registered_at?: string
+          shop_id: number
+          user_id: string
+        }
+        Update: {
+          last_registered_at?: string
+          shop_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_recent_registration_shops_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_config: {
         Row: {
           id: boolean
@@ -1777,6 +1803,19 @@ export type Database = {
           prefecture: string
           total_count: number
         }[]
+      }
+      list_recent_registration_shops: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: number
+          municipality: string
+          name: string
+          prefecture: string
+        }[]
+      }
+      record_recent_registration_shop: {
+        Args: { p_shop_id: number }
+        Returns: undefined
       }
       submit_price_correction_request: {
         Args: {

@@ -1347,6 +1347,13 @@ body:has(.register-page) main{max-width:720px;padding:16px 12px 90px}
 .register-page .compact-candidate-panel>label,.register-page .compact-candidate-panel>.two,.register-page .compact-candidate-panel>.form-help,.register-page .compact-candidate-panel>button,.register-page .compact-candidate-panel>.notice{margin-left:14px;margin-right:14px}
 .register-page .compact-candidate-panel>button{min-height:44px}
 .register-page>form>.button{border-radius:8px;font-size:17px;min-height:52px;width:100%}
+.recent-registration-shops{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
+.recent-registration-shop{align-items:center;background:#495473;border:1px solid #727c98;border-radius:8px;color:#f5f6fa;cursor:pointer;display:inline-flex;font:700 13px system-ui,-apple-system,"Noto Sans JP",sans-serif;gap:7px;max-width:100%;min-height:44px;padding:8px 11px;text-align:left}
+.recent-registration-shop:hover{border-color:#ecc100}
+.recent-registration-shop[aria-pressed=true]{border-color:#ecc100}
+.recent-registration-shop:focus-visible{outline:2px solid #ecc100;outline-offset:2px}
+.recent-registration-shop img{flex:none;height:16px;width:16px}
+.recent-registration-shop span{overflow-wrap:anywhere}
 @media(max-width:560px){.registration-card-content,.registration-basic-content{padding:12px 10px 0}.registration-card-preview{padding:10px 10px 0}.register-page .registration-basic-content .two{grid-template-columns:repeat(2,minmax(0,1fr))}.register-page .registration-basic-content .two input{font-size:14px;padding:10px 7px}}
 
 /* Card detail: keep identity and averages together, with secondary recalculation. */

@@ -9,6 +9,7 @@ import {
   REGISTRATION_SESSION_COOKIE,
 } from "@/lib/registration-session";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 import { MARKET_CARDS_CACHE_TAG } from "@/lib/market-data";
 import { hasRegistrationUser } from "@/lib/registration-auth";
 
@@ -86,7 +87,26 @@ export async function POST(request: Request) {
     return json({ error: "registration_failed" }, 400);
   }
 
+  let recentShopRecorded = false;
+  const authSupabase = await createAuthServerSupabaseClient();
+  if (!authSupabase) {
+    console.error("Failed to update recent registration shops: auth client unavailable");
+  } else {
+    const { error: recentShopError } = await authSupabase.rpc(
+      "record_recent_registration_shop",
+      { p_shop_id: priceRecord.shopId },
+    );
+    if (recentShopError) {
+      console.error(
+        "Failed to update recent registration shops",
+        recentShopError.code,
+      );
+    } else {
+      recentShopRecorded = true;
+    }
+  }
+
   revalidateTag(MARKET_CARDS_CACHE_TAG);
   revalidatePath("/");
-  return json({ recordId }, 201);
+  return json({ recordId, recentShopRecorded }, 201);
 }
