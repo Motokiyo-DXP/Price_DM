@@ -50,6 +50,7 @@ export type BoardState = {
   notifications?: BoardNotification[];
   turnRequest?: { requestedBy: PlayerId; status: "pending" | "held" } | null;
   inspection?: { cardId: string; owner: PlayerId; viewer: PlayerId } | null;
+  deckInspection?: { count: number | "max"; order: "deck" | "cost"; owner: PlayerId; viewer: PlayerId } | null;
 };
 export type BoardNotification = {
   id: string;
@@ -131,12 +132,13 @@ export function initialOnlineBoard(hostCards: DeckCard[], guestCards: DeckCard[]
     notifications: [],
     turnRequest: null,
     inspection: null,
+    deckInspection: null,
   };
 }
 
 export function resetBoard(current: BoardState, random = Math.random): BoardState {
   const resetPlayer = (playerId: PlayerId) => dealInstances(Object.values(current.players[playerId]).flat(), random);
-  return { players: { p1: resetPlayer("p1"), p2: resetPlayer("p2") }, revealPublic: { p1: false, p2: false }, turn: 1, activePlayer: "p1", shieldPlacementOrder: { p1: 1, p2: 1 }, notifications: [], turnRequest: null, inspection: null };
+  return { players: { p1: resetPlayer("p1"), p2: resetPlayer("p2") }, revealPublic: { p1: false, p2: false }, turn: 1, activePlayer: "p1", shieldPlacementOrder: { p1: 1, p2: 1 }, notifications: [], turnRequest: null, inspection: null, deckInspection: null };
 }
 
 export function advanceTurn(current: BoardState): BoardState {
