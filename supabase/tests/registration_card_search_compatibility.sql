@@ -1,4 +1,4 @@
--- Run after the current schema and 20260919130001_optimize_registration_card_search.
+-- Run after the current schema and both registration-card-search migrations.
 -- 1-2 character queries intentionally use prefix-only matching and therefore
 -- are checked for responsiveness/availability, not equality with the shared
 -- contains/fuzzy RPC. Every 3+ character case must retain the shared RPC's
