@@ -6,7 +6,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase";
 
 export type OnlineLobbySlot = {
   id: string; slot_number: number; format: string; time_limit_minutes: number;
-  game_room_id: string | null; status: string; player_count: number; spectator_count: number;
+  game_room_id: string | null; status: string; player_count: number; spectator_count: number; deck_is_public: boolean;
   host_display_name: string | null; host_avatar_url: string | null;
   guest_display_name: string | null; guest_avatar_url: string | null;
 };
@@ -14,13 +14,12 @@ export type OnlineLobbyMember = {
   user_id: string; display_name: string; avatar_url: string | null; member_role: string;
   last_seen_at: string; is_online: boolean;
 };
-type LobbyDeck = { id: string; name: string; format: string };
 
 export function OnlineLobbyLive({
-  currentUserId, decks, initialMembers, initialSlots, initialMyMatchIds, isPublic, lobbyId, selectedDeckId,
+  currentUserId, initialMembers, initialSlots, initialMyMatchIds, isPublic, lobbyId,
 }: {
-  currentUserId: string; decks: LobbyDeck[]; initialMembers: OnlineLobbyMember[];
-  initialSlots: OnlineLobbySlot[]; initialMyMatchIds: string[]; isPublic: boolean; lobbyId: string; selectedDeckId?: string | null;
+  currentUserId: string; initialMembers: OnlineLobbyMember[];
+  initialSlots: OnlineLobbySlot[]; initialMyMatchIds: string[]; isPublic: boolean; lobbyId: string;
 }) {
   const [supabase] = useState(() => createBrowserSupabaseClient());
   const [slots, setSlots] = useState(initialSlots);
@@ -67,9 +66,9 @@ export function OnlineLobbyLive({
   }, [lobbyId, refresh, supabase]);
 
   return <div className="online-lobby-layout">
-    <main><div className="lobby-section-heading"><h2><span aria-hidden="true">⚔</span> マッチ受付</h2><span>全{slots.length}受付</span></div><OnlineLobbySlots decks={decks} lobbyId={lobbyId} myMatchIds={myMatchIds} preferredDeckId={selectedDeckId} slots={slots} /></main>
+    <main><div className="lobby-section-heading"><h2><span aria-hidden="true">⚔</span> マッチ受付</h2><span>全{slots.length}受付</span></div><OnlineLobbySlots lobbyId={lobbyId} myMatchIds={myMatchIds} slots={slots} /></main>
     <aside>
-      <div className="lobby-members-title"><strong><span aria-hidden="true" className="ui-icon ui-icon-team" />メンバー</strong><span>{members.length}人</span><span aria-hidden="true">⌄</span><span className="lobby-sync-status">{connection}</span></div>
+      <div className="lobby-members-title"><strong><span aria-hidden="true" className="ui-icon ui-icon-team" />メンバー</strong><span>{members.length}人</span><span aria-hidden="true" className="ui-icon ui-icon-dropdown" /><span className="lobby-sync-status">{connection}</span></div>
       {members.map((member) => <article key={member.user_id}><span className={`member-avatar ${member.avatar_url ? "has-image" : ""}`} style={member.avatar_url ? { backgroundImage: `url("${member.avatar_url}")` } : undefined}>{member.avatar_url ? null : member.display_name.slice(0, 1).toUpperCase()}</span><div><strong>{member.display_name}{member.user_id === currentUserId ? "（あなた）" : ""}</strong><small>{member.member_role === "owner" ? "作成者・" : ""}{member.is_online ? "オンライン" : "離席中"}</small></div></article>)}
       <div className="lobby-information"><strong>{isPublic ? "誰でも参加できます" : "ルームIDまたは招待で参加できます"}</strong><p>受付ごとにフォーマット、時間制限、使用デッキ、対戦・観戦を選択できます。</p></div>
     </aside>

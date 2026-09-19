@@ -158,14 +158,20 @@ export async function enterOnlineMatchSlotAction(formData: FormData) {
   const role = formData.get("role") === "spectator" ? "spectator" : "player";
   const format = formData.get("format") === "advanced" ? "advanced" : "original";
   const timeLimit = Number(formData.get("timeLimit"));
-  const deckId = role === "player" ? parseDeckId(formData.get("deckId")) : null;
-  if (!/^[0-9a-f-]{36}$/i.test(slotId) || !/^[0-9a-f-]{36}$/i.test(lobbyId) || (role === "player" && !deckId) || !Number.isInteger(timeLimit)) {
+  const deckIsPublic = formData.getAll("deckIsPublic").includes("true");
+  if (!/^[0-9a-f-]{36}$/i.test(slotId) || !/^[0-9a-f-]{36}$/i.test(lobbyId) || !Number.isInteger(timeLimit)) {
     redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent("マッチ設定を確認してください。")}`);
   }
   const supabase = await createAuthServerSupabaseClient();
   if (!supabase) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent("接続設定を確認してください。")}`);
+  const { data: selectedLobbyDeck } = role === "player"
+    ? await supabase.from("online_lobby_members").select("selected_deck_id").eq("lobby_id", lobbyId).maybeSingle()
+    : { data: null };
+  const deckId = role === "player" ? parseDeckId(selectedLobbyDeck?.selected_deck_id ?? null) : null;
+  if (role === "player" && !deckId) redirect(`/rooms/lobbies/${lobbyId}?error=${encodeURIComponent("先にロビーの使用デッキを選択してください。")}`);
   const { data, error } = await supabase.rpc("enter_online_match_slot", {
     p_deck_id: deckId,
+    p_deck_is_public: deckIsPublic,
     p_format: format,
     p_role: role,
     p_slot_id: slotId,

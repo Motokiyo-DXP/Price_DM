@@ -57,6 +57,6 @@ export default async function OnlineLobbyPage({ params, searchParams }: { params
       <OnlineLobbyDeckPicker decks={playableDecks} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
       <OnlineFriendInvite friends={friends ?? []} lobbyId={lobby.id} />
     </section>
-    <OnlineLobbyLive currentUserId={userId} decks={playableDecks} initialMembers={members ?? []} initialSlots={slots} initialMyMatchIds={(myMatches ?? []).map((room) => room.id)} isPublic={isPublic} lobbyId={lobby.id} selectedDeckId={currentMember?.selected_deck_id ?? null} />
+    <OnlineLobbyLive currentUserId={userId} initialMembers={members ?? []} initialSlots={slots} initialMyMatchIds={(myMatches ?? []).map((room) => room.id)} isPublic={isPublic} lobbyId={lobby.id} />
   </section>;
 }
