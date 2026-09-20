@@ -243,13 +243,14 @@ export function OnlineMatchBoard({ roomId, returnLobbyId, userId, isHost, isSpec
     setError(null);
     const { data, error: inspectionError } = await supabase.rpc("inspect_own_game_deck", {
       p_room_id: roomId,
-      p_count: request.count === "max" ? null : request.count,
+      p_count: request.count === "max" || request.takeFrom === "bottom" ? null : request.count,
     });
     if (inspectionError || !Array.isArray(data) || !data.every((card) => card && !Array.isArray(card) && typeof card === "object" && typeof card.instanceId === "string")) {
       setError("山札を安全に取得できませんでした。最新の盤面を確認してください。");
       return null;
     }
-    return data as unknown as CardInstance[];
+    const cards = data as unknown as CardInstance[];
+    return request.takeFrom === "bottom" && request.count !== "max" ? cards.slice(-request.count) : cards;
   }
 
   async function surrender() {

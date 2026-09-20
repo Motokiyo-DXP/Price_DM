@@ -4,6 +4,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -44,6 +45,7 @@ import {
   toggleRevealPublic,
   resolveDraggedCardIds,
   resetBoard,
+  resolveCardCost,
   runYobinion,
   setCardMarker,
   shuffleCards,
@@ -86,10 +88,18 @@ export type { BoardState, CardInstance, DeckCard, PlayerId } from "@/lib/playfie
 export type ServerShuffleRequest = { owner: PlayerId; zone: PlayZone; mode: "deck" | "selection" | "stack"; cardIds?: string[]; stackId?: string };
 export type ServerYobinionRequest = { owner: PlayerId; sourceId: string; dragonOnly: boolean };
 export type ServerInspectionRequest = { owner: PlayerId; cardId: string };
-export type ServerDeckInspectionRequest = { owner: PlayerId; count: number | "max" };
+export type ServerDeckInspectionRequest = { owner: PlayerId; count: number | "max"; takeFrom: "top" | "bottom" };
 export type ServerEffectWarningRequest = { owner: PlayerId; cardId: string };
 
-type DeckInspection = ServerDeckInspectionRequest & { cards: CardInstance[]; order: "deck" | "cost" };
+type DeckInspection = ServerDeckInspectionRequest & { cards: CardInstance[]; mode: "deck" | "cost"; showFaces: boolean; maxSession?: { topIds: string[]; bottomIds: string[] } };
+
+type DeckViewConfirmState = {
+  owner: PlayerId;
+  takeFrom: "top" | "bottom";
+  showFaces: boolean;
+  useMax: boolean;
+  count: number;
+};
 
 const playerIds: PlayerId[] = ["p1", "p2"];
 const visibleMarkerGroups = [
@@ -108,6 +118,35 @@ const cardSwipeScrollableZones: PlayZone[] = ["battle", "mana", "shield", "hand"
 const zoneInertiaFrames = new WeakMap<HTMLElement, number>();
 const shuffleFeedbackTimers = new WeakMap<HTMLElement, number>();
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+function cancelZoneInertia(container: HTMLElement | null) {
+  if (!container) return;
+  const inertiaFrame = zoneInertiaFrames.get(container);
+  if (inertiaFrame === undefined) return;
+  window.cancelAnimationFrame(inertiaFrame);
+  zoneInertiaFrames.delete(container);
+}
+
+function startZoneInertia(container: HTMLElement | null, initialVelocity: number) {
+  if (!container || Math.abs(initialVelocity) < 0.02) return;
+  let velocity = Math.max(-2.4, Math.min(2.4, initialVelocity));
+  let previousAt = performance.now();
+  const coast = (now: number) => {
+    const elapsed = Math.min(40, now - previousAt);
+    previousAt = now;
+    const before = container.scrollLeft;
+    container.scrollLeft += velocity * elapsed;
+    velocity *= Math.pow(0.94, elapsed / 16.67);
+    if (Math.abs(velocity) < 0.02 || container.scrollLeft === before) {
+      zoneInertiaFrames.delete(container);
+      return;
+    }
+    const nextFrame = window.requestAnimationFrame(coast);
+    zoneInertiaFrames.set(container, nextFrame);
+  };
+  const firstFrame = window.requestAnimationFrame(coast);
+  zoneInertiaFrames.set(container, firstFrame);
+}
 
 function animateShuffleFeedback(resolveTargets: () => Iterable<HTMLElement>) {
   window.requestAnimationFrame(() => {
@@ -171,9 +210,9 @@ function snapHandToNearestCard(container: HTMLElement) {
 
 function inspectedDeckCards(cards: CardInstance[], inspection: DeckInspection | null | undefined, owner: PlayerId) {
   if (!inspection || inspection.owner !== owner) return cards;
-  if (inspection.order === "deck") return inspection.cards;
+  if (inspection.mode === "deck") return inspection.cards;
   return inspection.cards.map((card, index) => ({ card, index })).sort((left, right) =>
-    (left.card.cost ?? Number.MAX_SAFE_INTEGER) - (right.card.cost ?? Number.MAX_SAFE_INTEGER)
+    (resolveCardCost(left.card.name, left.card.cost) ?? Number.MAX_SAFE_INTEGER) - (resolveCardCost(right.card.name, right.card.cost) ?? Number.MAX_SAFE_INTEGER)
     || left.card.name.localeCompare(right.card.name, "ja")
     || left.index - right.index,
   ).map(({ card }) => card);
@@ -210,14 +249,11 @@ function DeckCountDial({ count, max, usingMax, onChange, onUseDial }: {
   function settle() {
     const wheel = wheelRef.current;
     if (!wheel) return;
-    onChange(Math.min(max, Math.max(1, Math.round(wheel.scrollTop / itemHeight) + 1)));
+    const next = Math.min(max, Math.max(1, Math.round(wheel.scrollTop / itemHeight) + 1));
+    onChange(next);
   }
 
-  function handleScroll() {
-    const wheel = wheelRef.current;
-    if (!wheel || syncingScroll.current || wheel.scrollTop === lastScrollTop.current) return;
-    lastScrollTop.current = wheel.scrollTop;
-    onUseDial();
+  function scheduleSettle() {
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
     settleTimer.current = window.setTimeout(() => {
       settleTimer.current = null;
@@ -225,8 +261,16 @@ function DeckCountDial({ count, max, usingMax, onChange, onUseDial }: {
     }, 90);
   }
 
+  function handleScroll() {
+    const wheel = wheelRef.current;
+    if (!wheel || syncingScroll.current || wheel.scrollTop === lastScrollTop.current) return;
+    lastScrollTop.current = wheel.scrollTop;
+    onUseDial();
+    scheduleSettle();
+  }
+
   return <div className={`deck-view-dial ${usingMax ? "using-max" : ""}`}>
-    <div aria-disabled={usingMax} aria-label="閲覧枚数" aria-valuemax={max} aria-valuemin={1} aria-valuenow={safeCount} className="deck-view-number-wheel" onScroll={handleScroll} ref={wheelRef} role="spinbutton" tabIndex={0}>
+    <div aria-disabled={usingMax} aria-label="確認枚数" aria-valuemax={max} aria-valuemin={1} aria-valuenow={safeCount} className="deck-view-number-wheel" onScroll={handleScroll} ref={wheelRef} role="spinbutton" tabIndex={0}>
       {values.map((value) => <button aria-current={value === safeCount} key={value} onClick={() => { onUseDial(); onChange(value); }} type="button">{value}</button>)}
     </div>
   </div>;
@@ -372,9 +416,12 @@ type CardViewProps = {
   revealPublic?: boolean;
   individualFromStack?: boolean;
   revealDeckToOwner?: boolean;
+  deckViewer?: boolean;
+  selectionOrder?: number;
+  onDeckReorder?: (cardId: string, beforeId: string | null) => void;
 };
 
-function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onCollapsedHandHold, selected, inspected = false, inspectionViewer, revealHiddenCards = false, privateReveal = false, revealPublic = false, individualFromStack = false, revealDeckToOwner = false }: CardViewProps) {
+function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onCollapsedHandHold, selected, inspected = false, inspectionViewer, revealHiddenCards = false, privateReveal = false, revealPublic = false, individualFromStack = false, revealDeckToOwner = false, deckViewer = false, selectionOrder, onDeckReorder }: CardViewProps) {
   const start = useRef<{ x: number; y: number; at: number } | null>(null);
   const currentPoint = useRef<{ x: number; y: number } | null>(null);
   const longPressTimer = useRef<number | null>(null);
@@ -473,7 +520,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     dragActivated.current = false;
     suppressClick.current = false;
     zoneScrollGesture.current = false;
-    zoneScrollContainer.current = event.currentTarget.closest<HTMLElement>(".play-zone-cards");
+    zoneScrollContainer.current = event.currentTarget.closest<HTMLElement>(".play-zone-cards, .deck-view-cards");
     collapsedHandGesture.current = zone === "hand" && Boolean(event.currentTarget.closest(".fan-collapsed"));
     collapsedHandHoldReady.current = false;
     interactionCardId.current = zone === "hand"
@@ -487,10 +534,10 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     setDragPreview(null);
     updateSpecialPreview(null);
     clearStackPreviewTimer();
-    const inertiaFrame = zoneScrollContainer.current ? zoneInertiaFrames.get(zoneScrollContainer.current) : undefined;
-    if (inertiaFrame !== undefined && zoneScrollContainer.current) {
-      window.cancelAnimationFrame(inertiaFrame);
-      zoneInertiaFrames.delete(zoneScrollContainer.current);
+    cancelZoneInertia(zoneScrollContainer.current);
+    if (deckViewer) {
+      setHoldActive(false);
+      return;
     }
     longPressTimer.current = window.setTimeout(() => {
       if (!start.current || !currentPoint.current) return;
@@ -538,11 +585,15 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       stepY,
       zone,
     });
-    if (switchHandScrollToDrag) {
+    const switchDeckViewerScrollToDrag = deckViewer
+      && zoneScrollGesture.current
+      && Math.abs(stepY) > 10
+      && Math.abs(stepY) > Math.abs(stepX);
+    if (switchHandScrollToDrag || switchDeckViewerScrollToDrag) {
       zoneScrollGesture.current = false;
-      interactionCardId.current = readCenteredHandCardId(zoneScrollContainer.current, interactionCardId.current);
+      if (zone === "hand") interactionCardId.current = readCenteredHandCardId(zoneScrollContainer.current, interactionCardId.current);
       start.current = { ...start.current, x: event.clientX, y: event.clientY - Math.sign(stepY || 1) * 12 };
-    } else if (cardSwipeScrollableZones.includes(zone) && shouldUseZoneScroll({
+    } else if ((deckViewer || cardSwipeScrollableZones.includes(zone)) && shouldUseZoneScroll({
       dragActivated: dragActivated.current,
       horizontalWithinScrollAngle,
       isScrolling: zoneScrollGesture.current,
@@ -573,6 +624,21 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       const previewImage = sourceElement?.querySelector<HTMLImageElement>(".card-artwork img")?.getAttribute("src")
         ?? (visible ? card.imageUrl : "/card-back.svg");
       setDragPreview({ x: event.clientX, y: event.clientY, imageUrl: previewImage });
+    }
+    if (deckViewer) {
+      if (dragActivated.current) {
+        const viewer = document.elementsFromPoint(event.clientX, event.clientY)
+          .map((element) => element.closest<HTMLElement>("[data-deck-view]"))
+          .find(Boolean);
+        document.querySelectorAll<HTMLElement>(".deck-insert-before").forEach((element) => element.classList.remove("deck-insert-before"));
+        if (viewer) {
+          const targetCard = document.elementsFromPoint(event.clientX, event.clientY)
+            .map((element) => element.closest<HTMLElement>("[data-card-id]"))
+            .find((element) => element?.dataset.cardId && element.dataset.cardId !== interactionCardId.current);
+          targetCard?.classList.add("deck-insert-before");
+        }
+      }
+      return;
     }
     if (specialPreviewRef.current?.kind === "stack") {
       showDropGuide(owner, specialPreviewRef.current.targetZone);
@@ -671,25 +737,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
         // Hand scrolling intentionally stops at pointer release.  Continuing the
         // old velocity made the centered card unpredictable on touch devices.
         snapHandToNearestCard(inertiaContainer);
-      } else if (inertiaContainer && Math.abs(zoneScrollVelocity.current) >= 0.02) {
-        let velocity = Math.max(-2.4, Math.min(2.4, zoneScrollVelocity.current));
-        let previousAt = performance.now();
-        const coast = (now: number) => {
-          const elapsed = Math.min(40, now - previousAt);
-          previousAt = now;
-          const before = inertiaContainer.scrollLeft;
-          inertiaContainer.scrollLeft += velocity * elapsed;
-          velocity *= Math.pow(0.94, elapsed / 16.67);
-          if (Math.abs(velocity) < 0.02 || inertiaContainer.scrollLeft === before) {
-            zoneInertiaFrames.delete(inertiaContainer);
-            return;
-          }
-          const nextFrame = window.requestAnimationFrame(coast);
-          zoneInertiaFrames.set(inertiaContainer, nextFrame);
-        };
-        const firstFrame = window.requestAnimationFrame(coast);
-        zoneInertiaFrames.set(inertiaContainer, firstFrame);
-      }
+      } else startZoneInertia(inertiaContainer, zoneScrollVelocity.current);
       zoneScrollGesture.current = false;
       zoneScrollContainer.current = null;
       zoneScrollLastPoint.current = null;
@@ -720,6 +768,21 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     collapsedHandHoldReady.current = false;
     if (gesture === "drag") {
       const movingCardId = interactionCardId.current;
+      if (deckViewer) {
+        const elements = document.elementsFromPoint(event.clientX, event.clientY);
+        const viewer = elements.map((element) => element.closest<HTMLElement>("[data-deck-view]")).find(Boolean);
+        if (viewer) {
+          const targetCard = elements.map((element) => element.closest<HTMLElement>("[data-card-id]")).find((element) => element?.dataset.cardId && element.dataset.cardId !== movingCardId);
+          onDeckReorder?.(movingCardId, targetCard?.dataset.cardId ?? null);
+        } else {
+          const target = elements.map((element) => element.closest<HTMLElement>("[data-drop-zone]")).find((element) => element?.dataset.dropOwner === owner);
+          const targetZone = target?.dataset.dropZone as PlayZone | undefined;
+          if (targetZone) onMove(owner, zone, movingCardId, targetZone);
+        }
+        document.querySelectorAll<HTMLElement>(".deck-insert-before").forEach((element) => element.classList.remove("deck-insert-before"));
+        updateSpecialPreview(null);
+        return;
+      }
       const activeSpecialPreview = specialPreviewRef.current;
       if (activeSpecialPreview) {
         if (activeSpecialPreview.kind === "deck") {
@@ -837,12 +900,13 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
         const count = card.markers?.filter((item) => item === marker).length ?? 0;
         return <i key={marker} title={marker === "slayer" ? `${label} ×${count}` : label}>{markerAssetNames[marker] ? <img alt="" src={`/markers/preview/${markerAssetNames[marker]}.svg`} /> : marker === "shield_force" ? <img alt="" src="/markers/shield-force.svg" /> : "酔"}{marker === "slayer" && count > 1 ? <b>{count}</b> : null}</i>;
       })}</span> : null}
+      {selectionOrder ? <span aria-label={`選択順 ${selectionOrder}`} className="deck-selection-order">{selectionOrder}</span> : null}
       </button>
-      <LongPressProgress durationMs={readLongPressMs()} label="長押し操作が有効になるまでの残り時間" point={holdActive ? holdPoint : null} />
+      {!deckViewer ? <LongPressProgress durationMs={readLongPressMs()} label="長押し操作が有効になるまでの残り時間" point={holdActive ? holdPoint : null} /> : null}
       <CardDragPreview preview={dragPreview} />
-      <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} />
-      <StackHoldProgress point={stackHoldProgress} />
-      {specialPreview?.kind === "stack" ? <StackDestinationMarkingMenu menu={{ pointerX: dragPreview?.x ?? specialPreview.centerX, pointerY: dragPreview?.y ?? specialPreview.centerY, x: specialPreview.centerX, y: specialPreview.centerY }} /> : null}
+      {!deckViewer ? <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} /> : null}
+      {!deckViewer ? <StackHoldProgress point={stackHoldProgress} /> : null}
+      {!deckViewer && specialPreview?.kind === "stack" ? <StackDestinationMarkingMenu menu={{ pointerX: dragPreview?.x ?? specialPreview.centerX, pointerY: dragPreview?.y ?? specialPreview.centerY, x: specialPreview.centerX, y: specialPreview.centerY }} /> : null}
     </>
   );
 }
@@ -862,7 +926,7 @@ type ZoneProps = CardViewProps extends infer _T ? {
   openedStack?: { owner: PlayerId; zone: PlayZone; stackId: string } | null;
   inspection?: BoardState["inspection"];
   deckInspection?: DeckInspection | null;
-  onDeckInspectionOrder?: (order: DeckInspection["order"]) => void;
+  onDeckInspectionOrder?: (order: DeckInspection["mode"]) => void;
   onDeckInspectionClose?: () => void;
   onCloseStack?: () => void;
   onUnbundleStack?: (owner: PlayerId, zone: PlayZone, stackId: string) => void;
@@ -970,8 +1034,8 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
     >
       {deckName ? <strong className="battle-deck-name">{deckName}</strong> : null}
       {zone === "deck" && revealDeckToOwner && deckInspection ? <>
-        <div className="deck-inspection-header"><span>{deckInspection.order === "deck" ? "山札の上" : "低コスト"}</span><strong>山札（閲覧表示）</strong><span>{deckInspection.order === "deck" ? "山札の下" : "高コスト"}</span><button aria-label="山札閲覧を閉じる" onClick={onDeckInspectionClose} type="button">×</button></div>
-        <aside aria-label="山札表示順" className="deck-view-actions"><div className="deck-view-mode-toggle"><strong>並び替え</strong><div><button aria-pressed={deckInspection.order === "deck"} onClick={() => onDeckInspectionOrder?.("deck")} type="button">山札順</button><button aria-pressed={deckInspection.order === "cost"} onClick={() => onDeckInspectionOrder?.("cost")} type="button">コスト</button></div></div></aside>
+        <div className="deck-inspection-header"><span>{deckInspection.mode === "deck" ? "山札の上" : "低コスト"}</span><strong>山札（閲覧表示）</strong><span>{deckInspection.mode === "deck" ? "山札の下" : "高コスト"}</span><button aria-label="山札閲覧を閉じる" onClick={onDeckInspectionClose} type="button">×</button></div>
+        <aside aria-label="山札表示順" className="deck-view-actions"><div className="deck-view-mode-toggle"><strong>並び替え</strong><div><button aria-pressed={deckInspection.mode === "deck"} onClick={() => onDeckInspectionOrder?.("deck")} type="button">山札順</button><button aria-pressed={deckInspection.mode === "cost"} onClick={() => onDeckInspectionOrder?.("cost")} type="button">コスト</button></div></div></aside>
       </> : <><strong className="play-zone-label">{zoneLabels[zone]}</strong><span className="play-zone-count">{countZoneCards(cards)}</span></>}
       {zone === "reveal" && onToggleReveal ? <button aria-pressed={revealPublic} className={`reveal-publish-button ${revealPublic ? "is-public" : ""}`} onClick={(event) => { event.stopPropagation(); onToggleReveal(owner); }} type="button"><span aria-hidden="true" className="reveal-publish-icon" />{revealPublic ? "公開" : "非公開"}</button> : null}
       <div className="play-zone-cards" ref={cardsRef} onPointerDown={(event) => { if (!(event.target as HTMLElement).closest(".play-card")) circlePoints.current = [{ x: event.clientX, y: event.clientY }]; }} onPointerMove={(event) => { if (circlePoints.current.length) circlePoints.current.push({ x: event.clientX, y: event.clientY }); }} onPointerUp={() => { const points = circlePoints.current; if (isCircleGesture(points)) onCircle(owner, zone); else if (points.length && Math.hypot(points.at(-1)!.x - points[0].x, points.at(-1)!.y - points[0].y) <= 8) { const now = performance.now(); if (now - lastEmptyTapAt.current <= 320) { lastEmptyTapAt.current = 0; onEmptyDoubleTap(owner, zone); } else lastEmptyTapAt.current = now; } circlePoints.current = []; }}>
@@ -981,6 +1045,142 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
       {openedMembers.length ? <aside className="stack-inspector" data-operation-container="stack" onClick={(event) => event.stopPropagation()}><header><strong>束の内容</strong><div className="stack-inspector-actions"><button onClick={onCloseStack} type="button">閉じる</button><button onClick={() => onUnbundleStack?.(owner, zone, openedStack!.stackId)} type="button">束を解除</button></div></header><div className="play-zone-cards stack-inspector-cards">{openedMembers.map((member) => <CardView key={`inspector-${member.instanceId}`} card={member} owner={owner} view={view} zone={zone} individualFromStack onMove={(moveOwner, from, cardId, to, targetCardId, choice) => onMove(moveOwner, from, cardId, to, targetCardId, choice, true)} onTap={onTap} onDoubleTap={onDoubleTap} onDetails={onDetails} onMarkingMenuStart={onCardMarkingMenuStart} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuEnd={onMarkingMenuEnd} onOptions={onOptions} selected={selectedCards.has(member.instanceId)} inspected={inspection?.cardId === member.instanceId} inspectionViewer={inspection?.viewer} revealHiddenCards={revealHiddenCards} privateReveal={privateReveal} revealPublic={revealPublic} revealDeckToOwner={revealDeckToOwner} />)}</div></aside> : null}
     </section>
   );
+}
+
+type DeckViewerProps = {
+  cards: CardInstance[];
+  mode: "deck" | "cost";
+  onClose: () => void;
+  onDoubleTap: (card: CardInstance) => void;
+  onMove: CardViewProps["onMove"];
+  onReorder: (cardId: string, beforeId: string | null) => void;
+  onReturn: (placement: "top" | "bottom") => void;
+  onSelect: (cards: CardInstance[], tappedId: string) => void;
+  onClearSelection: () => void;
+  onSelectRemaining: (cards: CardInstance[]) => void;
+  onDeselectGroup: (cards: CardInstance[]) => void;
+  onShuffle: () => void;
+  onToggleMode: (mode: "deck" | "cost") => void;
+  owner: PlayerId;
+  selectedIds: string[];
+  showFaces: boolean;
+  view: PlayerId;
+};
+
+function DeckViewer({ cards, mode, onClose, onDoubleTap, onMove, onReorder, onReturn, onSelect, onClearSelection, onSelectRemaining, onDeselectGroup, onShuffle, onToggleMode, owner, selectedIds, showFaces, view }: DeckViewerProps) {
+  const selectedOrder = new Map(selectedIds.map((id, index) => [id, index + 1]));
+  const selected = new Set(selectedIds);
+  const renderedStacks = new Set<string>();
+  const emptyPointerStart = useRef<{ x: number; y: number; scrollLeft: number } | null>(null);
+  const emptyScrollGesture = useRef(false);
+  const emptyScrollLastPoint = useRef<{ at: number; x: number; y: number } | null>(null);
+  const emptyScrollVelocity = useRef(0);
+  const lastEmptyTap = useRef<{ x: number; y: number; at: number } | null>(null);
+  const cardProps = (card: CardInstance, group: CardInstance[] = [card]) => ({
+    card,
+    owner,
+    view,
+    zone: "deck" as const,
+    onMove,
+    onTap: () => onSelect(group, card.instanceId),
+    onDoubleTap: () => onDoubleTap(card),
+    onDetails: onDoubleTap,
+    onMarkingMenuStart: () => undefined,
+    onMarkingMenuMove: () => undefined,
+    onMarkingMenuEnd: () => undefined,
+    onOptions: () => undefined,
+    selected: group.some((item) => selected.has(item.instanceId)),
+    revealDeckToOwner: card.stackId ? false : showFaces,
+    deckViewer: true,
+    selectionOrder: mode === "deck" && group.length === 1 ? selectedOrder.get(card.instanceId) : undefined,
+    onDeckReorder: mode === "deck" ? onReorder : undefined,
+  });
+  const deckCards = cards.flatMap((card) => {
+    if (card.stackId) {
+      if (renderedStacks.has(card.stackId)) return [];
+      renderedStacks.add(card.stackId);
+      const stack = cards.filter((item) => item.stackId === card.stackId).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
+      return [<div className="deck-view-stack" data-stack-size={stack.length} key={card.stackId}><CardView {...cardProps(stack[0], stack)} /><b>{stack.length}</b></div>];
+    }
+    return [<CardView {...cardProps(card)} key={card.instanceId} />];
+  });
+  const costGroups = [...cards.reduce((groups, card) => {
+    const key = card.name;
+    const current = groups.get(key) ?? [];
+    current.push(card);
+    groups.set(key, current);
+    return groups;
+  }, new Map<string, CardInstance[]>()).values()].sort((a, b) => (resolveCardCost(a[0].name, a[0].cost) ?? Number.MAX_SAFE_INTEGER) - (resolveCardCost(b[0].name, b[0].cost) ?? Number.MAX_SAFE_INTEGER) || a[0].name.localeCompare(b[0].name, "ja"));
+  const visibleCards = mode === "deck" ? cards : costGroups.flat();
+
+  function handleEmptyPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
+    emptyPointerStart.current = { x: event.clientX, y: event.clientY, scrollLeft: event.currentTarget.scrollLeft };
+    emptyScrollGesture.current = false;
+    emptyScrollLastPoint.current = { at: performance.now(), x: event.clientX, y: event.clientY };
+    emptyScrollVelocity.current = 0;
+    cancelZoneInertia(event.currentTarget);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleEmptyPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = emptyPointerStart.current;
+    if (!start || !isWithinHorizontalScrollAngle(event.clientX - start.x, event.clientY - start.y)) return;
+    if (Math.abs(event.clientX - start.x) <= 8) return;
+    emptyScrollGesture.current = true;
+    event.currentTarget.scrollLeft = start.scrollLeft - (event.clientX - start.x);
+    const now = performance.now();
+    const previous = emptyScrollLastPoint.current;
+    if (previous && now > previous.at) emptyScrollVelocity.current = -(event.clientX - previous.x) / (now - previous.at);
+    emptyScrollLastPoint.current = { at: now, x: event.clientX, y: event.clientY };
+  }
+
+  function handleEmptyPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = emptyPointerStart.current;
+    emptyPointerStart.current = null;
+    if (!start || event.target !== event.currentTarget) {
+      emptyScrollGesture.current = false;
+      emptyScrollLastPoint.current = null;
+      lastEmptyTap.current = null;
+      return;
+    }
+    if (emptyScrollGesture.current) {
+      startZoneInertia(event.currentTarget, emptyScrollVelocity.current);
+      emptyScrollGesture.current = false;
+      emptyScrollLastPoint.current = null;
+      lastEmptyTap.current = null;
+      return;
+    }
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) {
+      emptyScrollGesture.current = false;
+      emptyScrollLastPoint.current = null;
+      lastEmptyTap.current = null;
+      return;
+    }
+    const now = performance.now();
+    const previous = lastEmptyTap.current;
+    if (previous && now - previous.at <= 280 && Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 24) {
+      const allInspectionCardsSelected = cards.length > 0 && cards.every((card) => selected.has(card.instanceId));
+      if (allInspectionCardsSelected) onClearSelection();
+      else onSelectRemaining(visibleCards);
+      lastEmptyTap.current = null;
+      return;
+    }
+    lastEmptyTap.current = { at: now, x: event.clientX, y: event.clientY };
+  }
+
+  return <section aria-label="山札閲覧ゾーン" className="deck-viewer" data-deck-view data-drop-owner={owner}>
+    <header><span>{mode === "deck" ? "山札の上" : "低コスト"}</span><strong>山札（グループ化表示）</strong><span>{mode === "deck" ? "山札の下" : "高コスト"}</span><button aria-label="山札閲覧を閉じる" onClick={onClose} type="button">×</button></header>
+    <div className={`deck-view-cards ${mode === "cost" ? "cost" : "deck-order"}`} onPointerCancel={() => { emptyPointerStart.current = null; emptyScrollGesture.current = false; emptyScrollLastPoint.current = null; emptyScrollVelocity.current = 0; lastEmptyTap.current = null; }} onPointerDown={handleEmptyPointerDown} onPointerMove={handleEmptyPointerMove} onPointerUp={handleEmptyPointerUp}>
+      {mode === "deck" ? deckCards : costGroups.map((group) => {
+        const available = group.find((card) => !selected.has(card.instanceId)) ?? group[0];
+        const orders = group.map((card) => selectedOrder.get(card.instanceId)).filter((order): order is number => order !== undefined);
+        return <div className="deck-view-card-group" key={group[0].instanceId}><CardView {...cardProps(available, group)} /><b className="deck-group-count">×{group.length}</b>{orders.length ? <span aria-label={`選択順 ${orders.join("、")}`} className="deck-group-orders">{orders.map((order) => <i key={order}>{order}</i>)}</span> : null}<button aria-label={`${group[0].name}の直近の選択を解除`} className="deck-group-remove" disabled={!orders.length} onClick={() => onDeselectGroup(group)} type="button">−</button></div>;
+      })}
+    </div>
+    <aside className="deck-view-actions"><button aria-label="選択カードを束にしてシャッフル" className="deck-view-shuffle" disabled={selectedIds.length < 2} onClick={onShuffle} type="button">⤨<span>シャッフル</span></button><div aria-label="並び替え" className="deck-view-mode-toggle"><strong>並び替え</strong><div><button aria-pressed={mode === "deck"} onClick={() => onToggleMode("deck")} type="button">山札順</button><button aria-pressed={mode === "cost"} onClick={() => onToggleMode("cost")} type="button">コスト</button></div></div></aside>
+    <div aria-label="選択カードを山札へ戻す" className="deck-view-placement-actions"><button disabled={selectedIds.length === 0} onClick={() => onReturn("top")} type="button">↑ 山札の上</button><button disabled={selectedIds.length === 0} onClick={() => onReturn("bottom")} type="button">↓ 山札の下</button></div>
+  </section>;
 }
 
 type BattlePlayerProps = {
@@ -1019,8 +1219,7 @@ type BattlePlayerProps = {
   revealHiddenCards?: boolean;
   privateReveal?: boolean;
   onToggleReveal?: (owner: PlayerId) => void;
-  deckInspection?: DeckInspection | null;
-  onDeckInspectionOrder?: ZoneProps["onDeckInspectionOrder"];
+  deckViewer?: ReactNode;
 };
 
 function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onCircle, onSelectAuxiliaryZone, onZoneSelect }: { active: boolean; board: BoardState; disabled: boolean; owner: PlayerId; onOptions: ZoneProps["onOptions"]; onDraw: (owner: PlayerId) => void; onMove: ZoneProps["onMove"]; onMarkingMenuStart: ZoneProps["onMarkingMenuStart"]; onMarkingMenuMove: ZoneProps["onMarkingMenuMove"]; onMarkingMenuEnd: ZoneProps["onMarkingMenuEnd"]; onCircle: ZoneProps["onCircle"]; onSelectAuxiliaryZone: BattlePlayerProps["onSelectAuxiliaryZone"]; onZoneSelect?: ZoneProps["onZoneSelect"] }) {
@@ -1216,9 +1415,9 @@ function GraveyardPile({ active, board, disabled, owner, onSelect, onZoneSelect 
   return <aside className={`play-pile graveyard-pile ${active ? "active" : ""}`} data-drop-owner={owner} data-drop-zone="graveyard"><button disabled={disabled} onClick={() => { if (!onZoneSelect?.(owner, "graveyard")) onSelect(owner, "graveyard"); }} type="button"><strong>墓地</strong><b>{countZoneCards(board.players[owner].graveyard)}</b></button></aside>;
 }
 
-function BattlePlayer({ activeAuxiliaryZone, board, buttonsCollapsed = false, collapsed, controlledPlayer, canViewDeck, deckName, format, owner, position, view, onCollapse, onButtonsCollapse = () => undefined, onDetails, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onSelectAuxiliaryZone, onOpenExternalZones, onTap, onDoubleTap, onBackgroundTap, onUntapZone, onZoneSelect, selectedCards, openedStack, onCloseStack, onUnbundleStack, onCircle = () => undefined, revealHiddenCards = false, privateReveal = false, onToggleReveal, deckInspection, onDeckInspectionOrder }: BattlePlayerProps) {
+function BattlePlayer({ activeAuxiliaryZone, board, buttonsCollapsed = false, collapsed, controlledPlayer, canViewDeck, deckName, deckViewer, format, owner, position, view, onCollapse, onButtonsCollapse = () => undefined, onDetails, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onSelectAuxiliaryZone, onOpenExternalZones, onTap, onDoubleTap, onBackgroundTap, onUntapZone, onZoneSelect, selectedCards, openedStack, onCloseStack, onUnbundleStack, onCircle = () => undefined, revealHiddenCards = false, privateReveal = false, onToggleReveal }: BattlePlayerProps) {
   const disabled = false;
-  const zoneProps = { owner, view, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap: onUntapZone, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection: board.inspection, deckInspection, onDeckInspectionOrder, onDeckInspectionClose: () => onSelectAuxiliaryZone(owner, "deck"), revealHiddenCards, privateReveal, revealPublic: board.revealPublic?.[owner] ?? false, onToggleReveal: owner === controlledPlayer ? onToggleReveal : undefined };
+  const zoneProps = { owner, view, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap: onUntapZone, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection: board.inspection, revealHiddenCards, privateReveal, revealPublic: board.revealPublic?.[owner] ?? false, onToggleReveal: owner === controlledPlayer ? onToggleReveal : undefined };
   const displayedAuxiliaryZones = auxiliaryZones;
   const ownAuxiliaryButtonZones: PlayZone[] = format === "advanced"
     ? ["hyperspatial", "gr", "abyss", "reveal"]
@@ -1229,8 +1428,8 @@ function BattlePlayer({ activeAuxiliaryZone, board, buttonsCollapsed = false, co
     <section className={`battle-player player-${owner} battle-player-${position} ${collapsed ? "collapsed" : ""}`}>
       {position === "top" ? <button aria-label={collapsed ? "相手側を広げる" : "相手側を引っ込める"} aria-expanded={!collapsed} className="opponent-collapse" onClick={onCollapse} type="button">{collapsed ? "▼" : "▲"}</button> : null}
       {collapsed ? <div className="collapsed-player-label"><strong>{owner === "p1" ? "プレイヤー1" : "プレイヤー2"}</strong><span>相手側を表示</span></div> : <div className="battle-player-content">
-        {position === "top" ? <><div className={`opponent-buttons-section ${buttonsCollapsed ? "buttons-collapsed" : ""}`}>{!buttonsCollapsed ? <><div className="opponent-zone-buttons" style={{ gridTemplateColumns: `repeat(${opponentButtonZones.length + 1}, minmax(0, 1fr))` }}>{opponentButtonZones.map((zone) => <AuxiliaryZoneButton active={activeAuxiliaryZone === zone} board={board} disabled={disabled} key={zone} owner={owner} zone={zone} onSelect={onSelectAuxiliaryZone} />)}<ExternalZoneButton active={externalActive} disabled={disabled} onOpen={() => onOpenExternalZones(owner)} /></div>{activeAuxiliaryZone && (activeAuxiliaryZone === "deck" ? canViewDeck : [...opponentButtonZones, "graveyard", ...externalZones].includes(activeAuxiliaryZone)) ? <div className={`battle-auxiliary-drawer opponent-drawer ${activeAuxiliaryZone === "deck" ? "deck-view-drawer" : ""}`}><Zone {...zoneProps} cards={board.players[owner][activeAuxiliaryZone]} zone={activeAuxiliaryZone} revealDeckToOwner={activeAuxiliaryZone === "deck" && canViewDeck} /></div> : null}</> : null}<button aria-label={buttonsCollapsed ? "相手のボタン列を広げる" : "相手のボタン列を縮小する"} aria-expanded={!buttonsCollapsed} className="opponent-buttons-collapse" onClick={onButtonsCollapse} type="button">{buttonsCollapsed ? "▼" : "▲"}</button></div><div className="opponent-shield-row"><GraveyardPile active={activeAuxiliaryZone === "graveyard"} board={board} disabled={disabled} owner={owner} onSelect={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /><DeckPile active={activeAuxiliaryZone === "deck"} board={board} disabled={disabled} owner={owner} onCircle={onCircle} onDraw={onDraw} onMove={onMove} onMarkingMenuEnd={onMarkingMenuEnd} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuStart={onMarkingMenuStart} onOptions={onOptions} onSelectAuxiliaryZone={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /><Zone {...zoneProps} cards={board.players[owner].shield} zone="shield" /></div></> : null}
-        {position === "bottom" ? <><Zone {...zoneProps} cards={board.players[owner].battle} deckName={deckName} zone="battle" /><div className="battle-self-shield-row"><Zone {...zoneProps} cards={board.players[owner].shield} zone="shield" /><DeckPile active={activeAuxiliaryZone === "deck"} board={board} disabled={disabled} owner={owner} onCircle={onCircle} onDraw={onDraw} onMove={onMove} onMarkingMenuEnd={onMarkingMenuEnd} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuStart={onMarkingMenuStart} onOptions={onOptions} onSelectAuxiliaryZone={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /><GraveyardPile active={activeAuxiliaryZone === "graveyard"} board={board} disabled={disabled} owner={owner} onSelect={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /></div><Zone {...zoneProps} cards={board.players[owner].mana} zone="mana" /><div className="battle-auxiliary-row"><div className="battle-auxiliary-buttons" style={{ gridTemplateColumns: `repeat(${ownAuxiliaryButtonZones.length}, minmax(0, 1fr))` }}>{ownAuxiliaryButtonZones.map((auxiliaryZone) => <AuxiliaryZoneButton active={activeAuxiliaryZone === auxiliaryZone} board={board} disabled={disabled} key={auxiliaryZone} owner={owner} zone={auxiliaryZone} onSelect={onSelectAuxiliaryZone} />)}</div></div>{activeAuxiliaryZone && (activeAuxiliaryZone === "deck" ? canViewDeck : [...displayedAuxiliaryZones, ...externalZones].includes(activeAuxiliaryZone)) ? <div className={`battle-auxiliary-drawer ${activeAuxiliaryZone === "deck" ? "deck-view-drawer" : ""}`}><Zone {...zoneProps} cards={board.players[owner][activeAuxiliaryZone]} zone={activeAuxiliaryZone} revealDeckToOwner={activeAuxiliaryZone === "deck" && canViewDeck} /></div> : null}<Zone {...zoneProps} cards={board.players[owner].hand} fan zone="hand" /></> : null}
+        {position === "top" ? <><div className={`opponent-buttons-section ${buttonsCollapsed ? "buttons-collapsed" : ""}`}>{!buttonsCollapsed ? <><div className="opponent-zone-buttons" style={{ gridTemplateColumns: `repeat(${opponentButtonZones.length + 1}, minmax(0, 1fr))` }}>{opponentButtonZones.map((zone) => <AuxiliaryZoneButton active={activeAuxiliaryZone === zone} board={board} disabled={disabled} key={zone} owner={owner} zone={zone} onSelect={onSelectAuxiliaryZone} />)}<ExternalZoneButton active={externalActive} disabled={disabled} onOpen={() => onOpenExternalZones(owner)} /></div>{activeAuxiliaryZone && (activeAuxiliaryZone === "deck" ? canViewDeck : [...opponentButtonZones, "graveyard", ...externalZones].includes(activeAuxiliaryZone)) ? <div className={`battle-auxiliary-drawer opponent-drawer ${activeAuxiliaryZone === "deck" ? "deck-view-drawer" : ""}`}>{activeAuxiliaryZone === "deck" ? deckViewer : <Zone {...zoneProps} cards={board.players[owner][activeAuxiliaryZone]} zone={activeAuxiliaryZone} />}</div> : null}</> : null}<button aria-label={buttonsCollapsed ? "相手のボタン列を広げる" : "相手のボタン列を縮小する"} aria-expanded={!buttonsCollapsed} className="opponent-buttons-collapse" onClick={onButtonsCollapse} type="button">{buttonsCollapsed ? "▼" : "▲"}</button></div><div className="opponent-shield-row"><GraveyardPile active={activeAuxiliaryZone === "graveyard"} board={board} disabled={disabled} owner={owner} onSelect={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /><DeckPile active={activeAuxiliaryZone === "deck"} board={board} disabled={disabled} owner={owner} onCircle={onCircle} onDraw={onDraw} onMove={onMove} onMarkingMenuEnd={onMarkingMenuEnd} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuStart={onMarkingMenuStart} onOptions={onOptions} onSelectAuxiliaryZone={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /><Zone {...zoneProps} cards={board.players[owner].shield} zone="shield" /></div></> : null}
+        {position === "bottom" ? <><Zone {...zoneProps} cards={board.players[owner].battle} deckName={deckName} zone="battle" /><div className="battle-self-shield-row"><Zone {...zoneProps} cards={board.players[owner].shield} zone="shield" /><DeckPile active={activeAuxiliaryZone === "deck"} board={board} disabled={disabled} owner={owner} onCircle={onCircle} onDraw={onDraw} onMove={onMove} onMarkingMenuEnd={onMarkingMenuEnd} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuStart={onMarkingMenuStart} onOptions={onOptions} onSelectAuxiliaryZone={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /><GraveyardPile active={activeAuxiliaryZone === "graveyard"} board={board} disabled={disabled} owner={owner} onSelect={onSelectAuxiliaryZone} onZoneSelect={onZoneSelect} /></div><Zone {...zoneProps} cards={board.players[owner].mana} zone="mana" /><div className="battle-auxiliary-row"><div className="battle-auxiliary-buttons" style={{ gridTemplateColumns: `repeat(${ownAuxiliaryButtonZones.length}, minmax(0, 1fr))` }}>{ownAuxiliaryButtonZones.map((auxiliaryZone) => <AuxiliaryZoneButton active={activeAuxiliaryZone === auxiliaryZone} board={board} disabled={disabled} key={auxiliaryZone} owner={owner} zone={auxiliaryZone} onSelect={onSelectAuxiliaryZone} />)}</div></div>{activeAuxiliaryZone && (activeAuxiliaryZone === "deck" ? canViewDeck : [...displayedAuxiliaryZones, ...externalZones].includes(activeAuxiliaryZone)) ? <div className={`battle-auxiliary-drawer ${activeAuxiliaryZone === "deck" ? "deck-view-drawer" : ""}`}>{activeAuxiliaryZone === "deck" ? deckViewer : <Zone {...zoneProps} cards={board.players[owner][activeAuxiliaryZone]} zone={activeAuxiliaryZone} />}</div> : null}<Zone {...zoneProps} cards={board.players[owner].hand} fan zone="hand" /></> : null}
         {position === "top" ? <Zone {...zoneProps} cards={board.players[owner].battle} deckName={deckName} zone="battle" /> : null}
       </div>}
     </section>
@@ -1528,10 +1727,10 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const [yobinionSourceMode, setYobinionSourceMode] = useState<{ owner: PlayerId; dragon: boolean } | null>(null);
   const [privateZoneConfirm, setPrivateZoneConfirm] = useState<{ owner: PlayerId; zone: PlayZone; card: CardInstance } | null>(null);
   const [inspectionConfirm, setInspectionConfirm] = useState<{ owner: PlayerId; cardId: string } | null>(null);
-  const [deckViewConfirm, setDeckViewConfirm] = useState<PlayerId | null>(null);
-  const [deckViewCount, setDeckViewCount] = useState<number | "max">(3);
+  const [deckViewConfirm, setDeckViewConfirm] = useState<DeckViewConfirmState | null>(null);
   const [deckInspection, setDeckInspection] = useState<DeckInspection | null>(null);
-  const lastDeckViewCount = useRef<Record<PlayerId, number>>({ p1: 3, p2: 3 });
+  const [deckViewerSelection, setDeckViewerSelection] = useState<string[]>([]);
+  const [deckDialCounts, setDeckDialCounts] = useState<Record<PlayerId, number>>({ p1: 3, p2: 3 });
   const [externalZonePickerOwner, setExternalZonePickerOwner] = useState<PlayerId | null>(null);
   const [pendingMoveSelection, setPendingMoveSelection] = useState<{ cardId: string; from: PlayZone; owner: PlayerId; individual?: boolean } | null>(null);
   const [pendingZoneCardChoice, setPendingZoneCardChoice] = useState<{ targetCardId: string; targetZone: PlayZone } | null>(null);
@@ -1885,8 +2084,14 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     if (action === "details") setDetail(markingMenu.card);
     if (action === "inspect") setInspectionConfirm({ cardId: markingMenu.card.instanceId, owner: markingMenu.owner });
     if (action === "view_deck" && !readOnly && markingMenu.owner === visibilityPlayer) {
-      setDeckViewCount(lastDeckViewCount.current[markingMenu.owner]);
-      setDeckViewConfirm(markingMenu.owner);
+      if (deckInspection?.owner === markingMenu.owner && deckInspection.cards.length > 0) {
+        setActiveAuxiliaryZones((current) => ({ ...current, [markingMenu.owner]: "deck" }));
+        setDeckViewerSelection([]);
+        setMarkingMenu(null);
+        return;
+      }
+      const max = board.players[markingMenu.owner].deck.length;
+      setDeckViewConfirm({ owner: markingMenu.owner, takeFrom: "top", showFaces: true, useMax: false, count: Math.max(1, Math.min(deckDialCounts[markingMenu.owner], max || 1)) });
     }
     if (action === "publish") setCardFace(markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, "face_up");
     if (action === "toggle_tap") commit((current) => toggleCardTapWithProductionShadow(current, markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, { clearKeepTappedOnUntap: false }));
@@ -2111,7 +2316,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
 
   function selectAuxiliaryZone(owner: PlayerId, zone: PlayZone) {
     const opening = activeAuxiliaryZones[owner] !== zone;
-    if (owner === visibilityPlayer && (zone !== "deck" || !opening)) setDeckInspection(null);
+    if (owner === visibilityPlayer && !opening) setDeckViewerSelection([]);
     setActiveAuxiliaryZones((current) => ({ ...current, [owner]: current[owner] === zone ? null : zone }));
     if (opening && owner === displayPlayers[1]) {
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
@@ -2120,14 +2325,146 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     }
   }
 
-  async function openDeckInspection(owner: PlayerId, count: ServerDeckInspectionRequest["count"]) {
-    if (readOnly || owner !== visibilityPlayer) return;
+  async function executeDeckView() {
+    const pending = deckViewConfirm;
+    if (!pending || readOnly || pending.owner !== visibilityPlayer) return;
+    const deck = board.players[pending.owner].deck;
+    const count = pending.useMax ? deck.length : Math.max(1, Math.min(pending.count, deck.length));
     const inspectedCards = onDeckInspectionRequest
-      ? await onDeckInspectionRequest({ owner, count })
-      : board.players[owner].deck.slice(0, count === "max" ? undefined : count);
+      ? await onDeckInspectionRequest({ owner: pending.owner, count: pending.useMax ? "max" : count, takeFrom: pending.takeFrom })
+      : pending.takeFrom === "top" ? deck.slice(0, count) : deck.slice(-count);
     if (!inspectedCards) return;
-    setDeckInspection({ cards: inspectedCards, count, order: count === "max" ? "cost" : "deck", owner });
-    selectAuxiliaryZone(owner, "deck");
+    if (!pending.useMax) setDeckDialCounts((current) => ({ ...current, [pending.owner]: count }));
+    setDeckInspection({ cards: inspectedCards, count: pending.useMax ? "max" : count, mode: pending.useMax ? "cost" : "deck", owner: pending.owner, showFaces: pending.showFaces, takeFrom: pending.takeFrom, maxSession: pending.useMax ? { topIds: [], bottomIds: [] } : undefined });
+    setDeckViewerSelection([]);
+    setActiveAuxiliaryZones((current) => ({ ...current, [pending.owner]: "deck" }));
+    setDeckViewConfirm(null);
+  }
+
+  function selectDeckViewerCards(cardsToSelect: CardInstance[], tappedId: string) {
+    setDeckViewerSelection((current) => {
+      if (current.includes(tappedId)) return current.filter((id) => id !== tappedId);
+      const nextId = cardsToSelect.find((card) => !current.includes(card.instanceId))?.instanceId;
+      return nextId ? [...current, nextId] : current;
+    });
+  }
+
+  function selectAllDeckViewerCards(cardsToSelect: CardInstance[]) {
+    setDeckViewerSelection((current) => {
+      const selected = new Set(current);
+      return [...current, ...cardsToSelect.map((card) => card.instanceId).filter((id) => !selected.has(id))];
+    });
+  }
+
+  function handleDeckViewerDoubleTap(card: CardInstance) {
+    if (!deckInspection) return;
+    if (deckViewerSelection.length === 0) {
+      setDetail(card);
+      return;
+    }
+    const selected = new Set(deckViewerSelection);
+    if (deckInspection.cards.length > 0 && deckInspection.cards.every((item) => selected.has(item.instanceId))) {
+      setDeckViewerSelection([]);
+      return;
+    }
+    selectAllDeckViewerCards(deckInspection.cards);
+  }
+
+  function deselectDeckViewerGroup(cardsToSelect: CardInstance[]) {
+    const groupIds = new Set(cardsToSelect.map((card) => card.instanceId));
+    setDeckViewerSelection((current) => {
+      const last = [...current].reverse().find((id) => groupIds.has(id));
+      return last ? current.filter((id) => id !== last) : current;
+    });
+  }
+
+  function reorderDeckViewerCard(cardId: string, beforeId: string | null) {
+    setDeckInspection((current) => {
+      if (!current || current.mode !== "deck") return current;
+      const moving = current.cards.find((card) => card.instanceId === cardId);
+      if (!moving) return current;
+      const remaining = current.cards.filter((card) => card.instanceId !== cardId);
+      const index = beforeId ? remaining.findIndex((card) => card.instanceId === beforeId) : remaining.length;
+      remaining.splice(index < 0 ? remaining.length : index, 0, moving);
+      return { ...current, cards: remaining };
+    });
+  }
+
+  function removeInspectedCards(ids: readonly string[]) {
+    const moved = new Set(ids);
+    setDeckInspection((current) => current ? { ...current, cards: current.cards.filter((card) => !moved.has(card.instanceId)) } : current);
+    setDeckViewerSelection([]);
+  }
+
+  function moveDeckViewerCard(owner: PlayerId, _from: PlayZone, cardId: string, to: PlayZone, targetCardId?: string, choice?: "deck_top" | "deck_bottom" | "face_up_top" | "face_down_top" | "face_up_bottom" | "face_down_bottom" | "face_up_spread") {
+    if (!deckInspection || deckInspection.owner !== owner) return;
+    const ids = deckViewerSelection.includes(cardId) ? deckViewerSelection : [cardId];
+    if (to === "deck") {
+      returnDeckViewerSelection(choice === "deck_bottom" ? "bottom" : "top", ids);
+      return;
+    }
+    commit((current) => moveCardsBetweenZones(current, owner, "deck", to, new Set(ids), "bottom", Boolean(localPlayer)));
+    removeInspectedCards(ids);
+  }
+
+  function returnDeckViewerSelection(placement: "top" | "bottom", explicitIds = deckViewerSelection) {
+    if (!deckInspection || explicitIds.length === 0) return;
+    const ids = [...explicitIds];
+    const selected = new Set(ids);
+    commit((current) => {
+      const deck = current.players[deckInspection.owner].deck;
+      const picked = ids.flatMap((id) => deck.find((card) => card.instanceId === id) ?? []);
+      const remaining = deck.filter((card) => !selected.has(card.instanceId));
+      return { ...current, players: { ...current.players, [deckInspection.owner]: { ...current.players[deckInspection.owner], deck: placement === "top" ? [...picked, ...remaining] : [...remaining, ...picked] } } };
+    });
+    const moved = new Set(ids);
+    setDeckInspection((current) => {
+      if (!current) return current;
+      const maxSession = current.maxSession
+        ? placement === "top"
+          ? { ...current.maxSession, topIds: [...ids, ...current.maxSession.topIds] }
+          : { ...current.maxSession, bottomIds: [...current.maxSession.bottomIds, ...ids] }
+        : undefined;
+      return { ...current, cards: current.cards.filter((card) => !moved.has(card.instanceId)), maxSession };
+    });
+    setDeckViewerSelection([]);
+  }
+
+  function closeDeckViewer() {
+    const inspection = deckInspection;
+    if (inspection?.maxSession) {
+      const topIds = inspection.maxSession.topIds;
+      const bottomIds = inspection.maxSession.bottomIds;
+      const placed = new Set([...topIds, ...bottomIds]);
+      const remainingIds = inspection.cards.map((card) => card.instanceId).filter((id) => !placed.has(id));
+      if (onShuffleRequest && remainingIds.length > 1) onShuffleRequest({ owner: inspection.owner, zone: "deck", mode: "selection", cardIds: remainingIds });
+      else commit((current) => {
+        const deck = current.players[inspection.owner].deck;
+        const byId = new Map(deck.map((card) => [card.instanceId, card]));
+        const top = topIds.flatMap((id) => byId.get(id) ?? []);
+        const bottom = bottomIds.flatMap((id) => byId.get(id) ?? []);
+        const remaining = shuffleCards(deck.filter((card) => !placed.has(card.instanceId)));
+        return { ...current, players: { ...current.players, [inspection.owner]: { ...current.players[inspection.owner], deck: [...top, ...remaining, ...bottom] } } };
+      });
+      animateShuffleFeedback(() => document.querySelectorAll<HTMLElement>(`.deck-pile[data-drop-owner="${inspection.owner}"][data-drop-zone="deck"]`));
+      setDeckInspection(null);
+    }
+    setDeckViewerSelection([]);
+    setActiveAuxiliaryZones((current) => ({ ...current, [visibilityPlayer]: current[visibilityPlayer] === "deck" ? null : current[visibilityPlayer] }));
+  }
+
+  function shuffleDeckViewerSelection() {
+    if (!deckInspection || deckViewerSelection.length < 2) return;
+    const ids = [...deckViewerSelection];
+    const selected = new Set(ids);
+    if (onShuffleRequest) onShuffleRequest({ owner: deckInspection.owner, zone: "deck", mode: "selection", cardIds: ids });
+    else commit((current) => shuffleSelectedCards(current, selected));
+    const stackId = `stack-${Date.now()}`;
+    const shuffled = shuffleCards(deckInspection.cards.filter((card) => selected.has(card.instanceId))).map((card, index) => ({ ...card, face: "face_down" as CardFace, stackId, stackOrder: index }));
+    let shuffledIndex = 0;
+    setDeckInspection((current) => current ? { ...current, cards: current.cards.map((card) => selected.has(card.instanceId) ? shuffled[shuffledIndex++] : card) } : current);
+    setDeckViewerSelection([]);
+    animateShuffleFeedback(() => cardShuffleFeedbackTargets(ids));
   }
 
   function openOptions(owner: PlayerId, zone: PlayZone, card: CardInstance, individual = false) {
@@ -2193,6 +2530,9 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const detailCard = detail ? Object.values(board.players).flatMap((player) => Object.values(player).flat()).find((card) => card.instanceId === detail.instanceId) ?? detail : null;
   const detailMarkers = detailCard?.markers ?? [];
   const orderedDetailMarkers: CardMarker[] = [...visibleMarkerGroups.flat().map(([marker]) => marker), "shield_force"];
+  const deckViewerNode = deckInspection
+    ? <DeckViewer cards={deckInspection.cards} mode={deckInspection.mode} onClose={closeDeckViewer} onClearSelection={() => setDeckViewerSelection([])} onDeselectGroup={deselectDeckViewerGroup} onDoubleTap={handleDeckViewerDoubleTap} onMove={moveDeckViewerCard} onReorder={reorderDeckViewerCard} onReturn={returnDeckViewerSelection} onSelect={selectDeckViewerCards} onSelectRemaining={selectAllDeckViewerCards} onShuffle={shuffleDeckViewerSelection} onToggleMode={(mode) => setDeckInspection((current) => current ? { ...current, mode } : current)} owner={deckInspection.owner} selectedIds={deckViewerSelection} showFaces={deckInspection.showFaces} view={visibilityPlayer} />
+    : null;
 
   if (!externalState && (cards.reduce((sum, card) => sum + card.quantity, 0) < 10 || (opponentCards?.reduce((sum, card) => sum + card.quantity, 0) ?? 10) < 10)) {
     return <div className="history-empty"><strong>カードが足りません</strong><p>初期手札とシールドを作るため、10枚以上でひとり回しを開始してください。</p></div>;
@@ -2211,9 +2551,9 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       {selectionMode || targetSource || yobinionSourceMode || pendingMoveSelection ? <div className="play-mode-toolbar"><strong>{pendingMoveSelection ? "移動先のゾーンをタップ" : selectionMode ? `複数選択：${selectedCards.size}枚` : targetSource ? `対象指定：${selectedCards.size}枚` : yobinionSourceMode?.dragon ? "ドラゴンヨビニオン：発動元を選択" : "ヨビニオン：発動元を選択"}</strong><button onClick={() => { setSelectionMode(false); setTargetSource(null); setYobinionSourceMode(null); setPendingMoveSelection(null); setPendingZoneCardChoice(null); setInteractionNotice(null); setSelectedCards(new Set()); }} type="button">完了／キャンセル</button></div> : null}
       <div className="battle-history-actions"><div className="battle-primary-actions"><button onClick={() => setSettingsOpen(true)} type="button">設定</button><button onClick={onResetRequest ?? reset} type="button">{resetLabel ?? "リセット"}</button></div></div>
       <div className="battle-fields">
-        <BattlePlayer selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[0]]} board={board} buttonsCollapsed={opponentButtonsCollapsed} collapsed={opponentCollapsed} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[0] === visibilityPlayer} deckInspection={deckInspection} deckName={deckNames[displayPlayers[0]]} format={deckFormats[displayPlayers[0]]} owner={displayPlayers[0]} position="top" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onDeckInspectionOrder={(order) => setDeckInspection((current) => current ? { ...current, order } : null)} onBackgroundTap={exitMultiSelect} onButtonsCollapse={() => setOpponentButtonsCollapsed((value) => !value)} onCircle={handleCircle} onCollapse={() => setOpponentCollapsed((value) => !value)} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
+        <BattlePlayer deckViewer={deckInspection?.owner === displayPlayers[0] ? deckViewerNode : null} selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[0]]} board={board} buttonsCollapsed={opponentButtonsCollapsed} collapsed={opponentCollapsed} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[0] === visibilityPlayer} deckName={deckNames[displayPlayers[0]]} format={deckFormats[displayPlayers[0]]} owner={displayPlayers[0]} position="top" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onBackgroundTap={exitMultiSelect} onButtonsCollapse={() => setOpponentButtonsCollapsed((value) => !value)} onCircle={handleCircle} onCollapse={() => setOpponentCollapsed((value) => !value)} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
         <div className="perspective-divider"><div className="divider-turn-actions">{localPlayer && board.turnRequest?.requestedBy === controlledPlayer ? <span>{board.turnRequest.status === "held" ? "保留中" : "応答待ち"}</span> : null}</div><button aria-label={localPlayer ? board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? "ターンエンドを受け入れる" : "ターンエンド" : "プレイヤーの表示位置を交代"} className="perspective-switch" disabled={Boolean(localPlayer && (readOnly || (board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? false : board.activePlayer !== localPlayer || Boolean(board.turnRequest))))} onClick={localPlayer ? board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? () => respondTurnEnd(true) : requestTurnEnd : switchPerspective} onPointerDown={(event) => event.stopPropagation()} type="button"><span aria-hidden="true" className="perspective-switch-icon">{localPlayer ? "⟳" : "↕"}</span><span className="perspective-switch-copy"><span className="perspective-switch-label">{localPlayer ? board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? "ターンエンドを受け入れる" : "ターンエンド" : "交代"}</span><span className="perspective-switch-subtitle">{localPlayer ? "TURN END" : "TURN CHANGE"}</span></span></button></div>
-        <BattlePlayer selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[1]]} board={board} collapsed={false} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[1] === visibilityPlayer} deckInspection={deckInspection} deckName={deckNames[displayPlayers[1]]} format={deckFormats[displayPlayers[1]]} owner={displayPlayers[1]} position="bottom" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onDeckInspectionOrder={(order) => setDeckInspection((current) => current ? { ...current, order } : null)} onBackgroundTap={exitMultiSelect} onCircle={handleCircle} onCollapse={() => undefined} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
+        <BattlePlayer deckViewer={deckInspection?.owner === displayPlayers[1] ? deckViewerNode : null} selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[1]]} board={board} collapsed={false} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[1] === visibilityPlayer} deckName={deckNames[displayPlayers[1]]} format={deckFormats[displayPlayers[1]]} owner={displayPlayers[1]} position="bottom" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onBackgroundTap={exitMultiSelect} onCircle={handleCircle} onCollapse={() => undefined} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
       </div>
       <div className="hand-history-actions"><button disabled={externalHistoryBusy || (usesExternalHistory ? !canExternalUndo : past.length === 0)} onClick={undo} type="button">↶戻す</button><button disabled={externalHistoryBusy || (usesExternalHistory ? !canExternalRedo : future.length === 0)} onClick={redo} type="button">↷進む</button></div>
       {dynamicBottomClearance > 0 ? <div aria-hidden="true" className="playtest-bottom-clearance" style={{ height: dynamicBottomClearance }} /> : null}
@@ -2257,13 +2597,14 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       {deckViewConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setDeckViewConfirm(null)}>
         <section aria-labelledby="deck-view-confirm-title" aria-modal="true" className="play-modal deck-view-confirm" onClick={(event) => event.stopPropagation()} role="dialog">
           <header><h2 id="deck-view-confirm-title">山札確認</h2><button aria-label="山札確認を閉じる" onClick={() => setDeckViewConfirm(null)} type="button">×</button></header>
-          <section className={`deck-view-count-picker ${deckViewCount === "max" ? "using-max" : ""}`}>
+          <div className="deck-view-choice-row"><fieldset><legend>取り出す向き</legend><button aria-pressed={deckViewConfirm.takeFrom === "top"} onClick={() => setDeckViewConfirm((current) => current ? { ...current, takeFrom: "top" } : current)} type="button"><img alt="" className="deck-view-choice-icon take-direction" src="/playtest/deck-view/take-from-top.png" /><span>上から</span></button><button aria-pressed={deckViewConfirm.takeFrom === "bottom"} onClick={() => setDeckViewConfirm((current) => current ? { ...current, takeFrom: "bottom" } : current)} type="button"><img alt="" className="deck-view-choice-icon take-direction" src="/playtest/deck-view/take-from-bottom.png" /><span>下から</span></button></fieldset><fieldset><legend>確認方法</legend><button aria-pressed={deckViewConfirm.showFaces} onClick={() => setDeckViewConfirm((current) => current ? { ...current, showFaces: true } : current)} type="button"><img alt="" className="deck-view-choice-icon" src="/playtest/deck-view/icon_card_face.svg" /><span>表で確認</span></button><button aria-pressed={!deckViewConfirm.showFaces} onClick={() => setDeckViewConfirm((current) => current ? { ...current, showFaces: false } : current)} type="button"><img alt="" className="deck-view-choice-icon" src="/playtest/deck-view/icon_card_back.svg" /><span>裏で確認</span></button></fieldset></div>
+          <section className={`deck-view-count-picker ${deckViewConfirm.useMax ? "using-max" : ""}`}>
             <h3>▣ 枚数</h3>
-            <DeckCountDial count={deckViewCount === "max" ? lastDeckViewCount.current[deckViewConfirm] : deckViewCount} max={Math.max(1, board.players[deckViewConfirm].deck.length)} usingMax={deckViewCount === "max"} onChange={(count) => setDeckViewCount(count)} onUseDial={() => setDeckViewCount((current) => current === "max" ? lastDeckViewCount.current[deckViewConfirm] : current)} />
-            <button aria-pressed={deckViewCount === "max"} className="deck-view-max" disabled={board.players[deckViewConfirm].deck.length === 0} onClick={() => setDeckViewCount("max")} type="button">MAX</button>
+            <DeckCountDial count={deckViewConfirm.count} max={Math.max(1, board.players[deckViewConfirm.owner].deck.length)} usingMax={deckViewConfirm.useMax} onChange={(count) => setDeckViewConfirm((current) => current ? { ...current, count, useMax: false } : current)} onUseDial={() => setDeckViewConfirm((current) => current?.useMax ? { ...current, useMax: false } : current)} />
+            <button aria-pressed={deckViewConfirm.useMax} className="deck-view-max" disabled={board.players[deckViewConfirm.owner].deck.length === 0} onClick={() => setDeckViewConfirm((current) => current ? { ...current, useMax: true } : current)} type="button">MAX</button>
           </section>
-          <p className="deck-view-summary">上から{deckViewCount === "max" ? "すべて" : `${Math.min(deckViewCount, board.players[deckViewConfirm].deck.length)}枚`}を表で確認</p>
-          <button className="button deck-view-execute" disabled={board.players[deckViewConfirm].deck.length === 0} onClick={() => { if (!readOnly && deckViewConfirm === visibilityPlayer) { const count = deckViewCount; if (typeof count === "number") lastDeckViewCount.current[deckViewConfirm] = count; void openDeckInspection(deckViewConfirm, count); } setDeckViewConfirm(null); }} type="button">実行</button>
+          <p className="deck-view-summary">{deckViewConfirm.takeFrom === "top" ? "上から" : "下から"}{deckViewConfirm.useMax ? "すべて" : `${Math.min(deckViewConfirm.count, board.players[deckViewConfirm.owner].deck.length)}枚`} / {deckViewConfirm.showFaces ? "表で確認" : "裏で確認"}</p>
+          <button className="button deck-view-execute" disabled={board.players[deckViewConfirm.owner].deck.length === 0} onClick={() => { void executeDeckView(); }} type="button">実行</button>
         </section>
       </div> : null}
       {privateZoneConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setPrivateZoneConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に見ますか？</h2><p>相手の非公開ゾーンを閲覧すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = privateZoneConfirm; if (onInspectionRequest) onInspectionRequest({ owner: pending.owner, cardId: pending.card.instanceId }); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { cardId: pending.card.instanceId, owner: pending.owner, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: `相手があなたの${zoneLabels[pending.zone]}を確認しました`, createdAt: Date.now() }] }; }); setPrivateZoneConfirm(null); }} type="button">見る</button><button className="secondary-button" onClick={() => setPrivateZoneConfirm(null)} type="button">キャンセル</button></section></div> : null}
