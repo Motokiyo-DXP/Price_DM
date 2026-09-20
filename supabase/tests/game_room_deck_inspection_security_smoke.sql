@@ -5,6 +5,7 @@ declare
   v_guest uuid := pg_catalog.gen_random_uuid();
   v_room uuid;
   v_cards jsonb;
+  v_version bigint;
 begin
   insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
   values(v_host,'authenticated','authenticated','deck-owner-'||v_host||'@example.invalid','{}','{}',pg_catalog.now(),pg_catalog.now());
@@ -26,5 +27,18 @@ begin
   perform pg_catalog.set_config('request.jwt.claim.sub',v_guest::text,true);
   select public.inspect_own_game_deck(v_room,1) into v_cards;
   if v_cards #>> '{0,name}' <> 'ゲストの山札' then raise exception 'guest did not receive own deck'; end if;
+
+  select result.state,result.state_version into v_cards,v_version
+  from public.get_game_room_state(v_room) result;
+  if v_cards #>> '{players,p1,deck,0,instanceId}' = 'host-deck-1'
+     or v_cards #>> '{players,p1,deck,0,instanceId}' <> 'hidden-p1-deck-1' then
+    raise exception 'opponent deck instance leaked';
+  end if;
+
+  select result.state into v_cards
+  from public.update_game_room_state(v_room,v_version,v_cards) result;
+  if v_cards #>> '{players,p1,deck,0,instanceId}' <> 'hidden-p1-deck-1' then
+    raise exception 'redacted opponent deck could not round trip';
+  end if;
 end $$;
 rollback;
