@@ -1424,6 +1424,10 @@ export type Database = {
         Args: { p_room_id: string }
         Returns: { host_name: string; guest_name: string | null; selected_deck_id: string | null; host_icon_image_key: string | null; guest_icon_image_key: string | null }[]
       }
+      inspect_own_game_deck: {
+        Args: { p_room_id: string; p_count?: number | null }
+        Returns: Json
+      }
       shuffle_game_cards: {
         Args: { p_room_id: string; p_expected_version: number; p_owner: string; p_zone: string; p_mode: string; p_card_ids?: string[] | null; p_stack_id?: string | null }
         Returns: { state: Json; state_version: number }[]

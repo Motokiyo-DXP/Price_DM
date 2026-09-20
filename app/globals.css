@@ -282,6 +282,7 @@ body:has(.rough-battle-board) main{padding-bottom:198px}.battle-player-bottom .z
 
 /* Prevent zone labels and counters from stealing mobile long-press gestures. */
 .rough-battle-board .play-zone-label,.rough-battle-board .play-zone-count,.rough-battle-board .play-pile b{-webkit-touch-callout:none;-webkit-user-select:none;pointer-events:none;user-select:none}
+.deck-inspection-order{display:flex;gap:4px;left:6px;position:absolute;top:6px;z-index:6}.deck-inspection-order button{background:#1e2734;border:1px solid #75879b;border-radius:4px;color:#e7eef8;cursor:pointer;font-size:11px;font-weight:800;padding:4px 7px}.deck-inspection-order button[aria-pressed=true]{background:#1261d7;border-color:#f3c800;color:#fff;box-shadow:0 0 0 1px #f3c800}.deck-inspection-order button:focus-visible{outline:2px solid #f3c800;outline-offset:2px}
 .rough-battle-board,.rough-battle-board *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
 /* Fixed full-page scroll control for the tall battle board. */

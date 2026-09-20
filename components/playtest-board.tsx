@@ -86,7 +86,10 @@ export type { BoardState, CardInstance, DeckCard, PlayerId } from "@/lib/playfie
 export type ServerShuffleRequest = { owner: PlayerId; zone: PlayZone; mode: "deck" | "selection" | "stack"; cardIds?: string[]; stackId?: string };
 export type ServerYobinionRequest = { owner: PlayerId; sourceId: string; dragonOnly: boolean };
 export type ServerInspectionRequest = { owner: PlayerId; cardId: string };
+export type ServerDeckInspectionRequest = { owner: PlayerId; count: number | "max" };
 export type ServerEffectWarningRequest = { owner: PlayerId; cardId: string };
+
+type DeckInspection = ServerDeckInspectionRequest & { cards: CardInstance[]; order: "deck" | "cost" };
 
 const playerIds: PlayerId[] = ["p1", "p2"];
 const visibleMarkerGroups = [
@@ -166,11 +169,10 @@ function snapHandToNearestCard(container: HTMLElement) {
   container.scrollTo({ behavior: "smooth", left: Math.max(0, Math.min(left, container.scrollWidth - container.clientWidth)) });
 }
 
-function inspectedDeckCards(cards: CardInstance[], inspection: BoardState["deckInspection"] | undefined, owner: PlayerId, viewer: PlayerId) {
-  if (!inspection || inspection.owner !== owner || inspection.viewer !== viewer) return cards;
-  const limited = inspection.count === "max" ? cards : cards.slice(0, inspection.count);
-  if (inspection.order === "deck") return limited;
-  return limited.map((card, index) => ({ card, index })).sort((left, right) =>
+function inspectedDeckCards(cards: CardInstance[], inspection: DeckInspection | null | undefined, owner: PlayerId) {
+  if (!inspection || inspection.owner !== owner) return cards;
+  if (inspection.order === "deck") return inspection.cards;
+  return inspection.cards.map((card, index) => ({ card, index })).sort((left, right) =>
     (left.card.cost ?? Number.MAX_SAFE_INTEGER) - (right.card.cost ?? Number.MAX_SAFE_INTEGER)
     || left.card.name.localeCompare(right.card.name, "ja")
     || left.index - right.index,
@@ -806,7 +808,8 @@ type ZoneProps = CardViewProps extends infer _T ? {
   onBackgroundTap?: () => void;
   openedStack?: { owner: PlayerId; zone: PlayZone; stackId: string } | null;
   inspection?: BoardState["inspection"];
-  deckInspection?: BoardState["deckInspection"];
+  deckInspection?: DeckInspection | null;
+  onDeckInspectionOrder?: (order: DeckInspection["order"]) => void;
   onCloseStack?: () => void;
   onUnbundleStack?: (owner: PlayerId, zone: PlayZone, stackId: string) => void;
   deckName?: string;
@@ -818,7 +821,7 @@ type ZoneProps = CardViewProps extends infer _T ? {
   onToggleReveal?: (owner: PlayerId) => void;
 } : never;
 
-function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection, deckInspection, deckName, fan = false, revealHiddenCards = false, privateReveal = false, revealPublic = false, revealDeckToOwner = false, onToggleReveal }: ZoneProps) {
+function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection, deckInspection, onDeckInspectionOrder, deckName, fan = false, revealHiddenCards = false, privateReveal = false, revealPublic = false, revealDeckToOwner = false, onToggleReveal }: ZoneProps) {
   const onCardMarkingMenuStart: CardViewProps["onMarkingMenuStart"] = (cardOwner, cardZone, card, x, y, _deckCard, individual) => onMarkingMenuStart(cardOwner, cardZone, card, x, y, revealDeckToOwner, individual);
   const circlePoints = useRef<GesturePoint[]>([]);
   const lastEmptyTapAt = useRef(0);
@@ -876,7 +879,7 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
     return () => { window.cancelAnimationFrame(frame); container.removeEventListener("scroll", updateFan); window.removeEventListener("resize", updateFan); };
   }, [cards, fan]);
   const renderedIds = new Set<string>();
-  const displayCards = zone === "deck" && revealDeckToOwner ? inspectedDeckCards(cards, deckInspection, owner, view) : cards;
+  const displayCards = zone === "deck" && revealDeckToOwner ? inspectedDeckCards(cards, deckInspection, owner) : cards;
   const renderCard = (card: CardInstance) => <CardView key={card.instanceId} card={card} owner={owner} view={view} zone={zone} onMove={onMove} onTap={onTap} onDoubleTap={onDoubleTap} onDetails={onDetails} onMarkingMenuStart={onCardMarkingMenuStart} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuEnd={onMarkingMenuEnd} onOptions={onOptions} selected={selectedCards.has(card.instanceId)} inspected={inspection?.cardId === card.instanceId} inspectionViewer={inspection?.viewer} revealHiddenCards={revealHiddenCards} privateReveal={privateReveal} revealPublic={revealPublic} revealDeckToOwner={revealDeckToOwner} />;
   const renderStack = (stackId: string) => {
     const members = cards.filter((item) => item.stackId === stackId).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
@@ -906,7 +909,7 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
         const cardElement = (event.target as HTMLElement).closest<HTMLElement>("[data-card-id]");
         if (!cardElement) onBackgroundTap?.();
         if (!onZoneSelect) return;
-        const targetCard = cardElement ? cards.find((card) => card.instanceId === cardElement.dataset.cardId) : undefined;
+        const targetCard = cardElement ? displayCards.find((card) => card.instanceId === cardElement.dataset.cardId) : undefined;
         onZoneSelect(owner, zone, targetCard);
       }}
       ref={zoneRef}
@@ -914,6 +917,7 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
       {deckName ? <strong className="battle-deck-name">{deckName}</strong> : null}
       <strong className="play-zone-label">{zoneLabels[zone]}</strong>
       <span className="play-zone-count">{countZoneCards(cards)}</span>
+      {zone === "deck" && revealDeckToOwner && deckInspection ? <div aria-label="山札表示順" className="deck-inspection-order"><button aria-pressed={deckInspection.order === "deck"} onClick={() => onDeckInspectionOrder?.("deck")} type="button">山札順</button><button aria-pressed={deckInspection.order === "cost"} onClick={() => onDeckInspectionOrder?.("cost")} type="button">コスト</button></div> : null}
       {zone === "reveal" && onToggleReveal ? <button aria-pressed={revealPublic} className={`reveal-publish-button ${revealPublic ? "is-public" : ""}`} onClick={(event) => { event.stopPropagation(); onToggleReveal(owner); }} type="button"><span aria-hidden="true" className="reveal-publish-icon" />{revealPublic ? "公開" : "非公開"}</button> : null}
       <div className="play-zone-cards" ref={cardsRef} onPointerDown={(event) => { if (!(event.target as HTMLElement).closest(".play-card")) circlePoints.current = [{ x: event.clientX, y: event.clientY }]; }} onPointerMove={(event) => { if (circlePoints.current.length) circlePoints.current.push({ x: event.clientX, y: event.clientY }); }} onPointerUp={() => { const points = circlePoints.current; if (isCircleGesture(points)) onCircle(owner, zone); else if (points.length && Math.hypot(points.at(-1)!.x - points[0].x, points.at(-1)!.y - points[0].y) <= 8) { const now = performance.now(); if (now - lastEmptyTapAt.current <= 320) { lastEmptyTapAt.current = 0; onEmptyDoubleTap(owner, zone); } else lastEmptyTapAt.current = now; } circlePoints.current = []; }}>
         {cardNodes}
@@ -960,6 +964,8 @@ type BattlePlayerProps = {
   revealHiddenCards?: boolean;
   privateReveal?: boolean;
   onToggleReveal?: (owner: PlayerId) => void;
+  deckInspection?: DeckInspection | null;
+  onDeckInspectionOrder?: ZoneProps["onDeckInspectionOrder"];
 };
 
 function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onCircle, onSelectAuxiliaryZone, onZoneSelect }: { active: boolean; board: BoardState; disabled: boolean; owner: PlayerId; onOptions: ZoneProps["onOptions"]; onDraw: (owner: PlayerId) => void; onMove: ZoneProps["onMove"]; onMarkingMenuStart: ZoneProps["onMarkingMenuStart"]; onMarkingMenuMove: ZoneProps["onMarkingMenuMove"]; onMarkingMenuEnd: ZoneProps["onMarkingMenuEnd"]; onCircle: ZoneProps["onCircle"]; onSelectAuxiliaryZone: BattlePlayerProps["onSelectAuxiliaryZone"]; onZoneSelect?: ZoneProps["onZoneSelect"] }) {
@@ -1155,9 +1161,9 @@ function GraveyardPile({ active, board, disabled, owner, onSelect, onZoneSelect 
   return <aside className={`play-pile graveyard-pile ${active ? "active" : ""}`} data-drop-owner={owner} data-drop-zone="graveyard"><button disabled={disabled} onClick={() => { if (!onZoneSelect?.(owner, "graveyard")) onSelect(owner, "graveyard"); }} type="button"><strong>墓地</strong><b>{countZoneCards(board.players[owner].graveyard)}</b></button></aside>;
 }
 
-function BattlePlayer({ activeAuxiliaryZone, board, buttonsCollapsed = false, collapsed, controlledPlayer, canViewDeck, deckName, format, owner, position, view, onCollapse, onButtonsCollapse = () => undefined, onDetails, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onSelectAuxiliaryZone, onOpenExternalZones, onTap, onDoubleTap, onBackgroundTap, onUntapZone, onZoneSelect, selectedCards, openedStack, onCloseStack, onUnbundleStack, onCircle = () => undefined, revealHiddenCards = false, privateReveal = false, onToggleReveal }: BattlePlayerProps) {
+function BattlePlayer({ activeAuxiliaryZone, board, buttonsCollapsed = false, collapsed, controlledPlayer, canViewDeck, deckName, format, owner, position, view, onCollapse, onButtonsCollapse = () => undefined, onDetails, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onSelectAuxiliaryZone, onOpenExternalZones, onTap, onDoubleTap, onBackgroundTap, onUntapZone, onZoneSelect, selectedCards, openedStack, onCloseStack, onUnbundleStack, onCircle = () => undefined, revealHiddenCards = false, privateReveal = false, onToggleReveal, deckInspection, onDeckInspectionOrder }: BattlePlayerProps) {
   const disabled = false;
-  const zoneProps = { owner, view, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap: onUntapZone, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection: board.inspection, deckInspection: board.deckInspection, revealHiddenCards, privateReveal, revealPublic: board.revealPublic?.[owner] ?? false, onToggleReveal: owner === controlledPlayer ? onToggleReveal : undefined };
+  const zoneProps = { owner, view, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap: onUntapZone, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection: board.inspection, deckInspection, onDeckInspectionOrder, revealHiddenCards, privateReveal, revealPublic: board.revealPublic?.[owner] ?? false, onToggleReveal: owner === controlledPlayer ? onToggleReveal : undefined };
   const displayedAuxiliaryZones = auxiliaryZones;
   const ownAuxiliaryButtonZones: PlayZone[] = format === "advanced"
     ? ["hyperspatial", "gr", "abyss", "reveal"]
@@ -1439,7 +1445,7 @@ function RemoteCardInteractionIndicator({ interaction }: { interaction: RemoteCa
   return <span className={`remote-operation-label remote-operation-${interaction.player}`} style={position}>{interaction.displayName}が操作中</span>;
 }
 
-export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "original", opponentDeckName, opponentDeckFormat, initialState, externalState, localPlayer, onStateChange, onCardInteractionChange, onNonScrollInteraction, onShuffleRequest, onYobinionRequest, onInspectionRequest, onEffectWarningRequest, readOnly = false, remoteCardInteraction = null, revealHiddenCards = false, initialOpponentCollapsed = true, initialOpponentAuxiliaryZone = "hand", resetLabel, onResetRequest, canExternalUndo = false, canExternalRedo = false, onExternalUndo, onExternalRedo, externalHistoryBusy = false, onlineReveal = false }: { cards: DeckCard[]; opponentCards?: DeckCard[]; deckName: string; deckFormat?: string; opponentDeckName?: string; opponentDeckFormat?: string; initialState: BoardState; externalState?: BoardState; localPlayer?: PlayerId; onStateChange?: (state: BoardState) => void; onCardInteractionChange?: (signal: CardInteractionSignal) => void; onNonScrollInteraction?: () => void; onShuffleRequest?: (request: ServerShuffleRequest) => void; onYobinionRequest?: (request: ServerYobinionRequest) => void; onInspectionRequest?: (request: ServerInspectionRequest | null) => void; onEffectWarningRequest?: (request: ServerEffectWarningRequest) => void; readOnly?: boolean; remoteCardInteraction?: RemoteCardInteraction | null; revealHiddenCards?: boolean; initialOpponentCollapsed?: boolean; initialOpponentAuxiliaryZone?: PlayZone | null; resetLabel?: string; onResetRequest?: () => void; canExternalUndo?: boolean; canExternalRedo?: boolean; onExternalUndo?: () => void; onExternalRedo?: () => void; externalHistoryBusy?: boolean; onlineReveal?: boolean }) {
+export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "original", opponentDeckName, opponentDeckFormat, initialState, externalState, localPlayer, onStateChange, onCardInteractionChange, onNonScrollInteraction, onShuffleRequest, onYobinionRequest, onInspectionRequest, onDeckInspectionRequest, onEffectWarningRequest, readOnly = false, remoteCardInteraction = null, revealHiddenCards = false, initialOpponentCollapsed = true, initialOpponentAuxiliaryZone = "hand", resetLabel, onResetRequest, canExternalUndo = false, canExternalRedo = false, onExternalUndo, onExternalRedo, externalHistoryBusy = false, onlineReveal = false }: { cards: DeckCard[]; opponentCards?: DeckCard[]; deckName: string; deckFormat?: string; opponentDeckName?: string; opponentDeckFormat?: string; initialState: BoardState; externalState?: BoardState; localPlayer?: PlayerId; onStateChange?: (state: BoardState) => void; onCardInteractionChange?: (signal: CardInteractionSignal) => void; onNonScrollInteraction?: () => void; onShuffleRequest?: (request: ServerShuffleRequest) => void; onYobinionRequest?: (request: ServerYobinionRequest) => void; onInspectionRequest?: (request: ServerInspectionRequest | null) => void; onDeckInspectionRequest?: (request: ServerDeckInspectionRequest) => Promise<CardInstance[] | null>; onEffectWarningRequest?: (request: ServerEffectWarningRequest) => void; readOnly?: boolean; remoteCardInteraction?: RemoteCardInteraction | null; revealHiddenCards?: boolean; initialOpponentCollapsed?: boolean; initialOpponentAuxiliaryZone?: PlayZone | null; resetLabel?: string; onResetRequest?: () => void; canExternalUndo?: boolean; canExternalRedo?: boolean; onExternalUndo?: () => void; onExternalRedo?: () => void; externalHistoryBusy?: boolean; onlineReveal?: boolean }) {
   const [board, setBoard] = useState<BoardState>(() => resolvePlaytestInitialState(initialState, externalState));
   const [past, setPast] = useState<BoardState[]>([]);
   const [future, setFuture] = useState<BoardState[]>([]);
@@ -1469,6 +1475,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const [inspectionConfirm, setInspectionConfirm] = useState<{ owner: PlayerId; cardId: string } | null>(null);
   const [deckViewConfirm, setDeckViewConfirm] = useState<PlayerId | null>(null);
   const [deckViewCount, setDeckViewCount] = useState<number | "max">(3);
+  const [deckInspection, setDeckInspection] = useState<DeckInspection | null>(null);
   const lastDeckViewCount = useRef<Record<PlayerId, number>>({ p1: 3, p2: 3 });
   const [externalZonePickerOwner, setExternalZonePickerOwner] = useState<PlayerId | null>(null);
   const [pendingMoveSelection, setPendingMoveSelection] = useState<{ cardId: string; from: PlayZone; owner: PlayerId; individual?: boolean } | null>(null);
@@ -2049,12 +2056,23 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
 
   function selectAuxiliaryZone(owner: PlayerId, zone: PlayZone) {
     const opening = activeAuxiliaryZones[owner] !== zone;
+    if (owner === visibilityPlayer && (zone !== "deck" || !opening)) setDeckInspection(null);
     setActiveAuxiliaryZones((current) => ({ ...current, [owner]: current[owner] === zone ? null : zone }));
     if (opening && owner === displayPlayers[1]) {
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
         window.scrollTo({ behavior: "smooth", top: document.documentElement.scrollHeight });
       }));
     }
+  }
+
+  async function openDeckInspection(owner: PlayerId, count: ServerDeckInspectionRequest["count"]) {
+    if (readOnly || owner !== visibilityPlayer) return;
+    const inspectedCards = onDeckInspectionRequest
+      ? await onDeckInspectionRequest({ owner, count })
+      : board.players[owner].deck.slice(0, count === "max" ? undefined : count);
+    if (!inspectedCards) return;
+    setDeckInspection({ cards: inspectedCards, count, order: count === "max" ? "cost" : "deck", owner });
+    selectAuxiliaryZone(owner, "deck");
   }
 
   function openOptions(owner: PlayerId, zone: PlayZone, card: CardInstance, individual = false) {
@@ -2138,9 +2156,9 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       {selectionMode || targetSource || yobinionSourceMode || pendingMoveSelection ? <div className="play-mode-toolbar"><strong>{pendingMoveSelection ? "移動先のゾーンをタップ" : selectionMode ? `複数選択：${selectedCards.size}枚` : targetSource ? `対象指定：${selectedCards.size}枚` : yobinionSourceMode?.dragon ? "ドラゴンヨビニオン：発動元を選択" : "ヨビニオン：発動元を選択"}</strong><button onClick={() => { setSelectionMode(false); setTargetSource(null); setYobinionSourceMode(null); setPendingMoveSelection(null); setPendingZoneCardChoice(null); setInteractionNotice(null); setSelectedCards(new Set()); }} type="button">完了／キャンセル</button></div> : null}
       <div className="battle-history-actions"><div className="battle-primary-actions"><button onClick={() => setSettingsOpen(true)} type="button">設定</button><button onClick={onResetRequest ?? reset} type="button">{resetLabel ?? "リセット"}</button></div></div>
       <div className="battle-fields">
-        <BattlePlayer selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[0]]} board={board} buttonsCollapsed={opponentButtonsCollapsed} collapsed={opponentCollapsed} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[0] === visibilityPlayer} deckName={deckNames[displayPlayers[0]]} format={deckFormats[displayPlayers[0]]} owner={displayPlayers[0]} position="top" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onBackgroundTap={exitMultiSelect} onButtonsCollapse={() => setOpponentButtonsCollapsed((value) => !value)} onCircle={handleCircle} onCollapse={() => setOpponentCollapsed((value) => !value)} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
+        <BattlePlayer selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[0]]} board={board} buttonsCollapsed={opponentButtonsCollapsed} collapsed={opponentCollapsed} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[0] === visibilityPlayer} deckInspection={deckInspection} deckName={deckNames[displayPlayers[0]]} format={deckFormats[displayPlayers[0]]} owner={displayPlayers[0]} position="top" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onDeckInspectionOrder={(order) => setDeckInspection((current) => current ? { ...current, order } : null)} onBackgroundTap={exitMultiSelect} onButtonsCollapse={() => setOpponentButtonsCollapsed((value) => !value)} onCircle={handleCircle} onCollapse={() => setOpponentCollapsed((value) => !value)} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
         <div className="perspective-divider"><div className="divider-turn-actions">{localPlayer && board.turnRequest?.requestedBy === controlledPlayer ? <span>{board.turnRequest.status === "held" ? "保留中" : "応答待ち"}</span> : null}</div><button aria-label={localPlayer ? board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? "ターンエンドを受け入れる" : "ターンエンド" : "プレイヤーの表示位置を交代"} className="perspective-switch" disabled={Boolean(localPlayer && (readOnly || (board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? false : board.activePlayer !== localPlayer || Boolean(board.turnRequest))))} onClick={localPlayer ? board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? () => respondTurnEnd(true) : requestTurnEnd : switchPerspective} onPointerDown={(event) => event.stopPropagation()} type="button"><span aria-hidden="true" className="perspective-switch-icon">{localPlayer ? "⟳" : "↕"}</span><span className="perspective-switch-copy"><span className="perspective-switch-label">{localPlayer ? board.turnRequest?.status === "held" && board.turnRequest.requestedBy !== localPlayer ? "ターンエンドを受け入れる" : "ターンエンド" : "交代"}</span><span className="perspective-switch-subtitle">{localPlayer ? "TURN END" : "TURN CHANGE"}</span></span></button></div>
-        <BattlePlayer selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[1]]} board={board} collapsed={false} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[1] === visibilityPlayer} deckName={deckNames[displayPlayers[1]]} format={deckFormats[displayPlayers[1]]} owner={displayPlayers[1]} position="bottom" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onBackgroundTap={exitMultiSelect} onCircle={handleCircle} onCollapse={() => undefined} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
+        <BattlePlayer selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[1]]} board={board} collapsed={false} controlledPlayer={controlledPlayer} canViewDeck={!readOnly && displayPlayers[1] === visibilityPlayer} deckInspection={deckInspection} deckName={deckNames[displayPlayers[1]]} format={deckFormats[displayPlayers[1]]} owner={displayPlayers[1]} position="bottom" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onDeckInspectionOrder={(order) => setDeckInspection((current) => current ? { ...current, order } : null)} onBackgroundTap={exitMultiSelect} onCircle={handleCircle} onCollapse={() => undefined} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />
       </div>
       <div className="hand-history-actions"><button disabled={externalHistoryBusy || (usesExternalHistory ? !canExternalUndo : past.length === 0)} onClick={undo} type="button">↶戻す</button><button disabled={externalHistoryBusy || (usesExternalHistory ? !canExternalRedo : future.length === 0)} onClick={redo} type="button">↷進む</button></div>
       {dynamicBottomClearance > 0 ? <div aria-hidden="true" className="playtest-bottom-clearance" style={{ height: dynamicBottomClearance }} /> : null}
@@ -2181,7 +2199,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
           <button className="marker-modal-done" onClick={() => setMarkerTarget(null)} type="button">閉じる</button>
         </section>
       </div> : null}
-      {deckViewConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setDeckViewConfirm(null)}><section aria-modal="true" className="play-modal deck-inspection-dialog" onClick={(event) => event.stopPropagation()} role="dialog"><h2>山札閲覧</h2><p>非公開ゾーンである山札の内容を閲覧します。</p><label>枚数<input aria-label="閲覧枚数" disabled={deckViewCount === "max"} max={board.players[deckViewConfirm].deck.length} min={1} onChange={(event) => setDeckViewCount(Math.max(1, Math.min(board.players[deckViewConfirm].deck.length, Number(event.target.value) || 1)))} type="number" value={deckViewCount === "max" ? lastDeckViewCount.current[deckViewConfirm] : deckViewCount} /></label><button aria-pressed={deckViewCount === "max"} className="secondary-button" onClick={() => setDeckViewCount("max")} type="button">MAX</button><button className="button" onClick={() => { if (!readOnly && deckViewConfirm === visibilityPlayer) { const count = deckViewCount; if (typeof count === "number") lastDeckViewCount.current[deckViewConfirm] = count; commit((current) => ({ ...current, deckInspection: { count, order: count === "max" ? "cost" : "deck", owner: deckViewConfirm, viewer: visibilityPlayer } })); selectAuxiliaryZone(deckViewConfirm, "deck"); } setDeckViewConfirm(null); }} type="button">閲覧する</button><button className="secondary-button" onClick={() => setDeckViewConfirm(null)} type="button">キャンセル</button></section></div> : null}
+      {deckViewConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setDeckViewConfirm(null)}><section aria-modal="true" className="play-modal deck-inspection-dialog" onClick={(event) => event.stopPropagation()} role="dialog"><h2>山札閲覧</h2><p>非公開ゾーンである山札の内容を閲覧します。</p><label>枚数<input aria-label="閲覧枚数" disabled={deckViewCount === "max"} max={board.players[deckViewConfirm].deck.length} min={1} onChange={(event) => setDeckViewCount(Math.max(1, Math.min(board.players[deckViewConfirm].deck.length, Number(event.target.value) || 1)))} type="number" value={deckViewCount === "max" ? lastDeckViewCount.current[deckViewConfirm] : deckViewCount} /></label><button aria-pressed={deckViewCount === "max"} className="secondary-button" onClick={() => setDeckViewCount("max")} type="button">MAX</button><button className="button" onClick={() => { if (!readOnly && deckViewConfirm === visibilityPlayer) { const count = deckViewCount; if (typeof count === "number") lastDeckViewCount.current[deckViewConfirm] = count; void openDeckInspection(deckViewConfirm, count); } setDeckViewConfirm(null); }} type="button">閲覧する</button><button className="secondary-button" onClick={() => setDeckViewConfirm(null)} type="button">キャンセル</button></section></div> : null}
       {privateZoneConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setPrivateZoneConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に見ますか？</h2><p>相手の非公開ゾーンを閲覧すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = privateZoneConfirm; if (onInspectionRequest) onInspectionRequest({ owner: pending.owner, cardId: pending.card.instanceId }); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { cardId: pending.card.instanceId, owner: pending.owner, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: `相手があなたの${zoneLabels[pending.zone]}を確認しました`, createdAt: Date.now() }] }; }); setPrivateZoneConfirm(null); }} type="button">見る</button><button className="secondary-button" onClick={() => setPrivateZoneConfirm(null)} type="button">キャンセル</button></section></div> : null}
       {inspectionConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setInspectionConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に行いますか？</h2><p>非公開カードを確認すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = inspectionConfirm; if (onInspectionRequest) onInspectionRequest(pending); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { ...pending, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: "相手が非公開カードを確認しました", createdAt: Date.now() }] }; }); setInspectionConfirm(null); }} type="button">YES</button><button className="secondary-button" onClick={() => setInspectionConfirm(null)} type="button">NO</button></section></div> : null}
     </div>
