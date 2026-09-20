@@ -179,6 +179,59 @@ function inspectedDeckCards(cards: CardInstance[], inspection: DeckInspection | 
   ).map(({ card }) => card);
 }
 
+function DeckCountDial({ count, max, usingMax, onChange, onUseDial }: {
+  count: number;
+  max: number;
+  usingMax: boolean;
+  onChange: (count: number) => void;
+  onUseDial: () => void;
+}) {
+  const wheelRef = useRef<HTMLDivElement | null>(null);
+  const settleTimer = useRef<number | null>(null);
+  const syncingScroll = useRef(false);
+  const lastScrollTop = useRef(0);
+  const itemHeight = 38;
+  const values = Array.from({ length: max }, (_, index) => index + 1);
+  const safeCount = Math.min(Math.max(1, count), max);
+
+  useEffect(() => () => {
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+  }, []);
+
+  useEffect(() => {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+    syncingScroll.current = true;
+    wheel.scrollTo({ top: (safeCount - 1) * itemHeight, behavior: "auto" });
+    lastScrollTop.current = wheel.scrollTop;
+    window.requestAnimationFrame(() => { syncingScroll.current = false; });
+  }, [safeCount, max]);
+
+  function settle() {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+    onChange(Math.min(max, Math.max(1, Math.round(wheel.scrollTop / itemHeight) + 1)));
+  }
+
+  function handleScroll() {
+    const wheel = wheelRef.current;
+    if (!wheel || syncingScroll.current || wheel.scrollTop === lastScrollTop.current) return;
+    lastScrollTop.current = wheel.scrollTop;
+    onUseDial();
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      settleTimer.current = null;
+      settle();
+    }, 90);
+  }
+
+  return <div className={`deck-view-dial ${usingMax ? "using-max" : ""}`}>
+    <div aria-disabled={usingMax} aria-label="閲覧枚数" aria-valuemax={max} aria-valuemin={1} aria-valuenow={safeCount} className="deck-view-number-wheel" onScroll={handleScroll} ref={wheelRef} role="spinbutton" tabIndex={0}>
+      {values.map((value) => <button aria-current={value === safeCount} key={value} onClick={() => { onUseDial(); onChange(value); }} type="button">{value}</button>)}
+    </div>
+  </div>;
+}
+
 function readDropHit(elements: Element[], owner: PlayerId, sourceZone: PlayZone, movingCardId: string, allowEmptySameZoneBattle = false) {
   const candidates = elements.flatMap((element) => {
     const targetZoneElement = element.closest<HTMLElement>("[data-drop-zone]");
@@ -810,6 +863,7 @@ type ZoneProps = CardViewProps extends infer _T ? {
   inspection?: BoardState["inspection"];
   deckInspection?: DeckInspection | null;
   onDeckInspectionOrder?: (order: DeckInspection["order"]) => void;
+  onDeckInspectionClose?: () => void;
   onCloseStack?: () => void;
   onUnbundleStack?: (owner: PlayerId, zone: PlayZone, stackId: string) => void;
   deckName?: string;
@@ -821,7 +875,7 @@ type ZoneProps = CardViewProps extends infer _T ? {
   onToggleReveal?: (owner: PlayerId) => void;
 } : never;
 
-function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection, deckInspection, onDeckInspectionOrder, deckName, fan = false, revealHiddenCards = false, privateReveal = false, revealPublic = false, revealDeckToOwner = false, onToggleReveal }: ZoneProps) {
+function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection, deckInspection, onDeckInspectionOrder, onDeckInspectionClose, deckName, fan = false, revealHiddenCards = false, privateReveal = false, revealPublic = false, revealDeckToOwner = false, onToggleReveal }: ZoneProps) {
   const onCardMarkingMenuStart: CardViewProps["onMarkingMenuStart"] = (cardOwner, cardZone, card, x, y, _deckCard, individual) => onMarkingMenuStart(cardOwner, cardZone, card, x, y, revealDeckToOwner, individual);
   const circlePoints = useRef<GesturePoint[]>([]);
   const lastEmptyTapAt = useRef(0);
@@ -902,7 +956,7 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
     : [];
   return (
     <section
-      className={`play-zone zone-${zone} ${fan ? "fan-expanded" : ""} ${fan && cards.length === 0 ? "empty-hand" : ""} ${openedMembers.length ? "has-open-stack" : ""}`}
+      className={`play-zone zone-${zone} ${fan ? "fan-expanded" : ""} ${fan && cards.length === 0 ? "empty-hand" : ""} ${openedMembers.length ? "has-open-stack" : ""} ${zone === "deck" && revealDeckToOwner && deckInspection ? "deck-inspection-zone" : ""}`}
       data-drop-owner={owner}
       data-drop-zone={zone}
       onClick={(event) => {
@@ -915,9 +969,10 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
       ref={zoneRef}
     >
       {deckName ? <strong className="battle-deck-name">{deckName}</strong> : null}
-      <strong className="play-zone-label">{zoneLabels[zone]}</strong>
-      <span className="play-zone-count">{countZoneCards(cards)}</span>
-      {zone === "deck" && revealDeckToOwner && deckInspection ? <div aria-label="山札表示順" className="deck-inspection-order"><button aria-pressed={deckInspection.order === "deck"} onClick={() => onDeckInspectionOrder?.("deck")} type="button">山札順</button><button aria-pressed={deckInspection.order === "cost"} onClick={() => onDeckInspectionOrder?.("cost")} type="button">コスト</button></div> : null}
+      {zone === "deck" && revealDeckToOwner && deckInspection ? <>
+        <div className="deck-inspection-header"><span>{deckInspection.order === "deck" ? "山札の上" : "低コスト"}</span><strong>山札（閲覧表示）</strong><span>{deckInspection.order === "deck" ? "山札の下" : "高コスト"}</span><button aria-label="山札閲覧を閉じる" onClick={onDeckInspectionClose} type="button">×</button></div>
+        <aside aria-label="山札表示順" className="deck-view-actions"><div className="deck-view-mode-toggle"><strong>並び替え</strong><div><button aria-pressed={deckInspection.order === "deck"} onClick={() => onDeckInspectionOrder?.("deck")} type="button">山札順</button><button aria-pressed={deckInspection.order === "cost"} onClick={() => onDeckInspectionOrder?.("cost")} type="button">コスト</button></div></div></aside>
+      </> : <><strong className="play-zone-label">{zoneLabels[zone]}</strong><span className="play-zone-count">{countZoneCards(cards)}</span></>}
       {zone === "reveal" && onToggleReveal ? <button aria-pressed={revealPublic} className={`reveal-publish-button ${revealPublic ? "is-public" : ""}`} onClick={(event) => { event.stopPropagation(); onToggleReveal(owner); }} type="button"><span aria-hidden="true" className="reveal-publish-icon" />{revealPublic ? "公開" : "非公開"}</button> : null}
       <div className="play-zone-cards" ref={cardsRef} onPointerDown={(event) => { if (!(event.target as HTMLElement).closest(".play-card")) circlePoints.current = [{ x: event.clientX, y: event.clientY }]; }} onPointerMove={(event) => { if (circlePoints.current.length) circlePoints.current.push({ x: event.clientX, y: event.clientY }); }} onPointerUp={() => { const points = circlePoints.current; if (isCircleGesture(points)) onCircle(owner, zone); else if (points.length && Math.hypot(points.at(-1)!.x - points[0].x, points.at(-1)!.y - points[0].y) <= 8) { const now = performance.now(); if (now - lastEmptyTapAt.current <= 320) { lastEmptyTapAt.current = 0; onEmptyDoubleTap(owner, zone); } else lastEmptyTapAt.current = now; } circlePoints.current = []; }}>
         {cardNodes}
@@ -1163,7 +1218,7 @@ function GraveyardPile({ active, board, disabled, owner, onSelect, onZoneSelect 
 
 function BattlePlayer({ activeAuxiliaryZone, board, buttonsCollapsed = false, collapsed, controlledPlayer, canViewDeck, deckName, format, owner, position, view, onCollapse, onButtonsCollapse = () => undefined, onDetails, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onSelectAuxiliaryZone, onOpenExternalZones, onTap, onDoubleTap, onBackgroundTap, onUntapZone, onZoneSelect, selectedCards, openedStack, onCloseStack, onUnbundleStack, onCircle = () => undefined, revealHiddenCards = false, privateReveal = false, onToggleReveal, deckInspection, onDeckInspectionOrder }: BattlePlayerProps) {
   const disabled = false;
-  const zoneProps = { owner, view, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap: onUntapZone, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection: board.inspection, deckInspection, onDeckInspectionOrder, revealHiddenCards, privateReveal, revealPublic: board.revealPublic?.[owner] ?? false, onToggleReveal: owner === controlledPlayer ? onToggleReveal : undefined };
+  const zoneProps = { owner, view, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, selectedCards, onCircle, onEmptyDoubleTap: onUntapZone, onZoneSelect, onBackgroundTap, openedStack, onCloseStack, onUnbundleStack, inspection: board.inspection, deckInspection, onDeckInspectionOrder, onDeckInspectionClose: () => onSelectAuxiliaryZone(owner, "deck"), revealHiddenCards, privateReveal, revealPublic: board.revealPublic?.[owner] ?? false, onToggleReveal: owner === controlledPlayer ? onToggleReveal : undefined };
   const displayedAuxiliaryZones = auxiliaryZones;
   const ownAuxiliaryButtonZones: PlayZone[] = format === "advanced"
     ? ["hyperspatial", "gr", "abyss", "reveal"]
@@ -2199,7 +2254,18 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
           <button className="marker-modal-done" onClick={() => setMarkerTarget(null)} type="button">閉じる</button>
         </section>
       </div> : null}
-      {deckViewConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setDeckViewConfirm(null)}><section aria-modal="true" className="play-modal deck-inspection-dialog" onClick={(event) => event.stopPropagation()} role="dialog"><h2>山札閲覧</h2><p>非公開ゾーンである山札の内容を閲覧します。</p><label>枚数<input aria-label="閲覧枚数" disabled={deckViewCount === "max"} max={board.players[deckViewConfirm].deck.length} min={1} onChange={(event) => setDeckViewCount(Math.max(1, Math.min(board.players[deckViewConfirm].deck.length, Number(event.target.value) || 1)))} type="number" value={deckViewCount === "max" ? lastDeckViewCount.current[deckViewConfirm] : deckViewCount} /></label><button aria-pressed={deckViewCount === "max"} className="secondary-button" onClick={() => setDeckViewCount("max")} type="button">MAX</button><button className="button" onClick={() => { if (!readOnly && deckViewConfirm === visibilityPlayer) { const count = deckViewCount; if (typeof count === "number") lastDeckViewCount.current[deckViewConfirm] = count; void openDeckInspection(deckViewConfirm, count); } setDeckViewConfirm(null); }} type="button">閲覧する</button><button className="secondary-button" onClick={() => setDeckViewConfirm(null)} type="button">キャンセル</button></section></div> : null}
+      {deckViewConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setDeckViewConfirm(null)}>
+        <section aria-labelledby="deck-view-confirm-title" aria-modal="true" className="play-modal deck-view-confirm" onClick={(event) => event.stopPropagation()} role="dialog">
+          <header><h2 id="deck-view-confirm-title">山札確認</h2><button aria-label="山札確認を閉じる" onClick={() => setDeckViewConfirm(null)} type="button">×</button></header>
+          <section className={`deck-view-count-picker ${deckViewCount === "max" ? "using-max" : ""}`}>
+            <h3>▣ 枚数</h3>
+            <DeckCountDial count={deckViewCount === "max" ? lastDeckViewCount.current[deckViewConfirm] : deckViewCount} max={Math.max(1, board.players[deckViewConfirm].deck.length)} usingMax={deckViewCount === "max"} onChange={(count) => setDeckViewCount(count)} onUseDial={() => setDeckViewCount((current) => current === "max" ? lastDeckViewCount.current[deckViewConfirm] : current)} />
+            <button aria-pressed={deckViewCount === "max"} className="deck-view-max" disabled={board.players[deckViewConfirm].deck.length === 0} onClick={() => setDeckViewCount("max")} type="button">MAX</button>
+          </section>
+          <p className="deck-view-summary">上から{deckViewCount === "max" ? "すべて" : `${Math.min(deckViewCount, board.players[deckViewConfirm].deck.length)}枚`}を表で確認</p>
+          <button className="button deck-view-execute" disabled={board.players[deckViewConfirm].deck.length === 0} onClick={() => { if (!readOnly && deckViewConfirm === visibilityPlayer) { const count = deckViewCount; if (typeof count === "number") lastDeckViewCount.current[deckViewConfirm] = count; void openDeckInspection(deckViewConfirm, count); } setDeckViewConfirm(null); }} type="button">実行</button>
+        </section>
+      </div> : null}
       {privateZoneConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setPrivateZoneConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に見ますか？</h2><p>相手の非公開ゾーンを閲覧すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = privateZoneConfirm; if (onInspectionRequest) onInspectionRequest({ owner: pending.owner, cardId: pending.card.instanceId }); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { cardId: pending.card.instanceId, owner: pending.owner, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: `相手があなたの${zoneLabels[pending.zone]}を確認しました`, createdAt: Date.now() }] }; }); setPrivateZoneConfirm(null); }} type="button">見る</button><button className="secondary-button" onClick={() => setPrivateZoneConfirm(null)} type="button">キャンセル</button></section></div> : null}
       {inspectionConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setInspectionConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に行いますか？</h2><p>非公開カードを確認すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = inspectionConfirm; if (onInspectionRequest) onInspectionRequest(pending); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { ...pending, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: "相手が非公開カードを確認しました", createdAt: Date.now() }] }; }); setInspectionConfirm(null); }} type="button">YES</button><button className="secondary-button" onClick={() => setInspectionConfirm(null)} type="button">NO</button></section></div> : null}
     </div>
