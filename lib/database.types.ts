@@ -47,6 +47,32 @@ export type Database = {
           },
         ]
       }
+      account_recent_registration_shops: {
+        Row: {
+          last_registered_at: string
+          shop_id: number
+          user_id: string
+        }
+        Insert: {
+          last_registered_at?: string
+          shop_id: number
+          user_id: string
+        }
+        Update: {
+          last_registered_at?: string
+          shop_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_recent_registration_shops_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_config: {
         Row: {
           id: boolean
@@ -1398,6 +1424,10 @@ export type Database = {
         Args: { p_room_id: string }
         Returns: { host_name: string; guest_name: string | null; selected_deck_id: string | null; host_icon_image_key: string | null; guest_icon_image_key: string | null }[]
       }
+      inspect_own_game_deck: {
+        Args: { p_room_id: string; p_count?: number | null }
+        Returns: Json
+      }
       shuffle_game_cards: {
         Args: { p_room_id: string; p_expected_version: number; p_owner: string; p_zone: string; p_mode: string; p_card_ids?: string[] | null; p_stack_id?: string | null }
         Returns: { state: Json; state_version: number }[]
@@ -1777,6 +1807,19 @@ export type Database = {
           prefecture: string
           total_count: number
         }[]
+      }
+      list_recent_registration_shops: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: number
+          municipality: string
+          name: string
+          prefecture: string
+        }[]
+      }
+      record_recent_registration_shop: {
+        Args: { p_shop_id: number }
+        Returns: undefined
       }
       submit_price_correction_request: {
         Args: {

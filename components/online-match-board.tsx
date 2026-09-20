@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { Json } from "@/lib/database.types";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { PlaytestBoard, type BoardState, type PlayerId, type ServerEffectWarningRequest, type ServerInspectionRequest, type ServerShuffleRequest, type ServerYobinionRequest } from "@/components/playtest-board";
+import { PlaytestBoard, type BoardState, type CardInstance, type PlayerId, type ServerDeckInspectionRequest, type ServerEffectWarningRequest, type ServerInspectionRequest, type ServerShuffleRequest, type ServerYobinionRequest } from "@/components/playtest-board";
 import { parseRemoteCardOperation, type RemoteCardOperation } from "@/lib/online-card-operation";
 import { readNewerRoomSnapshot } from "@/lib/online-room-snapshot";
 import { describeOpponentBoardChange } from "@/lib/online-board-change";
@@ -238,6 +238,21 @@ export function OnlineMatchBoard({ roomId, returnLobbyId, userId, isHost, isSpec
     await broadcast(next, data[0].state_version);
   }
 
+  async function serverDeckInspection(request: ServerDeckInspectionRequest): Promise<CardInstance[] | null> {
+    if (!supabase || isSpectator || lifecycle.status !== "playing" || request.owner !== localPlayer) return null;
+    setError(null);
+    const { data, error: inspectionError } = await supabase.rpc("inspect_own_game_deck", {
+      p_room_id: roomId,
+      p_count: request.count === "max" || request.takeFrom === "bottom" ? null : request.count,
+    });
+    if (inspectionError || !Array.isArray(data) || !data.every((card) => card && !Array.isArray(card) && typeof card === "object" && typeof card.instanceId === "string")) {
+      setError("山札を安全に取得できませんでした。最新の盤面を確認してください。");
+      return null;
+    }
+    const cards = data as unknown as CardInstance[];
+    return request.takeFrom === "bottom" && request.count !== "max" ? cards.slice(-request.count) : cards;
+  }
+
   async function surrender() {
     if (!supabase || isSpectator || !window.confirm("投了しますか？ この対戦は敗北として終了します。")) return;
     const { error: surrenderError } = await supabase.rpc("surrender_game_room", { p_room_id: roomId });
@@ -368,6 +383,11 @@ export function OnlineMatchBoard({ roomId, returnLobbyId, userId, isHost, isSpec
   const finishDialog = lifecycle.status === "finished" ? <div className="online-dialog-backdrop"><section className="match-finish-dialog"><p>{finishReason}</p><h2>{finishMessage}</h2>{!isSpectator ? <button className="button" disabled={rematchRequested} onClick={() => void requestRematch()} type="button">{rematchRequested ? "相手の再戦希望を待っています" : "再戦"}</button> : null}<a className="secondary-button" href={returnLobbyId ? `/rooms/lobbies/${returnLobbyId}` : "/rooms"}>ルームへ戻る</a></section></div> : null;
   const undoApprovalDialog = historyStatus.pending_request_id ? <div className="online-dialog-backdrop"><section className="match-finish-dialog"><p>ターン終了の取り消し</p><h2>{historyStatus.pending_requester_name ?? "対戦相手"}がターン終了を取り消そうとしています。</h2><div className="online-dialog-actions"><button className="button" disabled={historyBusy} onClick={() => void respondUndoRequest(true)} type="button">承認</button><button className="secondary-button" disabled={historyBusy} onClick={() => void respondUndoRequest(false)} type="button">拒否</button></div></section></div> : null;
   if (!board) return <section className="match-start-panel"><strong>接続中：{onlineCount}人</strong>{connectionSummary}<p>両対戦者の準備完了後、対戦を自動的に開始します。</p>{error ? <p className="notice error">{error}</p> : null}</section>;
-  return <div className="online-match"><div className="online-match-meta"><strong>{onlineCount}人接続{isSpectator ? "・観戦中" : ""}</strong><strong className={`online-turn-label ${board.activePlayer === "p1" ? "first" : "second"}`}>{board.activePlayer === "p1" ? "先攻" : "後攻"}{board.turn}ターン目</strong><b className={remainingSeconds !== null && remainingSeconds <= 60 ? "urgent" : ""}>{timerLabel}</b><span>状態 #{version}・{connection}</span></div>{connectionSummary}{error ? <p className="notice error">{error}</p> : null}<PlaytestBoard onlineReveal initialOpponentAuxiliaryZone="mana" initialOpponentCollapsed={false} canExternalRedo={historyStatus.can_redo} canExternalUndo={historyStatus.can_undo} cards={[]} deckFormat={hostDeck.format} deckName={hostDeck.name} externalHistoryBusy={historyBusy} externalState={board} initialState={board} localPlayer={localPlayer} onCardInteractionChange={isSpectator ? undefined : (signal) => void broadcastCardOperation(signal)} onNonScrollInteraction={() => setOpponentActionNotice(null)} onEffectWarningRequest={isSpectator ? undefined : (request) => void serverEffectWarning(request)} onInspectionRequest={isSpectator ? undefined : (request) => void serverInspection(request)} onExternalRedo={isSpectator ? undefined : () => void runHistoryAction("redo")} onExternalUndo={isSpectator ? undefined : () => void runHistoryAction("undo")} onResetRequest={isSpectator ? undefined : () => void surrender()} onShuffleRequest={isSpectator ? undefined : (request) => void serverShuffle(request)} onYobinionRequest={isSpectator ? undefined : (request) => void serverYobinion(request)} opponentDeckFormat={guestDeck.format} opponentDeckName={guestDeck.name} onStateChange={isSpectator ? undefined : saveState} readOnly={isSpectator || lifecycle.status !== "playing"} remoteCardInteraction={remoteOperation?.active ? remoteOperation : null} revealHiddenCards={isSpectator} resetLabel={isSpectator ? undefined : "投了"} />{undoApprovalDialog}{finishDialog}{showOpeningNotice ? <div className={`opening-notice-backdrop ${localPlayer === "p1" ? "first" : "second"}`} onClick={dismissOpeningNotice} role="presentation"><section aria-label="先攻後攻の通知" aria-modal="true" className="opening-notice" role="dialog"><h2>あなたは<span>{localPlayer === "p1" ? "先攻" : "後攻"}</span>です</h2><p>画面のどこをタップしても閉じます</p></section></div> : null}</div>;
+  return <div className="online-match">
+    <div className="online-match-meta"><strong>{onlineCount}人接続{isSpectator ? "・観戦中" : ""}</strong><strong className={`online-turn-label ${board.activePlayer === "p1" ? "first" : "second"}`}>{board.activePlayer === "p1" ? "先攻" : "後攻"}{board.turn}ターン目</strong><b className={remainingSeconds !== null && remainingSeconds <= 60 ? "urgent" : ""}>{timerLabel}</b><span>状態 #{version}・{connection}</span></div>
+    {connectionSummary}{error ? <p className="notice error">{error}</p> : null}
+    <PlaytestBoard onlineReveal initialOpponentAuxiliaryZone="mana" initialOpponentCollapsed={false} canExternalRedo={historyStatus.can_redo} canExternalUndo={historyStatus.can_undo} cards={[]} deckFormat={hostDeck.format} deckName={hostDeck.name} externalHistoryBusy={historyBusy} externalState={board} initialState={board} localPlayer={localPlayer} onCardInteractionChange={isSpectator ? undefined : (signal) => void broadcastCardOperation(signal)} onNonScrollInteraction={() => setOpponentActionNotice(null)} onDeckInspectionRequest={isSpectator ? undefined : serverDeckInspection} onEffectWarningRequest={isSpectator ? undefined : (request) => void serverEffectWarning(request)} onInspectionRequest={isSpectator ? undefined : (request) => void serverInspection(request)} onExternalRedo={isSpectator ? undefined : () => void runHistoryAction("redo")} onExternalUndo={isSpectator ? undefined : () => void runHistoryAction("undo")} onResetRequest={isSpectator ? undefined : () => void surrender()} onShuffleRequest={isSpectator ? undefined : (request) => void serverShuffle(request)} onYobinionRequest={isSpectator ? undefined : (request) => void serverYobinion(request)} opponentDeckFormat={guestDeck.format} opponentDeckName={guestDeck.name} onStateChange={isSpectator ? undefined : saveState} readOnly={isSpectator || lifecycle.status !== "playing"} remoteCardInteraction={remoteOperation?.active ? remoteOperation : null} revealHiddenCards={isSpectator} resetLabel={isSpectator ? undefined : "投了"} />
+    {undoApprovalDialog}{finishDialog}{showOpeningNotice ? <div className={`opening-notice-backdrop ${localPlayer === "p1" ? "first" : "second"}`} onClick={dismissOpeningNotice} role="presentation"><section aria-label="先攻後攻の通知" aria-modal="true" className="opening-notice" role="dialog"><h2>あなたは<span>{localPlayer === "p1" ? "先攻" : "後攻"}</span>です</h2><p>画面のどこをタップしても閉じます</p></section></div> : null}
+  </div>;
 }
 

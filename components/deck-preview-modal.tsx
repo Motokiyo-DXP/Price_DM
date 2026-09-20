@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CardArtwork } from "@/components/card-artwork";
 import { resolveCardArtworkUrl } from "@/lib/card-image";
-
-type PreviewCard = { zone: string; name: string; imageUrl: string | null };
-type DeckPreview = { name: string; cards: PreviewCard[] };
-const previewCache = new Map<string, DeckPreview>();
+import { setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
 
 function zoneName(zone: string) {
   if (zone === "gr") return "超GRゾーン";
@@ -15,20 +12,19 @@ function zoneName(zone: string) {
 }
 
 export function DeckPreviewModal({ deckId, deckName, scope, onClose }: { deckId: string; deckName: string; scope: "public" | "mine"; onClose: () => void }) {
-  const cacheKey = `${scope}:${deckId}`;
-  const [preview, setPreview] = useState<DeckPreview | null>(previewCache.get(cacheKey) ?? null);
+  const [preview, setPreview] = useState<DeckPreview | null>(null);
   const [error, setError] = useState("");
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [otherOpen, setOtherOpen] = useState(false);
   useEffect(() => {
     if (preview) return;
     let active = true;
-    fetch(`/api/${scope === "mine" ? "my-decks" : "public-decks"}/${encodeURIComponent(deckId)}/preview`)
+    fetch(`/api/${scope === "mine" ? "my-decks" : "public-decks"}/${encodeURIComponent(deckId)}/preview`, { cache: "no-store" })
       .then((response) => { if (!response.ok) throw new Error(); return response.json() as Promise<DeckPreview>; })
-      .then((data) => { previewCache.set(cacheKey, data); if (active) setPreview(data); })
+      .then((data) => { setDeckPreview(scope, deckId, data); if (active) setPreview(data); })
       .catch(() => { if (active) setError("デッキを読み込めませんでした。"); });
     return () => { active = false; };
-  }, [cacheKey, deckId, preview, scope]);
+  }, [deckId, preview, scope]);
   const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 40) ?? [];
   const otherZones = useMemo(() => [...new Set(preview?.cards.filter((card) => card.zone !== "main").map((card) => card.zone) ?? [])], [preview]);
   const cardButton = (card: PreviewCard, index: number) => <button aria-label={`${card.name}を拡大`} key={index} onClick={(event) => { event.stopPropagation(); if (card.imageUrl) setExpandedImage(card.imageUrl); }} type="button"><CardArtwork imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 600px) 12vw, 100px" /></button>;

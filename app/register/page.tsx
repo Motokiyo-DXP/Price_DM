@@ -14,6 +14,7 @@ import {
   mapRegistrationCardOptions,
   mapRegistrationCardPrints,
   mapRegistrationGames,
+  mapRegistrationShopOptions,
   mapRegistrationShopSearchPage,
   RegistrationCardOption,
   RegistrationCardPrint,
@@ -32,6 +33,11 @@ import {
   readLastRegisteredShop,
   writeLastRegisteredShop,
 } from "@/lib/last-registered-shop";
+import {
+  resolveSubmissionShop,
+  selectShopOption,
+  updateRecentRegistrationShops,
+} from "@/lib/registration-shop-selection";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
 import { CardArtwork } from "@/components/card-artwork";
@@ -118,6 +124,8 @@ export default function RegisterPage() {
   const [searchingShops, setSearchingShops] = useState(false);
   const [shopSuggestionsOpen, setShopSuggestionsOpen] = useState(false);
   const [activeShopOptionIndex, setActiveShopOptionIndex] = useState(-1);
+  const [shopSearchComplete, setShopSearchComplete] = useState(false);
+  const [recentRegistrationShops, setRecentRegistrationShops] = useState<RegistrationShopOption[]>([]);
   const [candidateSubmitting, setCandidateSubmitting] = useState(false);
   const [candidateFeedback, setCandidateFeedback] = useState<Feedback | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
@@ -130,6 +138,8 @@ export default function RegisterPage() {
   const salePriceIsComposing = useRef(false);
   const buyPriceIsComposing = useRef(false);
   const cardQueryIsComposing = useRef(false);
+  const shopQueryIsComposing = useRef(false);
+  const shopSearchRequestSequence = useRef(0);
   const cardSearchAbortController = useRef<AbortController | null>(null);
   const cardSearchRequestSequence = useRef(0);
   const cardSearchInputStartedAt = useRef<number | null>(null);
@@ -329,21 +339,34 @@ export default function RegisterPage() {
   useEffect(() => {
     let cancelled = false;
     const query = shopQuery.trim();
+    const requestSequence = ++shopSearchRequestSequence.current;
 
-    if ((query.length === 0 && !shopPrefecture) || selectedShop) {
+    if (
+      (query.length === 0 && !shopPrefecture) ||
+      selectedShop ||
+      shopQueryIsComposing.current
+    ) {
       setShopOptions([]);
       setShopTotalCount(0);
       setSearchingShops(false);
       setActiveShopOptionIndex(-1);
+      setShopSearchComplete(false);
       return;
     }
 
+    setShopOptions([]);
+    setShopTotalCount(0);
+    setActiveShopOptionIndex(-1);
+    setShopSearchComplete(false);
     setSearchingShops(true);
     const timer = window.setTimeout(async () => {
+      if (requestSequence !== shopSearchRequestSequence.current) return;
       const supabase = createBrowserSupabaseClient();
       if (!supabase) {
         setSystemError("Supabase の接続情報が設定されていません。");
-        setSearchingShops(false);
+        if (requestSequence === shopSearchRequestSequence.current) {
+          setSearchingShops(false);
+        }
         return;
       }
 
@@ -354,7 +377,7 @@ export default function RegisterPage() {
         p_query: normalizeShopSearch(query),
       });
 
-      if (cancelled) return;
+      if (cancelled || requestSequence !== shopSearchRequestSequence.current) return;
       setSearchingShops(false);
       if (error) {
         setSystemError("承認済み店舗を読み込めませんでした。");
@@ -366,6 +389,7 @@ export default function RegisterPage() {
       setShopOptions(page.options);
       setShopTotalCount(page.totalCount);
       setActiveShopOptionIndex(-1);
+      setShopSearchComplete(true);
     }, 250);
 
     return () => {
@@ -373,6 +397,43 @@ export default function RegisterPage() {
       window.clearTimeout(timer);
     };
   }, [selectedShop, shopPrefecture, shopQuery]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (registrationAccess !== "ready") {
+      if (registrationAccess === "login_required") setRecentRegistrationShops([]);
+      return;
+    }
+
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) return;
+
+    void supabase.rpc("list_recent_registration_shops").then(({ data, error }) => {
+      if (cancelled || error) return;
+      setRecentRegistrationShops(mapRegistrationShopOptions(data));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [registrationAccess]);
+
+  function resetShopSearchResults() {
+    shopSearchRequestSequence.current += 1;
+    setShopOptions([]);
+    setShopTotalCount(0);
+    setActiveShopOptionIndex(-1);
+    setSearchingShops(false);
+    setShopSearchComplete(false);
+  }
+
+  function updateShopQuery(query: string) {
+    resetShopSearchResults();
+    setShopQuery(query);
+    setSelectedShop(null);
+    setShopSuggestionsOpen(true);
+  }
 
   async function loadMoreShops() {
     if (searchingShops || shopOptions.length >= shopTotalCount) return;
@@ -382,13 +443,16 @@ export default function RegisterPage() {
       return;
     }
 
+    const requestSequence = ++shopSearchRequestSequence.current;
     setSearchingShops(true);
+    setShopSearchComplete(false);
     const { data, error } = await supabase.rpc("search_shops_page", {
       p_limit: 20,
       p_offset: shopOptions.length,
       p_prefecture: shopPrefecture || undefined,
       p_query: normalizeShopSearch(shopQuery.trim()),
     });
+    if (requestSequence !== shopSearchRequestSequence.current) return;
     setSearchingShops(false);
     if (error) {
       setSystemError("承認済み店舗を追加で読み込めませんでした。");
@@ -401,6 +465,7 @@ export default function RegisterPage() {
       return [...current, ...page.options.filter((shop) => !knownIds.has(shop.id))];
     });
     setShopTotalCount(page.totalCount);
+    setShopSearchComplete(true);
     setSystemError(null);
   }
 
@@ -459,9 +524,11 @@ export default function RegisterPage() {
   }
 
   function chooseShop(shop: RegistrationShopOption) {
+    resetShopSearchResults();
     setSelectedShop(shop);
     setShopQuery(shop.name);
     setShopSuggestionsOpen(false);
+    setActiveShopOptionIndex(-1);
   }
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -511,13 +578,17 @@ export default function RegisterPage() {
       setActiveShopOptionIndex((current) =>
         current <= 0 ? shopOptions.length - 1 : current - 1,
       );
-    } else if (
-      event.key === "Enter" &&
-      shopSuggestionsOpen &&
-      activeShopOptionIndex >= 0
-    ) {
+    } else if (event.key === "Enter" && shopSuggestionsOpen) {
+      if (event.nativeEvent.isComposing || shopQueryIsComposing.current) return;
+      const shop = selectShopOption({
+        activeIndex: activeShopOptionIndex,
+        isComposing: false,
+        options: shopOptions,
+        searchComplete: shopSearchComplete && !searchingShops,
+      });
+      if (!shop) return;
       event.preventDefault();
-      chooseShop(shopOptions[activeShopOptionIndex]);
+      chooseShop(shop);
     }
   }
 
@@ -592,9 +663,7 @@ export default function RegisterPage() {
     }
 
     if (candidate.status === "already_approved") {
-      setShopQuery(name);
-      setSelectedShop(null);
-      setShopSuggestionsOpen(true);
+      updateShopQuery(name);
       setCandidateFeedback({
         kind: "success",
         text: "この店舗は承認済みです。上の検索候補から選択してください。",
@@ -620,13 +689,26 @@ export default function RegisterPage() {
       setFeedback({ kind: "error", text: "候補からカードを選択してください。" });
       return;
     }
-    if (!selectedShop) {
+    const shopForSubmission = resolveSubmissionShop({
+      selectedShop,
+      selection: {
+        activeIndex: -1,
+        isComposing: shopQueryIsComposing.current,
+        options: shopOptions,
+        searchComplete:
+          shopQuery.trim().length > 0 &&
+          shopSearchComplete &&
+          !searchingShops,
+      },
+    });
+    if (!shopForSubmission) {
       setFeedback({
         kind: "error",
         text: "承認済み店舗を検索候補から選択してください。",
       });
       return;
     }
+    if (!selectedShop) chooseShop(shopForSubmission);
     if (!salePrice && !buyPrice) {
       setFeedback({
         kind: "error",
@@ -656,7 +738,7 @@ export default function RegisterPage() {
           note: String(formData.get("note") ?? ""),
           observedOn: String(formData.get("observedOn") ?? ""),
           salePrice: salePrice ? Number(salePrice) : null,
-          shopId: selectedShop.id,
+          shopId: shopForSubmission.id,
           stockStatus: String(formData.get("stockStatus") ?? "unknown"),
         }),
       });
@@ -688,6 +770,23 @@ export default function RegisterPage() {
       return;
     }
 
+    const recordId =
+      typeof result === "object" &&
+      result !== null &&
+      "recordId" in result &&
+      typeof result.recordId === "number"
+        ? result.recordId
+        : null;
+    if (recordId === null || !Number.isSafeInteger(recordId) || recordId <= 0) {
+      setFeedback({ kind: "error", text: registrationErrorMessage("registration_failed") });
+      return;
+    }
+    const recentShopRecorded =
+      typeof result === "object" &&
+      result !== null &&
+      "recentShopRecorded" in result &&
+      result.recentShopRecorded === true;
+
     form.reset();
     setCardQuery("");
     setCardOptions([]);
@@ -698,12 +797,17 @@ export default function RegisterPage() {
     setShopOptions([]);
     setShopTotalCount(0);
     setShopSuggestionsOpen(false);
-    writeLastRegisteredShop(selectedShop);
+    writeLastRegisteredShop(shopForSubmission);
+    if (recentShopRecorded) {
+      setRecentRegistrationShops((current) =>
+        updateRecentRegistrationShops(current, shopForSubmission),
+      );
+    }
     setSalePriceInput("");
     setBuyPriceInput("");
     setFeedback({
       kind: "success",
-      text: `価格情報を登録しました。店舗「${selectedShop.name}」は次の登録にも引き継がれます。`,
+      text: `価格情報を登録しました。店舗「${shopForSubmission.name}」は次の登録にも引き継がれます。`,
     });
   }
 
@@ -715,6 +819,15 @@ export default function RegisterPage() {
     (shopQuery.trim().length > 0 || shopPrefecture.length > 0) &&
     !selectedShop;
   const activeShopOption = shopOptions[activeShopOptionIndex];
+  const canAutoSelectFirstShop =
+    selectedShop === null &&
+    shopQuery.trim().length > 0 &&
+    !shopQueryIsComposing.current &&
+    !searchingShops &&
+    shopSearchComplete &&
+    shopOptions.length > 0;
+  const showRecentRegistrationShops =
+    recentRegistrationShops.length > 0 && !showShopSuggestions;
 
   return (
     <section className="form-wrap register-page">
@@ -913,13 +1026,35 @@ export default function RegisterPage() {
             value={shopQuery}
             onFocus={() => setShopSuggestionsOpen(true)}
             onKeyDown={handleShopKeyDown}
+            onCompositionStart={() => {
+              shopQueryIsComposing.current = true;
+            }}
+            onCompositionEnd={(event) => {
+              shopQueryIsComposing.current = false;
+              updateShopQuery(event.currentTarget.value);
+            }}
             onChange={(event) => {
-              setShopQuery(event.target.value);
-              setSelectedShop(null);
-              setShopSuggestionsOpen(true);
+              updateShopQuery(event.target.value);
             }}
             required
           />
+
+          {showRecentRegistrationShops && (
+            <div className="recent-registration-shops" aria-label="最近使用した店舗">
+              {recentRegistrationShops.map((shop) => (
+                <button
+                  aria-pressed={selectedShop?.id === shop.id}
+                  className="recent-registration-shop"
+                  key={shop.id}
+                  onClick={() => chooseShop(shop)}
+                  type="button"
+                >
+                  <img alt="" aria-hidden="true" src="/icons/store.svg" />
+                  <span>{shop.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {showShopSuggestions && (
             <ul className="suggestions" id="shop-suggestions" role="listbox">
@@ -1074,6 +1209,7 @@ export default function RegisterPage() {
             <label htmlFor="shopPrefecture">
               都道府県で絞り込む（任意）
               <select id="shopPrefecture" value={shopPrefecture} onChange={(event) => {
+                resetShopSearchResults();
                 setShopPrefecture(event.target.value);
                 setSelectedShop(null);
                 setShopSuggestionsOpen(true);
@@ -1146,7 +1282,7 @@ export default function RegisterPage() {
             submitting ||
             registrationAccess !== "ready" ||
             !selectedCard ||
-            !selectedShop
+            (!selectedShop && !canAutoSelectFirstShop)
           }
         >
           {submitting ? "登録中…" : "登録する"}
