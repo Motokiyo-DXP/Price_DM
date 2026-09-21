@@ -1257,6 +1257,7 @@ export type Database = {
         Args: {
           p_query?: string
           p_limit?: number
+          p_offset?: number
           p_sort?: string
           p_ascending?: boolean
           p_product_name?: string | null
