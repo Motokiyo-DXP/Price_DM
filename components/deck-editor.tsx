@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createDeckAction, updateDeckAction } from "@/app/decks/actions";
 import { initialDeckActionState } from "@/app/decks/action-state";
 import { CardArtwork } from "@/components/card-artwork";
 import { getCardImageUrl } from "@/lib/card-image";
 import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { invalidateDeckPreviewCache } from "@/lib/deck-preview-cache";
-import { sortDeckCards, sortSearchCards, type DeckSortKey, type SearchSortKey, type SortDirection } from "@/lib/deck-sorting";
+import { sortDeckCards, type DeckSortKey, type SortDirection } from "@/lib/deck-sorting";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { DeckAnalysis } from "@/components/deck-analysis";
@@ -16,7 +16,9 @@ type ImageOption = { printId: number; url: string };
 type SearchCard = { id: number; name: string; name_kana: string | null; print_count: number; usage_count?: number; cost?: number | null; civilizations?: string[]; cardTypes?: string[]; imageUrl: string | null; imageOptions: ImageOption[]; productNames: string[]; cardNumbers: string[]; newestPrintId: number };
 type SelectedCard = { canonicalCardId: number; cardPrintId: number | null; name: string; quantity: number; imageUrl: string | null; cost?: number | null; civilizations?: string[] };
 type DeckTab = "main" | "gr" | "special";
+type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
 export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; cards: SelectedCard[] };
+const SEARCH_PAGE_SIZE = 24;
 
 export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: DeckEditorInitialData; fallbackCosts?: Record<string, number> }) {
   const submitAction = useMemo(() => initialDeck ? updateDeckAction.bind(null, initialDeck.id) : createDeckAction, [initialDeck]);
@@ -26,6 +28,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [cards, setCards] = useState<SelectedCard[]>(initialDeck?.cards ?? []);
   const [format, setFormat] = useState<DeckEditorInitialData["format"]>(initialDeck?.format ?? "original");
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreResults, setHasMoreResults] = useState(true);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DeckTab>("main");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -52,12 +56,15 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [maximumCost, setMaximumCost] = useState("");
   const [includeNoCost, setIncludeNoCost] = useState(false);
   const [imageFilter, setImageFilter] = useState<"all" | "with" | "without">("all");
-  const [searchSort, setSearchSort] = useState<SearchSortKey>("usage");
+  const [searchSort, setSearchSort] = useState<DeckSearchSortKey>("usage");
   const [searchSortDirection, setSearchSortDirection] = useState<SortDirection>("desc");
   // A new deck has no persisted order yet, so keep the historical cost-ascending default.
   // Existing decks continue to render their saved sort_order unchanged.
   const [deckSort, setDeckSort] = useState<DeckSortKey | null>(initialDeck ? null : "cost");
   const [deckSortDirection, setDeckSortDirection] = useState<SortDirection>("asc");
+  const resultCountRef = useRef(0);
+  const searchRequestRef = useRef(0);
+  const searchInFlightRef = useRef(false);
   const total = useMemo(() => cards.reduce((sum, card) => sum + card.quantity, 0), [cards]);
   const deckLimit = format === "duel_party" ? 60 : 40;
   const orderedCards = useMemo(() => deckSort ? sortDeckCards(cards, deckSort, deckSortDirection) : cards, [cards, deckSort, deckSortDirection]);
@@ -77,7 +84,9 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     return (aPriority < 0 ? cardTypePriority.length : aPriority) - (bPriority < 0 ? cardTypePriority.length : bPriority) || a.localeCompare(b, "ja");
   });
   const costOptions = allCosts;
-  const visibleResults = useMemo(() => query.trim() ? sortSearchCards(results, searchSort, searchSortDirection) : results, [results, searchSort, searchSortDirection, query]);
+  const visibleResults = results;
+
+  useEffect(() => { resultCountRef.current = results.length; }, [results]);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,35 +112,35 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    const value = query.trim();
-    setSearching(true);
+  const loadSearchPage = useCallback(async (append: boolean, requestId: number) => {
+    if (searchInFlightRef.current) return;
+    searchInFlightRef.current = true;
+    append ? setLoadingMore(true) : setSearching(true);
     setSearchError(null);
-    const timer = window.setTimeout(async () => {
-      const supabase = createBrowserSupabaseClient();
-      if (!supabase) return setSearching(false);
-      const hasFilters = Boolean(productFilter || cardNumberFilter.trim() || civilizationFilter.length || colorFilter !== "all" || cardTypeFilter || minimumCost !== "" || maximumCost !== "" || includeNoCost);
-      const { data, error } = hasFilters
-        ? await supabase.rpc("search_deck_cards_filtered", {
-          p_query: value, p_limit: 30, p_sort: value ? searchSort : "usage",
-          p_ascending: searchSortDirection === "asc",
-          p_product_name: productFilter || null, p_card_number: cardNumberFilter.trim() || null,
-          p_civilizations: civilizationFilter, p_civilization_mode: civilizationMode,
-          p_color: colorFilter, p_card_types: cardTypeFilter ? [cardTypeFilter] : [],
-          p_min_cost: minimumCost === "" ? null : Number(minimumCost),
-          p_max_cost: maximumCost === "" ? null : Number(maximumCost),
-          p_no_cost: includeNoCost, p_image: imageFilter,
-        })
-        : !value || searchSort === "usage"
-        ? await supabase.rpc("search_deck_cards_by_usage", {
-          p_query: value, p_limit: 30, p_ascending: Boolean(value) && searchSortDirection === "asc",
-        })
-        : await supabase.rpc("search_canonical_cards", {
-          p_query: value, p_game_slug: "duel-masters", p_limit: 30, p_mode: "broad",
-        });
-      if (cancelled) return;
-      if (error) { setResults([]); setSearching(false); setSearchError("カード検索に失敗しました。もう一度お試しください。"); return; }
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) { searchInFlightRef.current = false; setSearching(false); setLoadingMore(false); return; }
+    const offset = append ? resultCountRef.current : 0;
+    const searchArgs = {
+      p_query: query.trim(), p_limit: SEARCH_PAGE_SIZE, p_offset: offset, p_sort: searchSort,
+      p_ascending: searchSortDirection === "asc",
+      p_product_name: productFilter || null, p_card_number: cardNumberFilter.trim() || null,
+      p_civilizations: civilizationFilter, p_civilization_mode: civilizationMode,
+      p_color: colorFilter, p_card_types: cardTypeFilter ? [cardTypeFilter] : [],
+      p_min_cost: minimumCost === "" ? null : Number(minimumCost),
+      p_max_cost: maximumCost === "" ? null : Number(maximumCost),
+      p_no_cost: includeNoCost, p_image: imageFilter,
+    };
+    const { data, error } = await supabase.rpc("search_deck_cards_filtered", searchArgs);
+    if (requestId !== searchRequestRef.current) { searchInFlightRef.current = false; return; }
+    if (error) {
+      if (!append) setResults([]);
+      setHasMoreResults(false);
+      setSearchError("カード検索に失敗しました。もう一度お試しください。");
+      searchInFlightRef.current = false;
+      setSearching(false);
+      setLoadingMore(false);
+      return;
+    }
       const ids = (data ?? []).map((row) => row.id);
       const [{ data: prints }, { data: metadata }] = ids.length === 0
         ? [{ data: [] }, { data: [] }]
@@ -156,18 +165,35 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           if (url && !options.some((option) => option.url === url)) imageOptions.set(print.canonical_card_id, [...options, { printId: print.id, url }]);
         }
       }
-      if (!cancelled) {
-        setResults((data ?? []).filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string").map((row) => {
+      const page = (data ?? []).filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string").map((row) => {
           const options = imageOptions.get(row.id) ?? [];
           return { id: row.id, name: row.name, name_kana: row.name_kana || null, print_count: row.print_count, usage_count: "usage_count" in row ? row.usage_count : 0, cost: costs.get(row.id) ?? fallbackCosts[row.name], civilizations: civilizations.get(row.id), cardTypes: cardTypes.get(row.id),
             imageUrl: options[0]?.url ?? null, imageOptions: options,
             productNames: Array.from(products.get(row.id) ?? []), cardNumbers: Array.from(cardNumbers.get(row.id) ?? []), newestPrintId: newestPrintIds.get(row.id) ?? 0 };
-        }));
-        setSearching(false);
-      }
-    }, CARD_SEARCH_DEBOUNCE_MS);
-    return () => { cancelled = true; window.clearTimeout(timer); };
+        });
+      setResults((current) => append ? [...current, ...page.filter((card) => !current.some((existing) => existing.id === card.id))] : page);
+      setHasMoreResults(page.length === SEARCH_PAGE_SIZE);
+      searchInFlightRef.current = false;
+      setSearching(false);
+      setLoadingMore(false);
   }, [query, fallbackCosts, searchSort, searchSortDirection, productFilter, cardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
+
+  useEffect(() => {
+    const requestId = ++searchRequestRef.current;
+    searchInFlightRef.current = false;
+    setResults([]);
+    setHasMoreResults(true);
+    setSearching(true);
+    const timer = window.setTimeout(() => { void loadSearchPage(false, requestId); }, CARD_SEARCH_DEBOUNCE_MS);
+    return () => { window.clearTimeout(timer); };
+  }, [loadSearchPage]);
+
+  function handleResultScroll(event: React.UIEvent<HTMLDivElement>) {
+    const target = event.currentTarget;
+    if (hasMoreResults && !searchInFlightRef.current && target.scrollWidth - target.scrollLeft - target.clientWidth < 240) {
+      void loadSearchPage(true, searchRequestRef.current);
+    }
+  }
 
   function addCard(card: SearchCard, imageUrl = card.imageUrl) {
     const cardPrintId = card.imageOptions.find((option) => option.url === imageUrl)?.printId ?? null;
@@ -234,12 +260,12 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   return (
     <form action={formAction} className="deck-maker-form" onSubmit={() => { if (initialDeck) invalidateDeckPreviewCache(initialDeck.id); }}>
       <header className="deck-maker-toolbar">
-        <label className="deck-maker-name">デッキ名<input defaultValue={initialDeck?.name} maxLength={60} name="name" placeholder="デッキ名を入力" required /></label>
+        <label className="deck-maker-name"><span className="deck-maker-name-label">デッキ名</span><span className="deck-maker-name-input"><input defaultValue={initialDeck?.name} maxLength={60} name="name" placeholder="デッキ名を入力" required /><span aria-hidden="true" className="deck-maker-name-edit-icon">✎</span></span></label>
         <div className="deck-maker-actions">
           <button onClick={() => setSettingsOpen((open) => !open)} type="button"><span aria-hidden="true" className="deck-action-icon">⚙</span><span className="deck-action-label">設定</span></button>
           <button onClick={clearDeck} type="button"><span aria-hidden="true" className="deck-action-icon"><span className="ui-icon ui-icon-trash" /></span><span className="deck-action-label">全解除</span></button>
-          <button className="deck-save-button" disabled={pending} type="submit"><span aria-hidden="true" className="deck-action-icon">▣</span><span className="deck-action-label">{pending ? "保存中" : "保存"}</span></button>
           <button aria-haspopup="dialog" className="deck-analysis-button" onClick={() => setAnalysisOpen(true)} type="button"><img alt="" className="deck-action-icon" src="/icons/analysis_icon.svg" /><span className="deck-action-label">分析</span></button>
+          <button className="deck-save-button" disabled={pending} type="submit"><span aria-hidden="true" className="deck-action-icon">▣</span><span className="deck-action-label">{pending ? "保存中" : "保存"}</span></button>
         </div>
       </header>
       {analysisOpen ? <DeckAnalysis cards={cards} onClose={() => setAnalysisOpen(false)} /> : null}
@@ -250,15 +276,17 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         <label className="deck-description-field">説明<textarea defaultValue={initialDeck?.description} maxLength={1000} name="description" placeholder="デッキのメモ（任意）" rows={2} /></label>
       </section>
 
-      <nav aria-label="デッキのカード種別" className="deck-maker-tabs">
-        <button aria-selected={activeTab === "main"} onClick={() => setActiveTab("main")} role="tab" type="button">メイン <strong>{total}</strong></button>
-        <button aria-selected={activeTab === "gr"} onClick={() => setActiveTab("gr")} role="tab" type="button">GR / 超次元 <strong>0</strong></button>
-        <button aria-selected={activeTab === "special"} onClick={() => setActiveTab("special")} role="tab" type="button">特殊</button>
-      </nav>
+      <div className="deck-maker-layout">
+        <section className="deck-maker-deck-panel">
+          <nav aria-label="デッキのカード種別" className="deck-maker-tabs">
+            <button aria-selected={activeTab === "main"} onClick={() => setActiveTab("main")} role="tab" type="button">メイン <strong>{total}</strong></button>
+            <button aria-selected={activeTab === "gr"} onClick={() => setActiveTab("gr")} role="tab" type="button">GR / 超次元 <strong>0</strong></button>
+            <button aria-selected={activeTab === "special"} onClick={() => setActiveTab("special")} role="tab" type="button">特殊</button>
+            <div className="deck-maker-count"><strong className={total === deckLimit ? "complete" : total > deckLimit ? "over" : ""}>{total}<small>/{deckLimit}</small></strong></div>
+          </nav>
 
-      <section className="deck-maker-canvas">
+          <section className="deck-maker-canvas">
         {activeTab === "main" ? <>
-          <div className="deck-maker-count"><strong className={total === deckLimit ? "complete" : total > deckLimit ? "over" : ""}>{total}<small>/{deckLimit}</small></strong></div>
           {expandedCards.length === 0 ? <div className="deck-maker-empty"><strong>カードがまだありません</strong><span>下の検索欄からカードを追加してください</span></div> :
             <div className="deck-maker-grid">{expandedCards.map((card) => (
               <button aria-label={`${card.name}の詳細を開く`} className="deck-maker-card" key={`${card.canonicalCardId}-${card.copyIndex}`} onClick={() => openDeckCard(card)} title={`${card.name}の詳細を開く`} type="button">
@@ -266,22 +294,37 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
               </button>
             ))}</div>}
         </> : <div className="deck-maker-empty"><strong>{activeTab === "gr" ? "GR / 超次元ゾーン" : "特殊ゾーン"}</strong><span>このゾーンのカード登録は次の実装で対応します</span></div>}
-      </section>
+          </section>
+        </section>
 
-      <section className="deck-search-shelf">
-        <div className="deck-result-strip" aria-live="polite">
+        <aside className="deck-maker-desktop-side">
+          <DeckAnalysis cards={cards} inline />
+          <section className="deck-search-shelf">
+        <div className="deck-result-strip" aria-live="polite" onScroll={handleResultScroll}>
           {searching ? <p>検索中…</p> : searchError ? <p role="alert">{searchError}</p> : visibleResults.length === 0 ? <p>条件に一致するカードがありません</p> : visibleResults.map((card) => {
             const quantity = cards.find((item) => item.canonicalCardId === card.id)?.quantity ?? 0;
-            return <button key={card.id} onClick={() => openCard(card)} title={`${card.name}の詳細を開く`} type="button">
-              <CardArtwork eager imageUrl={card.imageUrl} name={card.name} sizes="110px" />
-              {quantity > 0 ? <strong>{quantity}</strong> : null}<span>{card.name}</span>
-            </button>;
+            const cannotAdd = total >= deckLimit || quantity >= 4;
+            return <article className="deck-result-card" key={card.id}>
+              <button aria-label={`${card.name}の詳細を開く`} className="deck-result-card-art" onClick={() => openCard(card)} title={`${card.name}の詳細を開く`} type="button">
+                <CardArtwork eager imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 760px) 84px, 180px" />
+                {quantity > 0 ? <strong>{quantity}</strong> : null}
+              </button>
+              <span className="deck-result-card-name">{card.name}</span>
+              <div className="deck-result-card-actions" aria-label={`${card.name}をデッキで増減`}>
+                <button aria-label={`${card.name}を1枚減らす`} disabled={quantity === 0} onClick={() => removeCard(card.id)} type="button">−</button>
+                <button aria-label={`${card.name}を1枚増やす`} disabled={cannotAdd} onClick={() => addCard(card)} type="button">＋</button>
+              </div>
+            </article>;
           })}
         </div>
-        <div className="deck-search-bar"><span aria-hidden="true">⌕</span>
+        <div className="deck-search-bar"><div className="deck-search-input-row"><span aria-hidden="true">⌕</span>
           <input aria-label="カード名" placeholder="カード名で検索" value={query} onChange={(event) => setQuery(event.target.value)} />
+        </div><div className="deck-search-controls-row">
+          <div aria-label="文明で絞り込む" className="deck-search-civilizations">{[["", "すべて"], ["light", "光"], ["water", "水"], ["darkness", "闇"], ["fire", "火"], ["nature", "自然"], ["zero", "ゼロ"]].map(([value, label]) => <button aria-pressed={value ? civilizationFilter.includes(value) : civilizationFilter.length === 0} key={value || "all"} onClick={() => setCivilizationFilter((current) => value ? current.includes(value) ? current.filter((item) => item !== value) : [...current, value] : [])} type="button">{label}</button>)}</div>
+          <div className="deck-search-actions"><select aria-label="検索結果の並び順" className="deck-search-sort-select" onChange={(event) => { const [sort, direction] = event.target.value.split(":") as [DeckSearchSortKey, SortDirection]; setSearchSort(sort); setSearchSortDirection(direction); }} value={`${searchSort}:${searchSortDirection}`}><option value="usage:desc">使用数順</option><option value="usage:asc">使用数順（昇順）</option><option value="relevance:asc">検索順</option><option value="name:asc">カード名順</option><option value="name:desc">カード名順（降順）</option><option value="release_date:desc">発売日順</option><option value="release_date:asc">発売日順（昇順）</option></select>
           <button aria-expanded={filterOpen} onClick={() => { setFilterOpen((open) => !open); setSortOpen(false); }} type="button"><span aria-hidden="true">☷</span> 絞り込み</button>
-          <button aria-expanded={sortOpen} onClick={() => { setSortOpen((open) => !open); setFilterOpen(false); }} type="button"><span aria-hidden="true">↕</span> 並べ替え</button>
+          <button className="deck-mobile-sort-button" aria-expanded={sortOpen} onClick={() => { setSortOpen((open) => !open); setFilterOpen(false); }} type="button"><span aria-hidden="true">↕</span> 並べ替え</button></div>
+        </div>
         </div>
         {filterOpen ? <section className="deck-filter-popover" aria-label="カードの絞り込み">
           <div className="deck-popover-heading"><strong>絞り込み</strong><button aria-label="絞り込みを閉じる" onClick={() => setFilterOpen(false)} type="button">×</button></div>
@@ -299,9 +342,12 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         {sortOpen ? <section className="deck-sort-modal-backdrop" onClick={() => setSortOpen(false)} role="presentation"><div aria-label="並べ替え方法選択" aria-modal="true" className="deck-sort-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-popover-heading"><strong>並べ替え方法選択</strong><button aria-label="並べ替えを閉じる" onClick={() => setSortOpen(false)} type="button">×</button></div>
           <div className="deck-sort-section-heading"><h3>デッキ並べ替え</h3><button aria-label="デッキの昇順と降順を切り替える" className="deck-sort-direction" onClick={() => { setDeckSort((current) => current ?? "cost"); setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc"); }} type="button">{deckSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options"><button className={deckSort === "cost" ? "active" : ""} onClick={() => setDeckSort("cost")} type="button">コスト順</button><button className={deckSort === "added" ? "active" : ""} onClick={() => setDeckSort("added")} type="button">追加順</button><button className={deckSort === "name" ? "active" : ""} onClick={() => setDeckSort("name")} type="button">カード名順</button><button className={deckSort === "quantity" ? "active" : ""} onClick={() => setDeckSort("quantity")} type="button">枚数順</button></div>
-          <div className="deck-sort-section-heading"><h3>検索結果並べ替え</h3><button aria-label="検索結果の昇順と降順を切り替える" className="deck-sort-direction" onClick={() => setSearchSortDirection((direction) => direction === "asc" ? "desc" : "asc")} type="button">{searchSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options search"><button className={searchSort === "relevance" ? "active" : ""} onClick={() => setSearchSort("relevance")} type="button">検索順</button><button className={searchSort === "name" ? "active" : ""} onClick={() => setSearchSort("name")} type="button">カード名順</button><button className={searchSort === "prints" ? "active" : ""} onClick={() => setSearchSort("prints")} type="button">収録数順</button><button className={searchSort === "usage" ? "active" : ""} onClick={() => { setSearchSort("usage"); setSearchSortDirection("desc"); }} type="button">使用数順</button></div>
+          <div className="deck-sort-section-heading"><h3>検索結果並べ替え</h3><button aria-label="検索結果の昇順と降順を切り替える" className="deck-sort-direction" onClick={() => setSearchSortDirection((direction) => direction === "asc" ? "desc" : "asc")} type="button">{searchSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options search"><button className={searchSort === "relevance" ? "active" : ""} onClick={() => { setSearchSort("relevance"); setSearchSortDirection("asc"); }} type="button">検索順</button><button className={searchSort === "name" ? "active" : ""} onClick={() => setSearchSort("name")} type="button">カード名順</button><button className={searchSort === "release_date" ? "active" : ""} onClick={() => { setSearchSort("release_date"); setSearchSortDirection("desc"); }} type="button">発売日順</button><button className={searchSort === "usage" ? "active" : ""} onClick={() => { setSearchSort("usage"); setSearchSortDirection("desc"); }} type="button">使用数順</button></div>
         </div></section> : null}
-      </section>
+          {loadingMore ? <p className="deck-results-loading" aria-live="polite">さらに読み込み中…</p> : null}
+          </section>
+        </aside>
+      </div>
 
       {selectedCard ? <div className="deck-card-modal-backdrop" onClick={() => setSelectedCard(null)} role="presentation">
         <section aria-label={`${selectedCard.name}のカード詳細`} aria-modal="true" className="deck-card-modal" onClick={(event) => event.stopPropagation()} role="dialog">
