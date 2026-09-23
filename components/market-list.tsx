@@ -23,6 +23,8 @@ type MarketListProps = {
   loadError: string | null;
 };
 
+type MarketSort = "all-updated" | "own-updated" | "release-date";
+
 const yen = (value: number | null) =>
   value === null ? "—" : `${value.toLocaleString("ja-JP")}円`;
 
@@ -45,6 +47,36 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoriteUserId, setFavoriteUserId] = useState<string | null | undefined>(undefined);
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<MarketSort>("all-updated");
+  const [sortMetadata, setSortMetadata] = useState<Record<string, {
+    allAccountsUpdatedAt: string | null;
+    ownAccountUpdatedAt: string | null;
+    latestReleaseDate: string | null;
+  }>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = [...new Set([
+      ...initialCards.map((card) => card.id),
+      ...(remoteSearch?.cards ?? []).map((card) => card.id),
+    ])].map(Number).filter(Number.isSafeInteger);
+    if (!ids.length) return;
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) return;
+    void supabase.rpc("load_market_card_sort_metadata", { p_card_ids: ids }).then(({ data }) => {
+      if (cancelled || !data) return;
+      setSortMetadata((current) => {
+        const next = { ...current };
+        for (const row of data) next[String(row.canonical_card_id)] = {
+          allAccountsUpdatedAt: row.all_accounts_updated_at,
+          ownAccountUpdatedAt: row.own_account_updated_at,
+          latestReleaseDate: row.latest_release_date,
+        };
+        return next;
+      });
+    });
+    return () => { cancelled = true; };
+  }, [initialCards, remoteSearch]);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,11 +207,9 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   const cards = useMemo(() => {
     const trimmedQuery = query.trim();
     const searchKey = `${searchMode}:${trimmedQuery}`;
-    if (trimmedQuery && remoteSearch?.key === searchKey) {
-      return remoteSearch.cards;
-    }
-
-    return initialCards.filter((card) => {
+    const matchingCards = trimmedQuery && remoteSearch?.key === searchKey
+      ? remoteSearch.cards
+      : initialCards.filter((card) => {
       return (
         searchTextMatches(
           query,
@@ -192,7 +222,28 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         )
       );
     });
-  }, [initialCards, query, remoteSearch, searchMode]);
+    const sortedCards = [...matchingCards].sort((a, b) => {
+      const favoriteOrder = Number(favorites.includes(b.id)) - Number(favorites.includes(a.id));
+      if (favoriteOrder) return favoriteOrder;
+      const aMeta = sortMetadata[a.id];
+      const bMeta = sortMetadata[b.id];
+      const aReleaseDate = aMeta?.latestReleaseDate ?? a.latestReleaseDate;
+      const bReleaseDate = bMeta?.latestReleaseDate ?? b.latestReleaseDate;
+      const dateCompare = (left: string | null | undefined, right: string | null | undefined) =>
+        (right ? Date.parse(right) : 0) - (left ? Date.parse(left) : 0);
+      if (sortMode === "release-date") {
+        return dateCompare(aReleaseDate, bReleaseDate) || Number(a.id) - Number(b.id);
+      }
+      const updateField = sortMode === "own-updated" ? "ownAccountUpdatedAt" : "allAccountsUpdatedAt";
+      const aUpdated = aMeta?.[updateField] ?? (sortMode === "all-updated" ? a.allAccountsUpdatedAt : null);
+      const bUpdated = bMeta?.[updateField] ?? (sortMode === "all-updated" ? b.allAccountsUpdatedAt : null);
+      if (aUpdated && bUpdated) return dateCompare(aUpdated, bUpdated) || dateCompare(aReleaseDate, bReleaseDate) || Number(a.id) - Number(b.id);
+      if (aUpdated) return -1;
+      if (bUpdated) return 1;
+      return dateCompare(aReleaseDate, bReleaseDate) || Number(a.id) - Number(b.id);
+    });
+    return sortedCards;
+  }, [favorites, initialCards, query, remoteSearch, searchMode, sortMetadata, sortMode]);
 
   return (
     <div className="market-shell">
@@ -247,6 +298,15 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
           パーペキ検索
         </button>
       </div>
+
+      <label className="market-sort-control">
+        並び替え
+        <select aria-label="カードの並び替え" value={sortMode} onChange={(event) => setSortMode(event.target.value as MarketSort)}>
+          <option value="all-updated">更新順・全アカウント</option>
+          <option value="own-updated">更新順・自アカウント</option>
+          <option value="release-date">収録日順</option>
+        </select>
+      </label>
 
       {favoriteError && <p className="notice error" role="alert">{favoriteError}</p>}
 
