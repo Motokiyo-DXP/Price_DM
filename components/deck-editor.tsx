@@ -14,7 +14,7 @@ import { DeckAnalysis } from "@/components/deck-analysis";
 import { MAX_MAIN_DECK_CARDS } from "@/lib/deck-validation";
 
 type ImageOption = { printId: number; url: string };
-type SearchCard = { id: number; name: string; name_kana: string | null; print_count: number; usage_count?: number; cost?: number | null; civilizations?: string[]; cardTypes?: string[]; imageUrl: string | null; imageOptions: ImageOption[]; productNames: string[]; cardNumbers: string[]; newestPrintId: number };
+type SearchCard = { id: number; name: string; name_kana: string | null; print_count: number; usage_count?: number; cost?: number | null; civilizations?: string[]; cardTypes?: string[]; imageUrl: string | null; imageOptions: ImageOption[]; productNames: string[]; cardNumbers: string[]; newestPrintId: number; hydrated?: boolean };
 type SelectedCard = { canonicalCardId: number; cardPrintId: number | null; name: string; quantity: number; imageUrl: string | null; cost?: number | null; civilizations?: string[] };
 type DeckTab = "main" | "gr" | "special";
 type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
@@ -25,6 +25,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const submitAction = useMemo(() => initialDeck ? updateDeckAction.bind(null, initialDeck.id) : createDeckAction, [initialDeck]);
   const [state, formAction, pending] = useActionState(submitAction, initialDeckActionState);
   const [query, setQuery] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
   const [results, setResults] = useState<SearchCard[]>([]);
   const [cards, setCards] = useState<SelectedCard[]>(initialDeck?.cards ?? []);
   const [format, setFormat] = useState<DeckEditorInitialData["format"]>(initialDeck?.format ?? "original");
@@ -64,6 +65,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [deckSortDirection, setDeckSortDirection] = useState<SortDirection>("asc");
   const resultCountRef = useRef(0);
   const searchRequestRef = useRef(0);
+  const searchControllerRef = useRef<AbortController | null>(null);
   const searchInFlightRef = useRef(false);
   const total = useMemo(() => cards.reduce((sum, card) => sum + card.quantity, 0), [cards]);
   const deckLimit = MAX_MAIN_DECK_CARDS;
@@ -112,7 +114,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     return () => { cancelled = true; };
   }, []);
 
-  const loadSearchPage = useCallback(async (append: boolean, requestId: number) => {
+  const loadSearchPage = useCallback(async (append: boolean, requestId: number, signal: AbortSignal) => {
     if (searchInFlightRef.current) return;
     searchInFlightRef.current = true;
     if (!append) setSearching(true);
@@ -130,8 +132,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       p_max_cost: maximumCost === "" ? null : Number(maximumCost),
       p_no_cost: includeNoCost, p_image: imageFilter,
     };
-    const { data, error } = await supabase.rpc("search_deck_cards_filtered", searchArgs);
-    if (requestId !== searchRequestRef.current) { searchInFlightRef.current = false; return; }
+    const { data, error } = await supabase.rpc("search_deck_cards_filtered", searchArgs).abortSignal(signal);
+    if (requestId !== searchRequestRef.current || signal.aborted) return;
     if (error) {
       if (!append) setResults([]);
       setHasMoreResults(false);
@@ -140,13 +142,23 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       setSearching(false);
       return;
     }
-      const ids = (data ?? []).map((row) => row.id);
+      const pageRows = (data ?? []).filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string");
+      const basePage: SearchCard[] = pageRows.map((row) => ({
+        id: row.id, name: row.name, name_kana: row.name_kana || null, print_count: row.print_count,
+        usage_count: "usage_count" in row ? row.usage_count : 0, cost: fallbackCosts[row.name],
+        imageUrl: null, imageOptions: [], productNames: [], cardNumbers: [], newestPrintId: 0, hydrated: false,
+      }));
+      setResults((current) => append ? [...current, ...basePage.filter((card) => !current.some((existing) => existing.id === card.id))] : basePage);
+      setHasMoreResults(basePage.length === SEARCH_PAGE_SIZE);
+      setSearching(false);
+      const ids = basePage.map((row) => row.id);
       const [{ data: prints }, { data: metadata }] = ids.length === 0
         ? [{ data: [] }, { data: [] }]
         : await Promise.all([
-          supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", ids).order("id"),
-          supabase.from("canonical_cards").select("id, cost, civilizations, card_types").in("id", ids),
+          supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", ids).order("id").abortSignal(signal),
+          supabase.from("canonical_cards").select("id, cost, civilizations, card_types").in("id", ids).abortSignal(signal),
         ]);
+      if (requestId !== searchRequestRef.current || signal.aborted) return;
       const imageOptions = new Map<number, ImageOption[]>();
       const products = new Map<number, Set<string>>();
       const cardNumbers = new Map<number, Set<string>>();
@@ -164,32 +176,39 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           if (url && !options.some((option) => option.url === url)) imageOptions.set(print.canonical_card_id, [...options, { printId: print.id, url }]);
         }
       }
-      const page = (data ?? []).filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string").map((row) => {
+      if (requestId !== searchRequestRef.current || signal.aborted) return;
+      const page = pageRows.map((row) => {
           const options = imageOptions.get(row.id) ?? [];
           return { id: row.id, name: row.name, name_kana: row.name_kana || null, print_count: row.print_count, usage_count: "usage_count" in row ? row.usage_count : 0, cost: costs.get(row.id) ?? fallbackCosts[row.name], civilizations: civilizations.get(row.id), cardTypes: cardTypes.get(row.id),
             imageUrl: options[0]?.url ?? null, imageOptions: options,
-            productNames: Array.from(products.get(row.id) ?? []), cardNumbers: Array.from(cardNumbers.get(row.id) ?? []), newestPrintId: newestPrintIds.get(row.id) ?? 0 };
+            productNames: Array.from(products.get(row.id) ?? []), cardNumbers: Array.from(cardNumbers.get(row.id) ?? []), newestPrintId: newestPrintIds.get(row.id) ?? 0, hydrated: true };
         });
-      setResults((current) => append ? [...current, ...page.filter((card) => !current.some((existing) => existing.id === card.id))] : page);
-      setHasMoreResults(page.length === SEARCH_PAGE_SIZE);
+      setResults((current) => append
+        ? current.map((card) => page.find((item) => item.id === card.id) ?? card)
+        : page);
       searchInFlightRef.current = false;
       setSearching(false);
   }, [query, fallbackCosts, searchSort, searchSortDirection, productFilter, cardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
 
   useEffect(() => {
     const requestId = ++searchRequestRef.current;
+    searchControllerRef.current?.abort();
+    if (isComposing) return;
+    const controller = new AbortController();
+    searchControllerRef.current = controller;
     searchInFlightRef.current = false;
     setResults([]);
     setHasMoreResults(true);
     setSearching(true);
-    const timer = window.setTimeout(() => { void loadSearchPage(false, requestId); }, CARD_SEARCH_DEBOUNCE_MS);
-    return () => { window.clearTimeout(timer); };
-  }, [loadSearchPage]);
+    const timer = window.setTimeout(() => { void loadSearchPage(false, requestId, controller.signal); }, CARD_SEARCH_DEBOUNCE_MS);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [isComposing, loadSearchPage]);
 
   function handleResultScroll(event: React.UIEvent<HTMLDivElement>) {
     const target = event.currentTarget;
     if (hasMoreResults && !searchInFlightRef.current && target.scrollWidth - target.scrollLeft - target.clientWidth < 240) {
-      void loadSearchPage(true, searchRequestRef.current);
+      const controller = searchControllerRef.current;
+      if (controller) void loadSearchPage(true, searchRequestRef.current, controller.signal);
     }
   }
 
@@ -299,24 +318,24 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           <DeckAnalysis cards={cards} inline />
           <section className="deck-search-shelf">
         <div className="deck-result-strip" aria-live="polite" onScroll={handleResultScroll}>
-          {searching ? <p>検索中…</p> : searchError ? <p role="alert">{searchError}</p> : visibleResults.length === 0 ? <p>条件に一致するカードがありません</p> : visibleResults.map((card) => {
+          {searchError ? <p role="alert">{searchError}</p> : visibleResults.length === 0 ? searching ? <p>検索中…</p> : <p>条件に一致するカードがありません</p> : visibleResults.map((card, index) => {
             const quantity = cards.find((item) => item.canonicalCardId === card.id)?.quantity ?? 0;
             const cannotAdd = total >= deckLimit || quantity >= 4;
             return <article className="deck-result-card" key={card.id}>
-              <button aria-label={`${card.name}の詳細を開く`} className="deck-result-card-art" onClick={() => openCard(card)} title={`${card.name}の詳細を開く`} type="button">
-                <CardArtwork eager imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 760px) 84px, 180px" />
+              <button aria-label={`${card.name}の詳細を開く`} className="deck-result-card-art" disabled={!card.hydrated} onClick={() => openCard(card)} title={`${card.name}の詳細を開く`} type="button">
+                <CardArtwork eager={index === 0} imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 760px) 84px, 180px" />
                 {quantity > 0 ? <strong>{quantity}</strong> : null}
               </button>
               <span className="deck-result-card-name">{card.name}</span>
               <div className="deck-result-card-actions" aria-label={`${card.name}をデッキで増減`}>
                 <button aria-label={`${card.name}を1枚減らす`} disabled={quantity === 0} onClick={() => removeCard(card.id)} type="button">−</button>
-                <button aria-label={`${card.name}を1枚増やす`} disabled={cannotAdd} onClick={() => addCard(card)} type="button">＋</button>
+                <button aria-label={`${card.name}を1枚増やす`} disabled={cannotAdd || !card.hydrated} onClick={() => addCard(card)} type="button">＋</button>
               </div>
             </article>;
           })}
         </div>
         <div className="deck-search-bar"><div className="deck-search-input-row"><span aria-hidden="true">⌕</span>
-          <input aria-label="カード名" placeholder="カード名で検索" value={query} onChange={(event) => setQuery(event.target.value)} />
+          <input aria-label="カード名" placeholder="カード名で検索" value={query} onChange={(event) => setQuery(event.target.value)} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={(event) => { setQuery(event.currentTarget.value); setIsComposing(false); }} />
         </div><div className="deck-search-controls-row">
           <div aria-label="文明で絞り込む" className="deck-search-civilizations">{[["", "すべて"], ["light", "光"], ["water", "水"], ["darkness", "闇"], ["fire", "火"], ["nature", "自然"], ["zero", "ゼロ"]].map(([value, label]) => <button aria-pressed={value ? civilizationFilter.includes(value) : civilizationFilter.length === 0} key={value || "all"} onClick={() => setCivilizationFilter((current) => value ? current.includes(value) ? current.filter((item) => item !== value) : [...current, value] : [])} type="button">{label}</button>)}</div>
           <div className="deck-search-actions"><select aria-label="検索結果の並び順" className="deck-search-sort-select" onChange={(event) => { const [sort, direction] = event.target.value.split(":") as [DeckSearchSortKey, SortDirection]; setSearchSort(sort); setSearchSortDirection(direction); }} value={`${searchSort}:${searchSortDirection}`}><option value="usage:desc">使用数順</option><option value="usage:asc">使用数順（昇順）</option><option value="relevance:asc">検索順</option><option value="name:asc">カード名順</option><option value="name:desc">カード名順（降順）</option><option value="release_date:desc">発売日順</option><option value="release_date:asc">発売日順（昇順）</option></select>
