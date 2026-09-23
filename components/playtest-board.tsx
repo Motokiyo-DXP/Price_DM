@@ -17,6 +17,7 @@ import {
   isWithinHorizontalScrollAngle,
   resolveCenteredHandCardId,
   resolveDeckDropArea,
+  resolveDeckDropTargetActive,
   resolveDeckDragRelease,
   resolveDropTarget,
   resolvePointerReleaseGesture,
@@ -463,6 +464,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     : isCardFaceVisible({ face: card.face, inspected, inspectionViewer, owner, revealHiddenCards, deckDrawer: revealDeckToOwner, view, zone });
   const [specialPreview, setSpecialPreview] = useState<{ centerX: number; centerY: number; kind: "deck" | "stack"; targetCardId?: string; targetZone: PlayZone; deckPlacement?: DeckPlacementPreviewState } | null>(null);
   const specialPreviewRef = useRef<typeof specialPreview>(null);
+  const deckTargetActive = useRef(false);
   const [stackHoldProgress, setStackHoldProgress] = useState<{ x: number; y: number } | null>(null);
   const [holdActive, setHoldActive] = useState(false);
   const [holdPoint, setHoldPoint] = useState({ x: 0, y: 0 });
@@ -540,6 +542,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     zoneScrollStartLeft.current = zoneScrollContainer.current?.scrollLeft ?? 0;
     zoneScrollLastPoint.current = { at: performance.now(), x: event.clientX, y: event.clientY };
     zoneScrollVelocity.current = 0;
+    deckTargetActive.current = false;
     setHoldActive(true);
     setHoldPoint({ x: event.clientX, y: event.clientY });
     setDragPreview(null);
@@ -642,17 +645,27 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       const movingCardId = interactionCardId.current;
       const { targetCard, targetZone } = readDropHit(elements, owner, zone, movingCardId, individualFromStack);
       const deckElement = document.querySelector<HTMLElement>(`[data-drop-owner="${owner}"][data-drop-zone="deck"]`);
+      const deckButton = deckElement?.querySelector<HTMLButtonElement>("button") ?? null;
       const deckPlacement = deckElement && zone !== "deck"
         ? toDeckPlacementPreviewState(deckElement.getBoundingClientRect())
         : null;
       const deckArea = deckPlacement
         ? resolveDeckDropArea({ ...deckPlacement, pointX: event.clientX, pointY: event.clientY })
         : null;
+      const deckTargetIsActive = Boolean(deckPlacement && deckButton && resolveDeckDropTargetActive({
+        wasActive: deckTargetActive.current,
+        buttonRect: deckButton.getBoundingClientRect(),
+        deckArea,
+        pointX: event.clientX,
+        pointY: event.clientY,
+        exitDistancePx: deckPlacement.horizontalPadding,
+      }));
+      deckTargetActive.current = deckTargetIsActive;
       // The selection targets may visually occupy the battle or mana
       // background.  While dragging, top/bottom therefore deliberately win
       // there; graveyard keeps its own drop priority so its adjacent pile is
       // never captured by the wider mobile target.
-      const deckTarget = deckPlacement && deckArea && targetZone !== "graveyard" ? deckPlacement : null;
+      const deckTarget = deckPlacement && deckTargetIsActive && targetZone !== "graveyard" ? deckPlacement : null;
       if (deckTarget) showDeckPlacementGuide(owner, deckArea);
       else showDropGuide(owner, targetZone, elements);
       const targetBounds = targetCard?.dataset.cardId ? targetCard.getBoundingClientRect() : null;
@@ -706,6 +719,8 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
   }
 
   function pointerUp(event: PointerEvent) {
+    const deckTargetWasActive = deckTargetActive.current;
+    deckTargetActive.current = false;
     const target = pointerTarget.current;
     detachPointerListeners();
     if (target?.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
@@ -772,35 +787,41 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
           return;
         }
       }
+      if (deckTargetWasActive) {
+        const elements = document.elementsFromPoint(event.clientX, event.clientY);
+        const { targetZone } = readDropHit(elements, owner, zone, movingCardId, individualFromStack);
+        const deckElement = document.querySelector<HTMLElement>(`[data-drop-owner="${owner}"][data-drop-zone="deck"]`);
+        const deckButton = deckElement?.querySelector<HTMLButtonElement>("button") ?? null;
+        const deckPlacement = deckElement && zone !== "deck"
+          ? toDeckPlacementPreviewState(deckElement.getBoundingClientRect())
+          : null;
+        const deckArea = deckPlacement
+          ? resolveDeckDropArea({ ...deckPlacement, pointX: event.clientX, pointY: event.clientY })
+          : null;
+        const deckTargetIsActive = Boolean(deckPlacement && deckButton && resolveDeckDropTargetActive({
+          wasActive: true,
+          buttonRect: deckButton.getBoundingClientRect(),
+          deckArea,
+          pointX: event.clientX,
+          pointY: event.clientY,
+          exitDistancePx: deckPlacement.horizontalPadding,
+        }));
+
+        if (targetZone === "graveyard") {
+          onMove(owner, zone, movingCardId, targetZone);
+        } else if (!deckTargetIsActive) {
+          const release = resolveDeckDragRelease(null, targetZone ?? null);
+          if (release?.kind === "zone") onMove(owner, zone, movingCardId, release.zone);
+        } else if (deckArea === "top" || deckArea === "bottom") {
+          const release = resolveDeckDragRelease(deckArea === "top" ? "deck_top" : "deck_bottom", targetZone ?? null);
+          if (release?.kind === "deck") onMove(owner, zone, movingCardId, "deck", undefined, release.choice);
+        }
+        updateSpecialPreview(null);
+        return;
+      }
+
       const activeSpecialPreview = specialPreviewRef.current;
       if (activeSpecialPreview) {
-        if (activeSpecialPreview.kind === "deck") {
-          const elements = document.elementsFromPoint(event.clientX, event.clientY);
-          const { targetZone } = readDropHit(elements, owner, zone, movingCardId, individualFromStack);
-          const deckArea = activeSpecialPreview.deckPlacement
-            ? resolveDeckDropArea({ ...activeSpecialPreview.deckPlacement, pointX: event.clientX, pointY: event.clientY })
-            : null;
-          if (targetZone === "graveyard") {
-            onMove(owner, zone, movingCardId, targetZone);
-            updateSpecialPreview(null);
-            return;
-          }
-          if (deckArea === "deck") {
-            updateSpecialPreview(null);
-            return;
-          }
-          if (!deckArea && targetZone && targetZone !== "deck") {
-            onMove(owner, zone, movingCardId, targetZone);
-            updateSpecialPreview(null);
-            return;
-          }
-          const placement = deckArea === "top" ? "deck_top" : deckArea === "bottom" ? "deck_bottom" : null;
-          const release = resolveDeckDragRelease(placement, targetZone ?? null);
-          if (release?.kind === "deck") onMove(owner, zone, movingCardId, "deck", undefined, release.choice);
-          else if (release?.kind === "zone") onMove(owner, zone, movingCardId, release.zone);
-          updateSpecialPreview(null);
-          return;
-        }
         const dx = event.clientX - activeSpecialPreview.centerX;
         const dy = event.clientY - activeSpecialPreview.centerY;
         const optionDistance = Math.hypot(dx, dy);
@@ -853,6 +874,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     collapsedHandGesture.current = false;
     collapsedHandHoldReady.current = false;
     dragActivated.current = false;
+    deckTargetActive.current = false;
     updateSpecialPreview(null);
     clearDropGuide();
     setHoldActive(false);

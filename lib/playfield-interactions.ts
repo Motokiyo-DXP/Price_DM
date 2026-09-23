@@ -204,6 +204,33 @@ export function resolveDeckDropArea(input: {
   return null;
 }
 
+/**
+ * A deck's broad top/bottom hit area is only an extension after the pointer
+ * has crossed the deck button. Once active, keep it latched across that broad
+ * area and a small button-relative exit margin.
+ */
+export function resolveDeckDropTargetActive(input: {
+  wasActive: boolean;
+  buttonRect: DeckDropRect;
+  deckArea: DeckDropArea;
+  pointX: number;
+  pointY: number;
+  exitDistancePx: number;
+}): boolean {
+  const { wasActive, buttonRect, deckArea, pointX, pointY, exitDistancePx } = input;
+  if (![buttonRect.left, buttonRect.right, buttonRect.top, buttonRect.bottom, pointX, pointY, exitDistancePx].every(Number.isFinite)) return false;
+  if (buttonRect.right <= buttonRect.left || buttonRect.bottom <= buttonRect.top || exitDistancePx < 0) return false;
+
+  const withinButton = pointX >= buttonRect.left && pointX <= buttonRect.right
+    && pointY >= buttonRect.top && pointY <= buttonRect.bottom;
+  if (!wasActive) return withinButton;
+  if (deckArea !== null) return true;
+
+  const dx = pointX < buttonRect.left ? buttonRect.left - pointX : pointX > buttonRect.right ? pointX - buttonRect.right : 0;
+  const dy = pointY < buttonRect.top ? buttonRect.top - pointY : pointY > buttonRect.bottom ? pointY - buttonRect.bottom : 0;
+  return Math.hypot(dx, dy) <= exitDistancePx;
+}
+
 export type ManaCard = {
   id: string;
   civilizations: string[];
