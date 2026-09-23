@@ -766,7 +766,7 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
         element.style.setProperty("--fan-angle", `${angle}deg`);
         element.style.setProperty("--fan-scale", index === focusedIndex ? "2.8" : "2");
         element.dataset.fanFocused = index === focusedIndex ? "true" : "false";
-        element.style.zIndex = `${1000 - Math.round(Math.abs(linearX))}`;
+        element.style.zIndex = index === focusedIndex ? "2000" : `${1000 - Math.round(Math.abs(linearX))}`;
       });
     }
     function updateFan() {
