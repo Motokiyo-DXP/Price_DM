@@ -2,7 +2,7 @@ import type { BoardState, CardInstance, PlayerId } from "@/lib/playfield-board";
 import type { PlayZone } from "@/lib/playfield-interactions";
 
 const zoneNames: Record<PlayZone, string> = {
-  deck: "山札", hand: "手札", shield: "シールド", mana: "マナ", battle: "バトルゾーン",
+  deck: "山札", deckInspection: "山札閲覧", hand: "手札", shield: "シールド", mana: "マナ", battle: "バトルゾーン",
   graveyard: "墓地", hyperspatial: "超次元", gr: "GR", abyss: "深淵", reveal: "仮置き場",
 };
 

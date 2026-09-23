@@ -1,5 +1,6 @@
 export type PlayZone =
   | "deck"
+  | "deckInspection"
   | "hand"
   | "shield"
   | "mana"
@@ -24,7 +25,7 @@ export type MoveDefaults = {
 
 export type MoveRule = "prohibited" | "face_down" | "face_up" | "special";
 
-const zones: PlayZone[] = ["battle", "shield", "deck", "graveyard", "hyperspatial", "gr", "abyss", "mana", "reveal", "hand"];
+const zones: PlayZone[] = ["battle", "shield", "deck", "deckInspection", "graveyard", "hyperspatial", "gr", "abyss", "mana", "reveal", "hand"];
 
 export const MOVE_RULE_TABLE = Object.fromEntries(zones.map((from) => [
   from,

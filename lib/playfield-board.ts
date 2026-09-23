@@ -89,7 +89,28 @@ export function shuffleCards<T>(items: T[], random = Math.random) {
 }
 
 function emptyPlayer(): PlayerState {
-  return { deck: [], hand: [], shield: [], mana: [], battle: [], graveyard: [], hyperspatial: [], gr: [], abyss: [], reveal: [] };
+  return { deck: [], deckInspection: [], hand: [], shield: [], mana: [], battle: [], graveyard: [], hyperspatial: [], gr: [], abyss: [], reveal: [] };
+}
+
+export function inspectDeckCards(current: BoardState, owner: PlayerId, count: number | "max", takeFrom: "top" | "bottom"): BoardState {
+  const deck = current.players[owner].deck;
+  const amount = count === "max" ? deck.length : Math.max(0, Math.min(count, deck.length));
+  if (amount === 0) return current;
+  const split = takeFrom === "top" ? amount : deck.length - amount;
+  const inspected = takeFrom === "top" ? deck.slice(0, amount) : deck.slice(split);
+  const remaining = takeFrom === "top" ? deck.slice(amount) : deck.slice(0, split);
+  return { ...current, players: { ...current.players, [owner]: { ...current.players[owner], deck: remaining, deckInspection: [...current.players[owner].deckInspection, ...inspected] } } };
+}
+
+export function closeMaxDeckInspection(current: BoardState, owner: PlayerId, topIds: readonly string[], bottomIds: readonly string[], random = Math.random): BoardState {
+  const player = current.players[owner];
+  const placed = new Set([...topIds, ...bottomIds]);
+  const byId = new Map(player.deck.map((card) => [card.instanceId, card]));
+  const top = topIds.flatMap((id) => byId.get(id) ?? []);
+  const bottom = bottomIds.flatMap((id) => byId.get(id) ?? []);
+  const remainder = shuffleCards(player.deckInspection.filter((card) => !placed.has(card.instanceId)), random);
+  const unrelated = player.deck.filter((card) => !placed.has(card.instanceId));
+  return { ...current, players: { ...current.players, [owner]: { ...player, deck: [...top, ...remainder, ...unrelated, ...bottom], deckInspection: [] } } };
 }
 
 function dealInstances(instances: CardInstance[], random = Math.random): PlayerState {
