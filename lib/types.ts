@@ -28,6 +28,9 @@ export type CardSummary = {
   buyTrend: Trend;
   stock: string;
   updatedAt: string | null;
+  latestReleaseDate?: string | null;
+  allAccountsUpdatedAt?: string | null;
+  ownAccountUpdatedAt?: string | null;
   isStale: boolean;
   usesPrintFallback: boolean;
 };

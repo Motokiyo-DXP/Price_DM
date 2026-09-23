@@ -1572,22 +1572,31 @@ export type Database = {
         Returns: {
           aliases: string[]
           aliases_kana: string[]
-          buy_price: number
+          buy_price: number | null
           buy_record_count: number
           buy_trend: string
           canonical_card_id: number
           game_name: string
           image_key: string
           is_stale: boolean
-          last_observed_on: string
+          last_observed_on: string | null
           name: string
           name_kana: string
           print_count: number
-          sale_price: number
+          sale_price: number | null
           sale_record_count: number
           sale_trend: string
-          stock_status: Database["public"]["Enums"]["stock_status"]
+          stock_status: Database["public"]["Enums"]["stock_status"] | null
           uses_print_fallback: boolean
+        }[]
+      }
+      load_market_card_sort_metadata: {
+        Args: { p_card_ids: number[] }
+        Returns: {
+          all_accounts_updated_at: string | null
+          canonical_card_id: number
+          latest_release_date: string | null
+          own_account_updated_at: string | null
         }[]
       }
       delete_pending_shop_candidate_for_admin: {
