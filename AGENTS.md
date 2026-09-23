@@ -45,6 +45,8 @@ When a previous fix has already failed, inspect git diff/history and previous ch
 
 Prefer root-cause fixes over CSS offsets, delays, arbitrary conditionals, or other symptom-hiding patches.
 
+When scroll and drag interactions coexist, use the shared gesture classification by default. Do not introduce zone-specific angle thresholds, movement thresholds, or mid-gesture switching unless explicitly requested. Once classified as scroll or drag, keep that classification for the remainder of the gesture. Extend the shared gesture system for zone-specific behavior instead of duplicating or overriding it.
+
 ## Production DB Safety
 
 This repository is developed by multiple Codex sessions and worktrees. Parallel feature development is allowed; production Supabase mutation is a single dedicated integration/release-session operation.
