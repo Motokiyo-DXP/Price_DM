@@ -1616,6 +1616,35 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
 .deck-result-card-art{background:#292c38;border:1px solid #627091;border-radius:5px;cursor:pointer;display:block;min-height:0;overflow:hidden;padding:4px;position:relative;width:100%}
 .deck-result-card-art:hover{border-color:#ecc100}.deck-result-card-art:focus-visible,.deck-result-card-actions button:focus-visible{outline:2px solid #ecc100;outline-offset:2px}
 .deck-result-card-art .card-artwork,.deck-result-card-art .card-artwork-placeholder{aspect-ratio:5/7;border-radius:3px;height:100%;width:100%}
+
+/* Fit the desktop deck preview to both available canvas dimensions and let analysis charts shrink with their grid tracks. */
+@media(min-width:761px){
+  .deck-maker-canvas{box-sizing:border-box;container-type:size;min-width:0}
+  .deck-maker-grid{--deck-preview-gap:5px;--deck-preview-card-width:max(0px,min(calc((100cqw - 35px)/8),calc((100cqh - 20px)/7)));align-self:center;box-sizing:border-box;gap:var(--deck-preview-gap);grid-template-columns:repeat(8,var(--deck-preview-card-width));justify-content:center;max-width:100%;min-height:0;min-width:0;width:100%}
+  .deck-analysis-inline{min-height:0;overflow:auto}
+  .deck-analysis-dashboard{grid-template-rows:minmax(0,1fr) minmax(0,1fr);min-height:0;min-width:0}
+  .deck-analysis-panel{min-height:0;min-width:0}
+  .deck-civilization-chart{min-height:0}
+  .deck-chart-y-axis{font-size:clamp(7px,1vh,10px);line-height:1}
+  .deck-civilization-table{display:grid;flex:0 1 auto;grid-template-rows:repeat(4,minmax(0,1fr));min-height:0}
+  .deck-civilization-table>div{min-height:0}
+  .deck-multicolor-content{min-height:0}
+  .deck-mana-chart,.deck-mana-chart>div,.deck-mana-chart>div>div{min-height:0}
+  .deck-mana-chart>div>div{flex:0 0 calc(100% - 14px);height:calc(100% - 14px)}
+}
+
+/* Keep the editor usable at unusually short desktop heights with contained internal scrolling. */
+@media(min-width:761px) and (max-height:560px){
+  .deck-maker-canvas{overflow:auto}
+  .deck-maker-grid{--deck-preview-card-width:max(30px,min(calc((100cqw - 35px)/8),calc((100cqh - 20px)/7)))}
+  .deck-analysis-inline{overflow:auto}
+  .deck-analysis-dashboard{height:auto;min-height:228px}
+}
+
+@media(min-width:761px) and (max-height:680px){
+  .deck-civilization-table{font-size:8px;margin-top:2px}
+  .deck-civilization-table strong,.deck-civilization-table span{line-height:1;padding:1px 0}
+}
 .deck-result-card-art>strong{align-items:center;background:#495473;border:2px solid #ecc100;border-radius:50%;color:#f5f6fa;display:flex;font-size:12px;height:clamp(20px,2vw,28px);justify-content:center;position:absolute;right:7px;top:7px;width:clamp(20px,2vw,28px)}
 .deck-result-card-name{align-self:center;color:#f5f6fa;display:-webkit-box;font-size:clamp(10px,.75vw,12px);line-height:1.25;overflow:hidden;padding:4px 2px;text-align:center;text-overflow:ellipsis;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .deck-result-card-actions{display:flex;gap:6px;justify-content:center;padding-bottom:2px}.deck-result-card-actions button{align-items:center;background:#495473;border:1px solid #627091;border-radius:5px;color:#f5f6fa;cursor:pointer;display:inline-flex;font-size:clamp(16px,1.4vw,22px);font-weight:800;height:clamp(28px,2.5vw,38px);justify-content:center;line-height:1;min-height:28px;min-width:28px;padding:0;width:clamp(28px,2.5vw,38px)}
