@@ -15,6 +15,7 @@ export type DeckInput = {
 
 const formats = new Set(["original", "advanced", "duel_party"]);
 const visibilities = new Set(["private", "unlisted", "public"]);
+export const MAX_MAIN_DECK_CARDS = 60;
 
 export function parseDeckInput(formData: FormData): DeckInput | null {
   const nameValue = formData.get("name");
@@ -47,7 +48,7 @@ export function parseDeckInput(formData: FormData): DeckInput | null {
   } catch {
     return null;
   }
-  const deckLimit = formatValue === "duel_party" ? 60 : 40;
+  const deckLimit = MAX_MAIN_DECK_CARDS;
   if (!Array.isArray(parsed) || parsed.length > deckLimit) return null;
 
   const ids = new Set<number>();

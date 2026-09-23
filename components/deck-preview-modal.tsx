@@ -25,7 +25,7 @@ export function DeckPreviewModal({ deckId, deckName, scope, onClose }: { deckId:
       .catch(() => { if (active) setError("デッキを読み込めませんでした。"); });
     return () => { active = false; };
   }, [deckId, preview, scope]);
-  const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 40) ?? [];
+  const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 60) ?? [];
   const otherZones = useMemo(() => [...new Set(preview?.cards.filter((card) => card.zone !== "main").map((card) => card.zone) ?? [])], [preview]);
   const cardButton = (card: PreviewCard, index: number) => <button aria-label={`${card.name}を拡大`} key={index} onClick={(event) => { event.stopPropagation(); if (card.imageUrl) setExpandedImage(card.imageUrl); }} type="button"><CardArtwork imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 600px) 12vw, 100px" /></button>;
 

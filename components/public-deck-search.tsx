@@ -66,7 +66,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
     if (sharedOpen) { setSharedOpen(false); router.replace("/deck-search"); }
   }
   const otherZones = useMemo(() => [...new Set(preview?.cards.filter((card) => card.zone !== "main").map((card) => card.zone) ?? [])], [preview]);
-  const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 40) ?? [];
+  const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 60) ?? [];
   async function openPreview(deck: PublicDeckItem) {
     setSharedOpen(false);
     selectedId.current = deck.id;

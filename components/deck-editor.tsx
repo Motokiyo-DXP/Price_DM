@@ -11,6 +11,7 @@ import { sortDeckCards, type DeckSortKey, type SortDirection } from "@/lib/deck-
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { DeckAnalysis } from "@/components/deck-analysis";
+import { MAX_MAIN_DECK_CARDS } from "@/lib/deck-validation";
 
 type ImageOption = { printId: number; url: string };
 type SearchCard = { id: number; name: string; name_kana: string | null; print_count: number; usage_count?: number; cost?: number | null; civilizations?: string[]; cardTypes?: string[]; imageUrl: string | null; imageOptions: ImageOption[]; productNames: string[]; cardNumbers: string[]; newestPrintId: number };
@@ -28,7 +29,6 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [cards, setCards] = useState<SelectedCard[]>(initialDeck?.cards ?? []);
   const [format, setFormat] = useState<DeckEditorInitialData["format"]>(initialDeck?.format ?? "original");
   const [searching, setSearching] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreResults, setHasMoreResults] = useState(true);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DeckTab>("main");
@@ -66,7 +66,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const searchRequestRef = useRef(0);
   const searchInFlightRef = useRef(false);
   const total = useMemo(() => cards.reduce((sum, card) => sum + card.quantity, 0), [cards]);
-  const deckLimit = format === "duel_party" ? 60 : 40;
+  const deckLimit = MAX_MAIN_DECK_CARDS;
   const orderedCards = useMemo(() => deckSort ? sortDeckCards(cards, deckSort, deckSortDirection) : cards, [cards, deckSort, deckSortDirection]);
   const expandedCards = useMemo(
     () => orderedCards.flatMap((card) => Array.from({ length: card.quantity }, (_, copyIndex) => ({ ...card, copyIndex }))),
@@ -115,10 +115,10 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const loadSearchPage = useCallback(async (append: boolean, requestId: number) => {
     if (searchInFlightRef.current) return;
     searchInFlightRef.current = true;
-    append ? setLoadingMore(true) : setSearching(true);
+    if (!append) setSearching(true);
     setSearchError(null);
     const supabase = createBrowserSupabaseClient();
-    if (!supabase) { searchInFlightRef.current = false; setSearching(false); setLoadingMore(false); return; }
+    if (!supabase) { searchInFlightRef.current = false; setSearching(false); return; }
     const offset = append ? resultCountRef.current : 0;
     const searchArgs = {
       p_query: query.trim(), p_limit: SEARCH_PAGE_SIZE, p_offset: offset, p_sort: searchSort,
@@ -138,7 +138,6 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       setSearchError("カード検索に失敗しました。もう一度お試しください。");
       searchInFlightRef.current = false;
       setSearching(false);
-      setLoadingMore(false);
       return;
     }
       const ids = (data ?? []).map((row) => row.id);
@@ -175,7 +174,6 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       setHasMoreResults(page.length === SEARCH_PAGE_SIZE);
       searchInFlightRef.current = false;
       setSearching(false);
-      setLoadingMore(false);
   }, [query, fallbackCosts, searchSort, searchSortDirection, productFilter, cardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
 
   useEffect(() => {
@@ -344,7 +342,6 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           <div className="deck-sort-section-heading"><h3>デッキ並べ替え</h3><button aria-label="デッキの昇順と降順を切り替える" className="deck-sort-direction" onClick={() => { setDeckSort((current) => current ?? "cost"); setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc"); }} type="button">{deckSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options"><button className={deckSort === "cost" ? "active" : ""} onClick={() => setDeckSort("cost")} type="button">コスト順</button><button className={deckSort === "added" ? "active" : ""} onClick={() => setDeckSort("added")} type="button">追加順</button><button className={deckSort === "name" ? "active" : ""} onClick={() => setDeckSort("name")} type="button">カード名順</button><button className={deckSort === "quantity" ? "active" : ""} onClick={() => setDeckSort("quantity")} type="button">枚数順</button></div>
           <div className="deck-sort-section-heading"><h3>検索結果並べ替え</h3><button aria-label="検索結果の昇順と降順を切り替える" className="deck-sort-direction" onClick={() => setSearchSortDirection((direction) => direction === "asc" ? "desc" : "asc")} type="button">{searchSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options search"><button className={searchSort === "relevance" ? "active" : ""} onClick={() => { setSearchSort("relevance"); setSearchSortDirection("asc"); }} type="button">検索順</button><button className={searchSort === "name" ? "active" : ""} onClick={() => setSearchSort("name")} type="button">カード名順</button><button className={searchSort === "release_date" ? "active" : ""} onClick={() => { setSearchSort("release_date"); setSearchSortDirection("desc"); }} type="button">発売日順</button><button className={searchSort === "usage" ? "active" : ""} onClick={() => { setSearchSort("usage"); setSearchSortDirection("desc"); }} type="button">使用数順</button></div>
         </div></section> : null}
-          {loadingMore ? <p className="deck-results-loading" aria-live="polite">さらに読み込み中…</p> : null}
           </section>
         </aside>
       </div>
