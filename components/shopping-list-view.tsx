@@ -33,7 +33,7 @@ function PricedShoppingCard({ entry, kind, onRemove }: { entry: ShoppingListEntr
 function UnpricedShoppingCard({ card, onRemove }: { card: ShoppingCard; onRemove: (id: number) => void }) {
   return (
     <article className="shopping-card shopping-card-unpriced">
-      <Link aria-label={`${card.name}の詳細を開く`} className="shopping-card-detail-link" href={`/cards/${card.id}`} />
+      <Link aria-label={`${card.name}の価格登録を開く`} className="shopping-card-detail-link" href={`/register?cardId=${card.id}`} />
       <CardArtwork imageUrl={card.imageUrl} name={card.name} sizes={artworkSizes} />
       <div className="shopping-card-copy">
         <h3>{card.name}</h3>
