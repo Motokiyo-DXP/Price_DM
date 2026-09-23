@@ -8,10 +8,9 @@ import {
   isRegistrationSessionToken,
   REGISTRATION_SESSION_COOKIE,
 } from "@/lib/registration-session";
-import { createServerSupabaseClient } from "@/lib/supabase";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 import { MARKET_CARDS_CACHE_TAG } from "@/lib/market-data";
-import { hasRegistrationUser } from "@/lib/registration-auth";
+import { mapRegistrationShopOptions } from "@/lib/registration-lookup-mapping";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +25,12 @@ function json(body: unknown, status = 200) {
 }
 
 export async function POST(request: Request) {
-  if (!(await hasRegistrationUser())) return json({ error: "session_required" }, 401);
+  const authSupabase = await createAuthServerSupabaseClient();
+  if (!authSupabase) return json({ error: "service_unavailable" }, 503);
+  const { data: auth, error: authError } = await authSupabase.auth.getClaims();
+  if (authError || typeof auth?.claims?.sub !== "string") {
+    return json({ error: "session_required" }, 401);
+  }
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(REGISTRATION_SESSION_COOKIE)?.value;
   if (!isRegistrationSessionToken(sessionToken)) {
@@ -63,10 +67,7 @@ export async function POST(request: Request) {
   }
   if (priceRecord.note) args.p_note = priceRecord.note;
 
-  const supabase = createServerSupabaseClient();
-  if (!supabase) return json({ error: "service_unavailable" }, 503);
-
-  const { data: recordId, error } = await supabase.rpc(
+  const { data: recordId, error } = await authSupabase.rpc(
     "submit_price_record_session_v3",
     args,
   );
@@ -87,26 +88,17 @@ export async function POST(request: Request) {
     return json({ error: "registration_failed" }, 400);
   }
 
-  let recentShopRecorded = false;
-  const authSupabase = await createAuthServerSupabaseClient();
-  if (!authSupabase) {
-    console.error("Failed to update recent registration shops: auth client unavailable");
+  let recentShops: ReturnType<typeof mapRegistrationShopOptions> | null = null;
+  const { data: recentShopsData, error: recentShopsError } = await authSupabase.rpc(
+    "list_recent_registration_shops",
+  );
+  if (recentShopsError) {
+    console.error("Failed to load recent registration shops", recentShopsError.code);
   } else {
-    const { error: recentShopError } = await authSupabase.rpc(
-      "record_recent_registration_shop",
-      { p_shop_id: priceRecord.shopId },
-    );
-    if (recentShopError) {
-      console.error(
-        "Failed to update recent registration shops",
-        recentShopError.code,
-      );
-    } else {
-      recentShopRecorded = true;
-    }
+    recentShops = mapRegistrationShopOptions(recentShopsData);
   }
 
   revalidateTag(MARKET_CARDS_CACHE_TAG);
   revalidatePath("/");
-  return json({ recordId, recentShopRecorded }, 201);
+  return json({ recordId, recentShops }, 201);
 }

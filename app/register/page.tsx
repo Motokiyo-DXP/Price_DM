@@ -36,7 +36,6 @@ import {
 import {
   resolveSubmissionShop,
   selectShopOption,
-  updateRecentRegistrationShops,
 } from "@/lib/registration-shop-selection";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
@@ -781,11 +780,13 @@ export default function RegisterPage() {
       setFeedback({ kind: "error", text: registrationErrorMessage("registration_failed") });
       return;
     }
-    const recentShopRecorded =
+    const recentShops =
       typeof result === "object" &&
       result !== null &&
-      "recentShopRecorded" in result &&
-      result.recentShopRecorded === true;
+      "recentShops" in result &&
+      Array.isArray(result.recentShops)
+        ? mapRegistrationShopOptions(result.recentShops)
+        : null;
 
     form.reset();
     setCardQuery("");
@@ -798,11 +799,7 @@ export default function RegisterPage() {
     setShopTotalCount(0);
     setShopSuggestionsOpen(false);
     writeLastRegisteredShop(shopForSubmission);
-    if (recentShopRecorded) {
-      setRecentRegistrationShops((current) =>
-        updateRecentRegistrationShops(current, shopForSubmission),
-      );
-    }
+    if (recentShops) setRecentRegistrationShops(recentShops);
     setSalePriceInput("");
     setBuyPriceInput("");
     setFeedback({
@@ -827,7 +824,7 @@ export default function RegisterPage() {
     shopSearchComplete &&
     shopOptions.length > 0;
   const showRecentRegistrationShops =
-    recentRegistrationShops.length > 0 && !showShopSuggestions;
+    recentRegistrationShops.length > 0;
 
   return (
     <section className="form-wrap register-page">

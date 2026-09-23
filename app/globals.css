@@ -1663,3 +1663,6 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
 .deck-maker-name-input{gap:8px}.deck-maker-name-input>.deck-maker-name-edit-icon{color:#c8ccd8;display:block;flex:none;font-size:18px;line-height:1}.deck-maker-name-input>input{flex:1 1 auto;width:auto}
 @media(max-width:760px){.deck-maker-name-input>.deck-maker-name-edit-icon{display:block;font-size:16px}}
 @media(min-width:761px){.deck-maker-name{border-left:0;padding-left:0;width:min(58%,620px)}.deck-maker-name-input{background:#20232d;border:1px solid #627091;border-radius:8px;box-sizing:border-box;height:38px;padding:0 10px;width:100%}.deck-maker-name input{font-size:16px;line-height:1;padding:0}.deck-maker-name-input>.deck-maker-name-edit-icon{font-size:16px}}
+
+/* Keep recent-shop shortcuts visible below the input while suggestions follow in flow. */
+.shop-combobox .suggestions{position:relative;top:auto}
