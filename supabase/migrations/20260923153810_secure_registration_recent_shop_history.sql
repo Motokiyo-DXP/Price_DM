@@ -15,6 +15,7 @@ grant select on table public.account_recent_registration_shops
 
 grant select, insert, update on table public.account_recent_registration_shops
   to price_registration_executor;
+grant create on schema public to price_registration_executor;
 create policy account_recent_registration_shops_executor_select
   on public.account_recent_registration_shops
   for select to price_registration_executor
@@ -31,8 +32,6 @@ create policy account_recent_registration_shops_executor_update
 
 revoke all on function public.record_recent_registration_shop(bigint)
   from public, anon, authenticated, service_role;
-
-set role price_registration_executor;
 
 create or replace function public.submit_price_record_session_v3(
   p_session_token text,
@@ -133,4 +132,5 @@ comment on function public.submit_price_record_session_v3(
   'Registers a canonical-card price and best-effort records the authenticated account shop only after a positive record id.';
 
 set role postgres;
+revoke create on schema public from price_registration_executor;
 revoke price_registration_executor from postgres granted by postgres;
