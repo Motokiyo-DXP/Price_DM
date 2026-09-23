@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { CardArtwork } from "@/components/card-artwork";
 import { getCardImageUrl } from "@/lib/card-image";
@@ -37,6 +37,8 @@ const trendClass = (trend: Trend, stale: boolean) => {
 
 export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [query, setQuery] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
+  const searchRequestSequence = useRef(0);
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [remoteSearch, setRemoteSearch] = useState<{
     key: string;
@@ -120,11 +122,19 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
 
   useEffect(() => {
     let cancelled = false;
+    let controller: AbortController | null = null;
+    const requestSequence = ++searchRequestSequence.current;
     const trimmedQuery = query.trim();
     const searchKey = `${searchMode}:${trimmedQuery}`;
 
     if (!trimmedQuery) {
       setRemoteSearch(null);
+      setSearchingCards(false);
+      setSearchError(null);
+      return;
+    }
+
+    if (isComposing) {
       setSearchingCards(false);
       setSearchError(null);
       return;
@@ -142,43 +152,64 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         return;
       }
 
-      const { data, error } = await supabase.rpc("search_canonical_cards_with_images", {
-        p_game_slug: "duel-masters",
-        p_limit: 100,
-        p_mode: searchMode,
-        p_query: trimmedQuery,
-      });
+      controller = new AbortController();
+      let data;
+      let error;
+      try {
+        ({ data, error } = await supabase.rpc("search_market_cards", {
+          p_game_slug: "duel-masters",
+          p_limit: 100,
+          p_mode: searchMode,
+          p_query: trimmedQuery,
+        }).abortSignal(controller.signal));
+      } catch {
+        if (!cancelled && requestSequence === searchRequestSequence.current) {
+          setSearchingCards(false);
+          setSearchError("カード候補を読み込めませんでした。");
+        }
+        return;
+      }
 
-      if (cancelled) return;
-      setSearchingCards(false);
+      if (cancelled || requestSequence !== searchRequestSequence.current) return;
       if (error) {
+        setSearchingCards(false);
         setSearchError("カード候補を読み込めませんでした。");
         return;
       }
 
       const mappedCards = mapMarketSearchResults(data, pricedCardsById);
+      setRemoteSearch({ key: searchKey, cards: mappedCards });
+      setSearchingCards(false);
+
       const ids = mappedCards.map((card) => Number(card.id));
       if (ids.length) {
-        const { data: prints } = await supabase.from("card_prints")
-          .select("id, canonical_card_id, image_key, product_name, card_number, official_card_id")
-          .in("canonical_card_id", ids).not("image_key", "is", null).is("deleted_at", null).order("id");
+        let prints;
+        try {
+          ({ data: prints } = await supabase.from("card_prints")
+            .select("id, canonical_card_id, image_key, product_name, card_number, official_card_id")
+            .in("canonical_card_id", ids).not("image_key", "is", null).is("deleted_at", null).order("id")
+            .abortSignal(controller.signal));
+        } catch {
+          return;
+        }
+        if (cancelled || requestSequence !== searchRequestSequence.current) return;
         const oldestImages = new Map<number, string>();
         for (const print of sortCardPrintsOldestFirst(prints ?? [])) {
           if (print.image_key && !oldestImages.has(print.canonical_card_id)) oldestImages.set(print.canonical_card_id, print.image_key);
         }
         for (const card of mappedCards) card.imageUrl = getCardImageUrl(oldestImages.get(Number(card.id))) ?? card.imageUrl;
+        setRemoteSearch((current) => current?.key === searchKey
+          ? { key: searchKey, cards: mappedCards }
+          : current);
       }
-      setRemoteSearch({
-        key: searchKey,
-        cards: mappedCards,
-      });
     }, CARD_SEARCH_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      controller?.abort();
     };
-  }, [pricedCardsById, query, searchMode]);
+  }, [isComposing, pricedCardsById, query, searchMode]);
 
   const toggleFavorite = async (id: string) => {
     if (favoriteUserId === undefined) {
@@ -266,7 +297,18 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             aria-label="カード検索"
             placeholder="カード名を入力"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setQuery(value);
+            }}
+            onCompositionStart={() => {
+              setIsComposing(true);
+            }}
+            onCompositionEnd={(event) => {
+              setIsComposing(false);
+              const value = event.currentTarget.value;
+              setQuery(value);
+            }}
           />
           {query && (
             <button type="button" aria-label="カード名を消去" onClick={() => setQuery("")}>

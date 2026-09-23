@@ -1738,6 +1738,10 @@ export type Database = {
         Args: { p_query?: string; p_game_slug?: string; p_limit?: number; p_mode?: string }
         Returns: { id: number; game_slug: string; game_name: string; name: string; name_kana: string; print_count: number; image_key: string | null }[]
       }
+      search_market_cards: {
+        Args: { p_query: string; p_game_slug?: string; p_limit?: number; p_mode?: string }
+        Returns: { id: number; game_name: string; name: string; name_kana: string | null; print_count: number }[]
+      }
       search_canonical_cards: {
         Args: {
           p_game_slug?: string
