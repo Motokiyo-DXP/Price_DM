@@ -65,6 +65,8 @@ revoke all on function private.market_card_print_candidates(text, text, text)
 grant execute on function private.market_card_print_candidates(text, text, text)
   to anon, authenticated;
 
+-- Keep the fuzzy cutoff in the query predicate: the hosted migration role
+-- lacks permission for this extension setting.
 create or replace function public.search_market_cards(
   p_query text,
   p_game_slug text default 'duel-masters',
@@ -82,7 +84,6 @@ language plpgsql
 stable
 security invoker
 set search_path = ''
-set pg_trgm.similarity_threshold = '0.6'
 as $$
 declare
   normalized_query text := public.normalize_card_search(coalesce(p_query, ''));
