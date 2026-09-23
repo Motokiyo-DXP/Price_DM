@@ -20,7 +20,6 @@ import {
   resolveDeckDragRelease,
   resolveDropTarget,
   resolvePointerReleaseGesture,
-  shouldSwitchHandScrollToDrag,
   shouldUseZoneScroll,
   STACK_HOLD_MENU_MS,
   STACK_HOLD_PROGRESS_MS,
@@ -575,25 +574,8 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     const deltaX = event.clientX - start.current.x;
     const deltaY = event.clientY - start.current.y;
     if (collapsedHandGesture.current && !collapsedHandHoldReady.current) return;
-    const lastScrollPoint = zoneScrollLastPoint.current;
-    const stepX = lastScrollPoint ? event.clientX - lastScrollPoint.x : deltaX;
-    const stepY = lastScrollPoint ? event.clientY - lastScrollPoint.y : deltaY;
     const horizontalWithinScrollAngle = isWithinHorizontalScrollAngle(deltaX, deltaY);
-    const switchHandScrollToDrag = shouldSwitchHandScrollToDrag({
-      isScrolling: zoneScrollGesture.current,
-      stepX,
-      stepY,
-      zone,
-    });
-    const switchDeckViewerScrollToDrag = deckViewer
-      && zoneScrollGesture.current
-      && Math.abs(stepY) > 10
-      && Math.abs(stepY) > Math.abs(stepX);
-    if (switchHandScrollToDrag || switchDeckViewerScrollToDrag) {
-      zoneScrollGesture.current = false;
-      if (zone === "hand") interactionCardId.current = readCenteredHandCardId(zoneScrollContainer.current, interactionCardId.current);
-      start.current = { ...start.current, x: event.clientX, y: event.clientY - Math.sign(stepY || 1) * 12 };
-    } else if ((deckViewer || cardSwipeScrollableZones.includes(zone)) && shouldUseZoneScroll({
+    if ((deckViewer || cardSwipeScrollableZones.includes(zone)) && shouldUseZoneScroll({
       dragActivated: dragActivated.current,
       horizontalWithinScrollAngle,
       isScrolling: zoneScrollGesture.current,

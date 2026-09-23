@@ -134,18 +134,6 @@ export function resolveDropTarget(
   return { targetCardId, targetZone };
 }
 
-export function shouldSwitchHandScrollToDrag(input: {
-  isScrolling: boolean;
-  stepX: number;
-  stepY: number;
-  zone: PlayZone;
-}) {
-  return input.zone === "hand"
-    && input.isScrolling
-    && Math.abs(input.stepY) > 10
-    && Math.abs(input.stepY) > Math.abs(input.stepX);
-}
-
 export function shouldUseZoneScroll(input: {
   dragActivated: boolean;
   horizontalWithinScrollAngle: boolean;
