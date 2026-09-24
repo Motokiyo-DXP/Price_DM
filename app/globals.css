@@ -542,7 +542,7 @@ body:has(.rough-battle-board){overflow-x:hidden}.rough-battle-board,.battle-play
   width:36px;
   z-index:121;
 }
-.long-press-progress svg{display:block;height:100%;overflow:visible;transform:rotate(-90deg);width:100%}.long-press-progress circle{fill:#101419d9;stroke-width:4}.long-press-progress .track{stroke:#ffffff55}.long-press-progress .value{animation:long-press-fill var(--long-press-ms) linear forwards;fill:none;stroke:#55cbe3;stroke-dasharray:94.25;stroke-dashoffset:94.25;stroke-linecap:round}@keyframes long-press-fill{to{stroke-dashoffset:0}}
+.long-press-progress svg{display:block;height:100%;overflow:visible;transform:rotate(-90deg);width:100%}.long-press-progress circle{fill:#101419d9;stroke-width:4}.long-press-progress .track{stroke:#ffffff55}.long-press-progress .value{animation:long-press-fill var(--long-press-ms) linear forwards;fill:none;stroke:#55cbe3;stroke-dasharray:94.25;stroke-dashoffset:var(--long-press-offset,94.25);stroke-linecap:round}@keyframes long-press-fill{to{stroke-dashoffset:0}}
 .card-drag-preview{
   height:112px;
   opacity:.5;

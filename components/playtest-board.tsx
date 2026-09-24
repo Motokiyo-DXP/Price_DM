@@ -5,6 +5,9 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -79,7 +82,9 @@ import {
   type MarkingMenuAction,
   type StackDestinationAction,
 } from "@/lib/marking-menu";
-import { LONG_PRESS_MAX_MS, LONG_PRESS_MIN_MS, readLongPressMs, saveLongPressMs } from "@/lib/play-input-settings";
+import { LONG_PRESS_DEFAULT_MS, LONG_PRESS_MAX_MS, LONG_PRESS_MIN_MS, LONG_PRESS_STEP_MS, normalizeLongPressMs } from "@/lib/play-input-settings";
+import { getLongPressProgress } from "@/lib/long-press-progress";
+import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { getContextualActions, getOtherContextualActions } from "@/lib/play-context-actions";
 import type { CardMarker } from "@/lib/playfield-board";
 import { isCircleGesture, type GesturePoint } from "@/lib/circle-gesture";
@@ -105,6 +110,8 @@ type DeckViewConfirmState = {
 };
 
 const playerIds: PlayerId[] = ["p1", "p2"];
+type LongPressMeterState = { point: { x: number; y: number }; startedAt: number; totalDurationMs: number };
+const LongPressDurationContext = createContext<number>(LONG_PRESS_DEFAULT_MS);
 const visibleMarkerGroups = [
   [["meta_warning", "メタ注意"], ["removal_resistance", "除去耐性"], ["just_diver", "ジャストダイバー"], ["cannot_be_chosen", "選ばれない"], ["cannot_be_attacked", "アタックされない"], ["cannot_be_blocked", "ブロックされない"], ["hyper_mode", "ハイパーモード"], ["speed_attacker", "スピードアタッカー"], ["mach_fighter", "マッハファイター"], ["blocker", "ブロッカー"], ["slayer", "スレイヤー"], ["power_up", "パワーアップ"]],
   [["cannot_attack", "アタックできない"], ["cannot_block", "ブロックできない"], ["keep_tapped", "アンタップしない"], ["summoning_sickness", "召喚酔い"], ["ignore_ability", "能力無効"], ["power_down", "パワーダウン"]],
@@ -392,10 +399,24 @@ function CardDragPreview({ preview }: { preview: DragPreviewState }) {
   );
 }
 
-function LongPressProgress({ durationMs, label, point }: { durationMs: number; label: string; point: { x: number; y: number } | null }) {
-  if (!point || typeof document === "undefined") return null;
+function LongPressProgress({ label, meter }: { label: string; meter: LongPressMeterState | null }) {
+  const [visibleForStartedAt, setVisibleForStartedAt] = useState<number | null>(null);
+  useEffect(() => {
+    setVisibleForStartedAt(null);
+    if (!meter) return;
+    const delay = meter.startedAt + meter.totalDurationMs / 2 - performance.now() + 1;
+    if (delay <= 0) {
+      setVisibleForStartedAt(meter.startedAt);
+      return;
+    }
+    const timer = window.setTimeout(() => setVisibleForStartedAt(meter.startedAt), delay);
+    return () => window.clearTimeout(timer);
+  }, [meter?.point.x, meter?.point.y, meter?.startedAt, meter?.totalDurationMs]);
+  if (!meter || visibleForStartedAt !== meter.startedAt || typeof document === "undefined") return null;
+  const progress = getLongPressProgress(performance.now() - meter.startedAt, meter.totalDurationMs);
+  if (!progress) return null;
   return createPortal(
-    <span aria-label={label} className="long-press-progress" style={{ "--long-press-ms": `${durationMs}ms`, left: point.x, top: point.y } as CSSProperties}>
+    <span aria-label={label} className="long-press-progress" style={{ "--long-press-ms": `${Math.max(1, progress.remainingMs)}ms`, "--long-press-offset": `${94.25 * (1 - progress.progress)}`, left: meter.point.x, top: meter.point.y } as CSSProperties}>
       <svg aria-hidden="true" viewBox="0 0 36 36">
         <circle className="track" cx="18" cy="18" r="15" />
         <circle className="value" cx="18" cy="18" r="15" />
@@ -405,8 +426,8 @@ function LongPressProgress({ durationMs, label, point }: { durationMs: number; l
   );
 }
 
-function StackHoldProgress({ point }: { point: { x: number; y: number } | null }) {
-  return <LongPressProgress durationMs={STACK_HOLD_MENU_MS - STACK_HOLD_PROGRESS_MS} label="重ね方パネルを開くまでの残り時間" point={point} />;
+function StackHoldProgress({ meter }: { meter: LongPressMeterState | null }) {
+  return <LongPressProgress label="重ね方パネルを開くまでの残り時間" meter={meter} />;
 }
 
 function DeckPlacementPreview({ owner, preview }: { owner: PlayerId; preview: DeckPlacementPreviewState | null }) {
@@ -451,6 +472,7 @@ type CardViewProps = {
 };
 
 function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetails, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onOptions, onCollapsedHandHold, selected, inspected = false, inspectionViewer, revealHiddenCards = false, privateReveal = false, revealPublic = false, individualFromStack = false, revealDeckToOwner = false, deckViewer = false, selectionOrder, onDeckReorder }: CardViewProps) {
+  const longPressMs = useContext(LongPressDurationContext);
   const start = useRef<{ x: number; y: number; at: number } | null>(null);
   const currentPoint = useRef<{ x: number; y: number } | null>(null);
   const longPressTimer = useRef<number | null>(null);
@@ -462,7 +484,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
   const stackPreviewTimer = useRef<number | null>(null);
   const stackProgressTimer = useRef<number | null>(null);
   const stackPreviewZone = useRef<PlayZone | null>(null);
-  const stackPreviewCandidate = useRef<{ centerX: number; centerY: number; holdX: number; holdY: number; targetCardId: string; targetZone: PlayZone } | null>(null);
+  const stackPreviewCandidate = useRef<{ centerX: number; centerY: number; holdX: number; holdY: number; startedAt: number; targetCardId: string; targetZone: PlayZone } | null>(null);
   const zoneScrollGesture = useRef(false);
   const zoneScrollContainer = useRef<HTMLElement | null>(null);
   const zoneScrollStartLeft = useRef(0);
@@ -482,9 +504,8 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
   const [specialPreview, setSpecialPreview] = useState<{ centerX: number; centerY: number; kind: "deck" | "stack"; targetCardId?: string; targetZone: PlayZone; deckPlacement?: DeckPlacementPreviewState } | null>(null);
   const specialPreviewRef = useRef<typeof specialPreview>(null);
   const deckTargetActive = useRef(false);
-  const [stackHoldProgress, setStackHoldProgress] = useState<{ x: number; y: number } | null>(null);
-  const [holdActive, setHoldActive] = useState(false);
-  const [holdPoint, setHoldPoint] = useState({ x: 0, y: 0 });
+  const [stackHoldProgress, setStackHoldProgress] = useState<LongPressMeterState | null>(null);
+  const [holdProgress, setHoldProgress] = useState<LongPressMeterState | null>(null);
   const [dragPreview, setDragPreview] = useState<DragPreviewState>(null);
 
   useEffect(() => () => {
@@ -544,7 +565,9 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     pointerTarget.current = event.currentTarget;
     attachPointerListeners(event.pointerId);
     event.currentTarget.setPointerCapture(event.pointerId);
-    start.current = { x: event.clientX, y: event.clientY, at: performance.now() };
+    const startedAt = performance.now();
+    const holdDurationMs = longPressMs;
+    start.current = { x: event.clientX, y: event.clientY, at: startedAt };
     currentPoint.current = { x: event.clientX, y: event.clientY };
     markingMenuOpen.current = false;
     dragActivated.current = false;
@@ -560,19 +583,18 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     zoneScrollLastPoint.current = { at: performance.now(), x: event.clientX, y: event.clientY };
     zoneScrollVelocity.current = 0;
     deckTargetActive.current = false;
-    setHoldActive(true);
-    setHoldPoint({ x: event.clientX, y: event.clientY });
+    setHoldProgress({ point: { x: event.clientX, y: event.clientY }, startedAt, totalDurationMs: holdDurationMs });
     setDragPreview(null);
     updateSpecialPreview(null);
     clearStackPreviewTimer();
     cancelZoneInertia(zoneScrollContainer.current);
     if (deckViewer) {
-      setHoldActive(false);
+      setHoldProgress(null);
       return;
     }
     longPressTimer.current = window.setTimeout(() => {
       if (!start.current || !currentPoint.current) return;
-      setHoldActive(false);
+      setHoldProgress(null);
       if (collapsedHandGesture.current) {
         collapsedHandHoldReady.current = true;
         onCollapsedHandHold?.();
@@ -588,7 +610,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       markingMenuOpen.current = true;
       suppressClick.current = true;
       onMarkingMenuStart(owner, zone, card, start.current.x, start.current.y, false, individualFromStack);
-    }, readLongPressMs());
+    }, holdDurationMs);
   }
 
   function pointerMove(event: PointerEvent) {
@@ -614,7 +636,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     })) {
       zoneScrollGesture.current = true;
       dragActivated.current = false;
-      setHoldActive(false);
+      setHoldProgress(null);
       setDragPreview(null);
       clearStackPreviewTimer();
       updateSpecialPreview(null);
@@ -626,7 +648,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     }
     if (Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > 8) {
       dragActivated.current = true;
-      setHoldActive(false);
+      setHoldProgress(null);
       const sourceElement = [...(zoneScrollContainer.current?.querySelectorAll<HTMLElement>("[data-card-id]") ?? [])]
         .find((element) => element.dataset.cardId === interactionCardId.current);
       const previewImage = sourceElement?.querySelector<HTMLImageElement>(".card-artwork img")?.getAttribute("src")
@@ -681,7 +703,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       else showDropGuide(owner, targetZone, elements);
       const targetBounds = targetCard?.dataset.cardId ? targetCard.getBoundingClientRect() : null;
       const candidate = targetCard?.dataset.cardId && targetBounds && targetZone
-        ? { centerX: targetBounds.left + targetBounds.width / 2, centerY: targetBounds.top + targetBounds.height / 2, holdX: event.clientX, holdY: event.clientY, targetCardId: targetCard.dataset.cardId, targetZone }
+        ? { centerX: targetBounds.left + targetBounds.width / 2, centerY: targetBounds.top + targetBounds.height / 2, holdX: event.clientX, holdY: event.clientY, startedAt: performance.now(), targetCardId: targetCard.dataset.cardId, targetZone }
         : null;
       if (deckTarget) {
         clearStackPreviewTimer();
@@ -705,7 +727,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
           stackPreviewCandidate.current = candidate;
           stackProgressTimer.current = window.setTimeout(() => {
             const currentCandidate = stackPreviewCandidate.current;
-            if (currentCandidate) setStackHoldProgress({ x: currentCandidate.holdX, y: currentCandidate.holdY });
+            if (currentCandidate) setStackHoldProgress({ point: { x: currentCandidate.holdX, y: currentCandidate.holdY }, startedAt: currentCandidate.startedAt, totalDurationMs: STACK_HOLD_MENU_MS });
             stackProgressTimer.current = null;
           }, STACK_HOLD_PROGRESS_MS);
           stackPreviewTimer.current = window.setTimeout(() => {
@@ -738,7 +760,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     if (!start.current) return;
     if (longPressTimer.current !== null) window.clearTimeout(longPressTimer.current);
     longPressTimer.current = null;
-    setHoldActive(false);
+    setHoldProgress(null);
     setDragPreview(null);
     clearStackPreviewTimer();
     clearDropGuide();
@@ -888,7 +910,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     deckTargetActive.current = false;
     updateSpecialPreview(null);
     clearDropGuide();
-    setHoldActive(false);
+    setHoldProgress(null);
     setDragPreview(null);
     clearStackPreviewTimer();
     if (longPressTimer.current !== null) window.clearTimeout(longPressTimer.current);
@@ -917,10 +939,10 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       })}</span> : null}
       {selectionOrder ? <span aria-label={`選択順 ${selectionOrder}`} className="deck-selection-order">{selectionOrder}</span> : null}
       </button>
-      {!deckViewer ? <LongPressProgress durationMs={readLongPressMs()} label="長押し操作が有効になるまでの残り時間" point={holdActive ? holdPoint : null} /> : null}
+      {!deckViewer ? <LongPressProgress label="長押し操作が有効になるまでの残り時間" meter={holdProgress} /> : null}
       <CardDragPreview preview={dragPreview} />
-      <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} />
-      {!deckViewer ? <StackHoldProgress point={stackHoldProgress} /> : null}
+      {!deckViewer ? <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} /> : null}
+      {!deckViewer ? <StackHoldProgress meter={stackHoldProgress} /> : null}
       {!deckViewer && specialPreview?.kind === "stack" ? <StackDestinationMarkingMenu menu={{ pointerX: dragPreview?.x ?? specialPreview.centerX, pointerY: dragPreview?.y ?? specialPreview.centerY, x: specialPreview.centerX, y: specialPreview.centerY }} /> : null}
     </>
   );
@@ -1230,6 +1252,7 @@ type BattlePlayerProps = {
 };
 
 function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, onMarkingMenuStart, onMarkingMenuMove, onMarkingMenuEnd, onCircle, onSelectAuxiliaryZone, onZoneSelect }: { active: boolean; board: BoardState; disabled: boolean; owner: PlayerId; onOptions: ZoneProps["onOptions"]; onDraw: (owner: PlayerId) => void; onMove: ZoneProps["onMove"]; onMarkingMenuStart: ZoneProps["onMarkingMenuStart"]; onMarkingMenuMove: ZoneProps["onMarkingMenuMove"]; onMarkingMenuEnd: ZoneProps["onMarkingMenuEnd"]; onCircle: ZoneProps["onCircle"]; onSelectAuxiliaryZone: BattlePlayerProps["onSelectAuxiliaryZone"]; onZoneSelect?: ZoneProps["onZoneSelect"] }) {
+  const longPressMs = useContext(LongPressDurationContext);
   const fallback: CardInstance = { instanceId: "deck", canonicalCardId: 0, name: "山札", imageUrl: null, face: "face_down", tapped: false, shieldMarker: null };
   const timer = useRef<number | null>(null);
   const start = useRef<(GesturePoint & { at: number }) | null>(null);
@@ -1238,13 +1261,13 @@ function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, o
   const dragActivated = useRef(false);
   const stackPreviewTimer = useRef<number | null>(null);
   const stackProgressTimer = useRef<number | null>(null);
-  const stackPreviewCandidate = useRef<{ centerX: number; centerY: number; holdX: number; holdY: number; targetCardId: string; targetZone: PlayZone } | null>(null);
+  const stackPreviewCandidate = useRef<{ centerX: number; centerY: number; holdX: number; holdY: number; startedAt: number; targetCardId: string; targetZone: PlayZone } | null>(null);
   const stackPreviewRef = useRef<{ centerX: number; centerY: number; targetCardId: string; targetZone: PlayZone } | null>(null);
   const card = board.players[owner].deck[0] ?? fallback;
   const [dragPreview, setDragPreview] = useState<DragPreviewState>(null);
   const [stackPreview, setStackPreview] = useState<typeof stackPreviewRef.current>(null);
-  const [stackHoldProgress, setStackHoldProgress] = useState<{ x: number; y: number } | null>(null);
-  const [longPressProgress, setLongPressProgress] = useState<{ x: number; y: number } | null>(null);
+  const [stackHoldProgress, setStackHoldProgress] = useState<LongPressMeterState | null>(null);
+  const [longPressProgress, setLongPressProgress] = useState<LongPressMeterState | null>(null);
   useEffect(() => () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
     if (stackPreviewTimer.current !== null) window.clearTimeout(stackPreviewTimer.current);
@@ -1282,12 +1305,14 @@ function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, o
           }}
           onPointerDown={(event) => {
             clearDropGuide();
-            start.current = { at: performance.now(), x: event.clientX, y: event.clientY };
+            const startedAt = performance.now();
+            const holdDurationMs = longPressMs;
+            start.current = { at: startedAt, x: event.clientX, y: event.clientY };
             points.current = [start.current];
             menuOpen.current = false;
             dragActivated.current = false;
             setDragPreview(null);
-            setLongPressProgress({ x: event.clientX, y: event.clientY });
+            setLongPressProgress({ point: { x: event.clientX, y: event.clientY }, startedAt, totalDurationMs: holdDurationMs });
             clearStackHold();
             event.currentTarget.setPointerCapture(event.pointerId);
             timer.current = window.setTimeout(() => {
@@ -1296,7 +1321,7 @@ function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, o
               setDragPreview(null);
               setLongPressProgress(null);
               onMarkingMenuStart(owner, "deck", card, start.current.x, start.current.y);
-            }, readLongPressMs());
+            }, holdDurationMs);
           }}
           onPointerMove={(event) => {
             if (!start.current) return;
@@ -1320,7 +1345,7 @@ function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, o
               if (!stackPreviewRef.current) {
                 const bounds = targetCard?.dataset.cardId ? targetCard.getBoundingClientRect() : null;
                 const candidate = targetCard?.dataset.cardId && targetZone && bounds && !nonStackableZones.includes(targetZone)
-                  ? { centerX: bounds.left + bounds.width / 2, centerY: bounds.top + bounds.height / 2, holdX: event.clientX, holdY: event.clientY, targetCardId: targetCard.dataset.cardId, targetZone }
+                  ? { centerX: bounds.left + bounds.width / 2, centerY: bounds.top + bounds.height / 2, holdX: event.clientX, holdY: event.clientY, startedAt: performance.now(), targetCardId: targetCard.dataset.cardId, targetZone }
                   : null;
                 const previous = stackPreviewCandidate.current;
                 const sameCandidate = Boolean(candidate && previous && candidate.targetCardId === previous.targetCardId && candidate.targetZone === previous.targetZone);
@@ -1330,7 +1355,7 @@ function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, o
                   stackPreviewCandidate.current = candidate;
                   stackProgressTimer.current = window.setTimeout(() => {
                     const current = stackPreviewCandidate.current;
-                    if (current) setStackHoldProgress({ x: current.holdX, y: current.holdY });
+                    if (current) setStackHoldProgress({ point: { x: current.holdX, y: current.holdY }, startedAt: current.startedAt, totalDurationMs: STACK_HOLD_MENU_MS });
                     stackProgressTimer.current = null;
                   }, STACK_HOLD_PROGRESS_MS);
                   stackPreviewTimer.current = window.setTimeout(() => {
@@ -1402,9 +1427,9 @@ function DeckPile({ active, board, disabled, owner, onOptions, onDraw, onMove, o
           <b>{countZoneCards(board.players[owner].deck)}</b>
         </button>
       </aside>
-      <LongPressProgress durationMs={readLongPressMs()} label="山札の長押し操作が有効になるまでの残り時間" point={longPressProgress} />
+      <LongPressProgress label="山札の長押し操作が有効になるまでの残り時間" meter={longPressProgress} />
       <CardDragPreview preview={dragPreview} />
-      <StackHoldProgress point={stackHoldProgress} />
+      <StackHoldProgress meter={stackHoldProgress} />
       {stackPreview ? <StackDestinationMarkingMenu menu={{ pointerX: dragPreview?.x ?? stackPreview.centerX, pointerY: dragPreview?.y ?? stackPreview.centerY, x: stackPreview.centerX, y: stackPreview.centerY }} /> : null}
     </>
   );
@@ -1706,7 +1731,7 @@ function RemoteCardInteractionIndicator({ interaction }: { interaction: RemoteCa
   return <span className={`remote-operation-label remote-operation-${interaction.player}`} style={position}>{interaction.displayName}が操作中</span>;
 }
 
-export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "original", opponentDeckName, opponentDeckFormat, initialState, externalState, localPlayer, onStateChange, onCardInteractionChange, onNonScrollInteraction, onShuffleRequest, onYobinionRequest, onInspectionRequest, onDeckInspectionRequest, onEffectWarningRequest, readOnly = false, remoteCardInteraction = null, revealHiddenCards = false, initialOpponentCollapsed = true, initialOpponentAuxiliaryZone = "hand", resetLabel, onResetRequest, canExternalUndo = false, canExternalRedo = false, onExternalUndo, onExternalRedo, externalHistoryBusy = false, onlineReveal = false }: { cards: DeckCard[]; opponentCards?: DeckCard[]; deckName: string; deckFormat?: string; opponentDeckName?: string; opponentDeckFormat?: string; initialState: BoardState; externalState?: BoardState; localPlayer?: PlayerId; onStateChange?: (state: BoardState) => void; onCardInteractionChange?: (signal: CardInteractionSignal) => void; onNonScrollInteraction?: () => void; onShuffleRequest?: (request: ServerShuffleRequest) => void; onYobinionRequest?: (request: ServerYobinionRequest) => void; onInspectionRequest?: (request: ServerInspectionRequest | null) => void; onDeckInspectionRequest?: (request: ServerDeckInspectionRequest) => Promise<CardInstance[] | null>; onEffectWarningRequest?: (request: ServerEffectWarningRequest) => void; readOnly?: boolean; remoteCardInteraction?: RemoteCardInteraction | null; revealHiddenCards?: boolean; initialOpponentCollapsed?: boolean; initialOpponentAuxiliaryZone?: PlayZone | null; resetLabel?: string; onResetRequest?: () => void; canExternalUndo?: boolean; canExternalRedo?: boolean; onExternalUndo?: () => void; onExternalRedo?: () => void; externalHistoryBusy?: boolean; onlineReveal?: boolean }) {
+export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "original", opponentDeckName, opponentDeckFormat, initialState, externalState, localPlayer, onStateChange, onCardInteractionChange, onNonScrollInteraction, onShuffleRequest, onYobinionRequest, onInspectionRequest, onDeckInspectionRequest, onEffectWarningRequest, readOnly = false, remoteCardInteraction = null, revealHiddenCards = false, initialOpponentCollapsed = true, initialOpponentAuxiliaryZone = "hand", resetLabel, onResetRequest, canExternalUndo = false, canExternalRedo = false, onExternalUndo, onExternalRedo, externalHistoryBusy = false, onlineReveal = false, currentUserId, initialLongPressMs = LONG_PRESS_DEFAULT_MS }: { cards: DeckCard[]; opponentCards?: DeckCard[]; deckName: string; deckFormat?: string; opponentDeckName?: string; opponentDeckFormat?: string; initialState: BoardState; externalState?: BoardState; localPlayer?: PlayerId; onStateChange?: (state: BoardState) => void; onCardInteractionChange?: (signal: CardInteractionSignal) => void; onNonScrollInteraction?: () => void; onShuffleRequest?: (request: ServerShuffleRequest) => void; onYobinionRequest?: (request: ServerYobinionRequest) => void; onInspectionRequest?: (request: ServerInspectionRequest | null) => void; onDeckInspectionRequest?: (request: ServerDeckInspectionRequest) => Promise<CardInstance[] | null>; onEffectWarningRequest?: (request: ServerEffectWarningRequest) => void; readOnly?: boolean; remoteCardInteraction?: RemoteCardInteraction | null; revealHiddenCards?: boolean; initialOpponentCollapsed?: boolean; initialOpponentAuxiliaryZone?: PlayZone | null; resetLabel?: string; onResetRequest?: () => void; canExternalUndo?: boolean; canExternalRedo?: boolean; onExternalUndo?: () => void; onExternalRedo?: () => void; externalHistoryBusy?: boolean; onlineReveal?: boolean; currentUserId: string; initialLongPressMs?: number }) {
   const [board, setBoard] = useState<BoardState>(() => resolvePlaytestInitialState(initialState, externalState));
   const [past, setPast] = useState<BoardState[]>([]);
   const [future, setFuture] = useState<BoardState[]>([]);
@@ -1719,7 +1744,18 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const [menu, setMenu] = useState<{ owner: PlayerId; zone: PlayZone; card: CardInstance; individual?: boolean } | null>(null);
   const [markingMenu, setMarkingMenu] = useState<MarkingMenuState | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [longPressMs, setLongPressMs] = useState(460);
+  const [longPressMs, setLongPressMs] = useState(() => normalizeLongPressMs(initialLongPressMs));
+  const [longPressSaveStatus, setLongPressSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [longPressSaveError, setLongPressSaveError] = useState<string | null>(null);
+  const [supabase] = useState(() => createBrowserSupabaseClient());
+  const confirmedLongPressMs = useRef(longPressMs);
+  const currentLongPressMs = useRef(longPressMs);
+  currentLongPressMs.current = longPressMs;
+  const longPressChangeVersion = useRef(0);
+  const savedLongPressVersion = useRef(0);
+  const longPressSaveInFlight = useRef(false);
+  const pendingLongPressSave = useRef<{ value: number; version: number } | null>(null);
+  const longPressSaveTimer = useRef<number | null>(null);
   const [pendingDeckMove, setPendingDeckMove] = useState<{ cardId: string; from: PlayZone; owner: PlayerId; x: number; y: number; height: number; individual?: boolean } | null>(null);
   const [pendingStackMove, setPendingStackMove] = useState<{ cardId: string; from: PlayZone; owner: PlayerId; targetCardId: string; targetZone: PlayZone; individual?: boolean } | null>(null);
   const [pendingDestinationStack, setPendingDestinationStack] = useState<PendingDestinationStack | null>(null);
@@ -1744,7 +1780,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const [pendingZoneCardChoice, setPendingZoneCardChoice] = useState<{ targetCardId: string; targetZone: PlayZone } | null>(null);
   const [openedStack, setOpenedStack] = useState<{ owner: PlayerId; zone: PlayZone; stackId: string } | null>(null);
   const [dynamicBottomClearance, setDynamicBottomClearance] = useState(0);
-  const [otherBranchProgress, setOtherBranchProgress] = useState<{ x: number; y: number } | null>(null);
+  const [otherBranchProgress, setOtherBranchProgress] = useState<LongPressMeterState | null>(null);
   const markingPointerFrame = useRef<number | null>(null);
   const queuedMarkingPointer = useRef<{ x: number; y: number } | null>(null);
   const otherBranchTimer = useRef<number | null>(null);
@@ -1755,6 +1791,85 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const visibilityPlayer = localPlayer ?? perspective;
   const deckNames: Record<PlayerId, string> = { p1: deckName, p2: opponentDeckName ?? deckName };
   const deckFormats: Record<PlayerId, string> = { p1: deckFormat, p2: opponentDeckFormat ?? deckFormat };
+
+  const persistLongPressSetting = useCallback(async (value: number, version: number) => {
+    pendingLongPressSave.current = { value, version };
+    if (longPressSaveInFlight.current) return;
+    longPressSaveInFlight.current = true;
+    try {
+      while (pendingLongPressSave.current) {
+        const request = pendingLongPressSave.current;
+        pendingLongPressSave.current = null;
+        if (!supabase) {
+          if (request.version === longPressChangeVersion.current) {
+            currentLongPressMs.current = confirmedLongPressMs.current;
+            savedLongPressVersion.current = request.version;
+            setLongPressMs(confirmedLongPressMs.current);
+            setLongPressSaveStatus("error");
+            setLongPressSaveError("長押し時間を保存できませんでした。接続を確認して、もう一度お試しください。");
+          }
+          continue;
+        }
+        let saveResult;
+        try {
+          saveResult = await supabase
+            .from("profiles")
+            .update({ long_press_ms: request.value, updated_at: new Date().toISOString() })
+            .eq("user_id", currentUserId)
+            .select("long_press_ms")
+            .maybeSingle();
+        } catch {
+          saveResult = { data: null, error: { message: "request_failed" } };
+        }
+        if (saveResult.error || !saveResult.data) {
+          let currentProfile = null;
+          try {
+            const result = await supabase
+              .from("profiles")
+              .select("long_press_ms")
+              .eq("user_id", currentUserId)
+              .maybeSingle();
+            currentProfile = result.data;
+          } catch {
+            currentProfile = null;
+          }
+        if (currentProfile) confirmedLongPressMs.current = normalizeLongPressMs(currentProfile.long_press_ms);
+        if (request.version === longPressChangeVersion.current) {
+          currentLongPressMs.current = confirmedLongPressMs.current;
+          savedLongPressVersion.current = request.version;
+          setLongPressMs(confirmedLongPressMs.current);
+          setLongPressSaveStatus("error");
+          setLongPressSaveError("長押し時間を保存できませんでした。接続を確認して、もう一度お試しください。");
+        }
+        continue;
+        }
+        const savedValue = normalizeLongPressMs(saveResult.data.long_press_ms);
+        confirmedLongPressMs.current = savedValue;
+        if (request.version === longPressChangeVersion.current) {
+          currentLongPressMs.current = savedValue;
+          savedLongPressVersion.current = request.version;
+          setLongPressMs(savedValue);
+          setLongPressSaveStatus("saved");
+          setLongPressSaveError(null);
+        }
+      }
+    } finally {
+      longPressSaveInFlight.current = false;
+    }
+  }, [currentUserId, supabase]);
+  const changeLongPressSetting = useCallback((rawValue: number) => {
+    const value = normalizeLongPressMs(rawValue);
+    const version = ++longPressChangeVersion.current;
+    currentLongPressMs.current = value;
+    setLongPressMs(value);
+    setLongPressSaveStatus("saving");
+    setLongPressSaveError(null);
+    if (longPressSaveTimer.current !== null) window.clearTimeout(longPressSaveTimer.current);
+    longPressSaveTimer.current = window.setTimeout(() => {
+      longPressSaveTimer.current = null;
+      void persistLongPressSetting(value, version);
+    }, 250);
+  }, [persistLongPressSetting]);
 
   useEffect(() => {
     if (externalState) setBoard(resolvePlaytestInitialState(externalState));
@@ -1775,7 +1890,36 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     document.addEventListener("pointerdown", clearOnNextScreenPointer, true);
     return () => document.removeEventListener("pointerdown", clearOnNextScreenPointer, true);
   }, [board.inspection?.cardId, board.inspection?.viewer, controlledPlayer]);
-  useEffect(() => setLongPressMs(readLongPressMs()), []);
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel(`profile-settings:${currentUserId}`, { config: { private: true } })
+      .on("broadcast", { event: "long_press_ms_updated" }, ({ payload }) => {
+        if (longPressChangeVersion.current !== savedLongPressVersion.current
+          || longPressSaveTimer.current !== null
+          || longPressSaveInFlight.current
+          || pendingLongPressSave.current) return;
+        const incoming = Number(payload?.long_press_ms);
+        if (!Number.isFinite(incoming)) return;
+        const normalized = normalizeLongPressMs(incoming);
+        longPressChangeVersion.current += 1;
+        savedLongPressVersion.current = longPressChangeVersion.current;
+        confirmedLongPressMs.current = normalized;
+        currentLongPressMs.current = normalized;
+        setLongPressMs(normalized);
+        setLongPressSaveStatus("saved");
+        setLongPressSaveError(null);
+      })
+      .subscribe();
+    return () => {
+      if (longPressSaveTimer.current !== null) {
+        window.clearTimeout(longPressSaveTimer.current);
+        longPressSaveTimer.current = null;
+        void persistLongPressSetting(currentLongPressMs.current, longPressChangeVersion.current);
+      }
+      void supabase.removeChannel(channel);
+    };
+  }, [currentUserId, persistLongPressSetting, supabase]);
   useEffect(() => () => {
     if (markingPointerFrame.current !== null) window.cancelAnimationFrame(markingPointerFrame.current);
     if (otherBranchTimer.current !== null) window.clearTimeout(otherBranchTimer.current);
@@ -2227,7 +2371,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
         const selected = current.branch === null ? selectCurrentMarkingItem(current, point.x, point.y) : null;
         if (selected?.action === "other") {
           if (otherBranchTimer.current === null) {
-            setOtherBranchProgress({ x: point.x, y: point.y });
+            setOtherBranchProgress({ point: { x: point.x, y: point.y }, startedAt: performance.now(), totalDurationMs: OTHER_BRANCH_HOLD_MS });
             otherBranchTimer.current = window.setTimeout(() => {
               otherBranchTimer.current = null;
               setOtherBranchProgress(null);
@@ -2541,6 +2685,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   }
 
   return (
+    <LongPressDurationContext.Provider value={longPressMs}>
     <div className={`playtest-board rough-battle-board ${opponentCollapsed ? "opponent-collapsed" : ""} ${opponentButtonsCollapsed ? "opponent-buttons-collapsed" : ""} ${!opponentCollapsed && activeAuxiliaryZones[displayPlayers[0]] === "hand" ? "opponent-hand-open" : ""} ${yobinionSourceMode ? "source-selection-mode" : ""}`} onClick={(event) => { if (selectionMode && !(event.target as HTMLElement).closest(".play-card,button,.marking-menu,.play-modal")) exitMultiSelect(); }} onContextMenu={(event) => event.preventDefault()} onPointerCancelCapture={() => { if (interactionCardId.current) onCardInteractionChange?.({ active: false, cardId: interactionCardId.current }); interactionCardId.current = null; interactionScrolled.current = false; }} onPointerDownCapture={(event) => { interactionScrolled.current = false; const cardId = (event.target as HTMLElement).closest<HTMLElement>("[data-card-id]")?.dataset.cardId; if (!cardId) return; interactionCardId.current = cardId; onCardInteractionChange?.({ active: true, cardId }); }} onPointerUpCapture={(event) => { if (interactionCardId.current) onCardInteractionChange?.({ active: false, cardId: interactionCardId.current }); interactionCardId.current = null; if (!interactionScrolled.current && !(event.target as HTMLElement).closest(".play-notification,.opponent-operation-notice")) dismissInteractionNotifications(); interactionScrolled.current = false; }} onScrollCapture={() => { interactionScrolled.current = true; }}>
       <PageScrollRail />
       <RemoteCardInteractionIndicator interaction={remoteCardInteraction} />
@@ -2565,8 +2710,8 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       {detailCard && typeof document !== "undefined" ? createPortal(<div className="play-modal-backdrop card-detail-modal-backdrop" role="presentation" onClick={() => setDetail(null)}><section aria-label={`${detailCard.name}のカード詳細`} aria-modal="true" className="play-modal card-detail-modal" onClick={(event) => event.stopPropagation()} role="dialog"><button aria-label="カード詳細を閉じる" className="card-detail-modal-close" onClick={() => setDetail(null)} type="button">×</button><div className="card-detail-modal-content"><p className="eyebrow">カード詳細</p><h2>{detailCard.name}</h2><CardVisualStage className="card-detail-viewport"><CardArtwork imageUrl={detailCard.imageUrl} name={detailCard.name} sizes="(max-width:700px) 90vw, 384px" /></CardVisualStage>{detailMarkers.length > 0 ? <div aria-label="適用中のマーカー" className="detail-marker-list" role="list">{orderedDetailMarkers.filter((marker) => detailMarkers.includes(marker)).map((marker) => { const label = markerLabels[marker] ?? (marker === "shield_force" ? "シールドフォース" : "召喚酔い"); const count = detailMarkers.filter((item) => item === marker).length; return <div className="detail-marker" key={marker} role="listitem"><img alt="" height={28} src={marker === "shield_force" ? "/markers/shield-force.svg" : `/markers/preview/${markerAssetNames[marker]}.svg`} width={28} /><span>{label}{count > 1 ? ` ×${count}` : ""}</span></div>; })}</div> : null}</div></section></div>, document.body) : null}
       {menu ? <div className="play-modal-backdrop" role="presentation" onClick={() => setMenu(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><p className="eyebrow">操作</p><h2>{menu.zone === "deck" ? "山札" : menu.card.name}</h2>{menu.zone === "deck" ? <div className="play-option-grid"><button onClick={() => { draw(menu.owner); setMenu(null); }} type="button">ドロー</button><button onClick={() => { shuffleDeck(menu.owner); setMenu(null); }} type="button">シャッフル</button><button disabled type="button">ヨビニオン（準備中）</button><button disabled type="button">メクレイド（準備中）</button></div> : <div className="play-option-grid">{visibleZones.filter((zone) => getMoveRule(menu.zone, zone) !== "prohibited").map((zone) => <button key={zone} onClick={() => moveCard(menu.owner, menu.zone, menu.card.instanceId, zone, undefined, undefined, menu.individual)} type="button">{zoneLabels[zone]}へ</button>)}</div>}<button className="secondary-button" onClick={() => setMenu(null)} type="button">キャンセル</button></section></div> : null}
       {markingMenu ? <MarkingMenu menu={markingMenu} onAction={markingMenuAction} onClose={() => { clearOtherBranchTimer(); setMarkingMenu(null); }} onMove={(zone) => { moveCard(markingMenu.owner, markingMenu.zone, markingMenu.card.instanceId, zone, undefined, undefined, markingMenu.individual); setMarkingMenu(null); }} /> : null}
-      <LongPressProgress durationMs={OTHER_BRANCH_HOLD_MS} label="その他の操作パネルを開くまでの残り時間" point={otherBranchProgress} />
-      {settingsOpen ? <div className="play-modal-backdrop" role="presentation" onClick={() => setSettingsOpen(false)}><section aria-modal="true" className="play-modal play-settings-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>操作設定</h2><label>長押し反応時間 <strong>{longPressMs}ms</strong><input max={LONG_PRESS_MAX_MS} min={LONG_PRESS_MIN_MS} onChange={(event) => setLongPressMs(saveLongPressMs(Number(event.target.value)))} step={20} type="range" value={longPressMs} /></label><button className="button" onClick={() => setSettingsOpen(false)} type="button">閉じる</button></section></div> : null}
+      <LongPressProgress label="その他の操作パネルを開くまでの残り時間" meter={otherBranchProgress} />
+      {settingsOpen ? <div className="play-modal-backdrop" role="presentation" onClick={() => setSettingsOpen(false)}><section aria-modal="true" className="play-modal play-settings-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>操作設定</h2><label>長押し反応時間 <strong>{longPressMs}ms</strong><input max={LONG_PRESS_MAX_MS} min={LONG_PRESS_MIN_MS} onChange={(event) => changeLongPressSetting(Number(event.target.value))} step={LONG_PRESS_STEP_MS} type="range" value={longPressMs} /></label><small aria-live="polite" role="status">{longPressSaveStatus === "saving" ? "保存中…" : longPressSaveStatus === "saved" ? "保存済み" : ""}</small>{longPressSaveError ? <p className="notice error" role="alert">{longPressSaveError}</p> : null}<button className="button" onClick={() => setSettingsOpen(false)} type="button">閉じる</button></section></div> : null}
       {externalZonePickerOwner ? <div className="play-modal-backdrop" role="presentation" onClick={() => setExternalZonePickerOwner(null)}><section aria-modal="true" className="play-modal external-zone-picker" onClick={(event) => event.stopPropagation()} role="dialog"><h2>外部エリアを選択</h2><div className="play-option-grid">{externalZones.map((zone) => <button key={zone} onClick={() => { selectAuxiliaryZone(externalZonePickerOwner, zone); setExternalZonePickerOwner(null); }} type="button"><strong>{zoneLabels[zone]}</strong><span>{countZoneCards(board.players[externalZonePickerOwner][zone])}枚</span></button>)}</div><button className="secondary-button" onClick={() => setExternalZonePickerOwner(null)} type="button">キャンセル</button></section></div> : null}
       {pendingDeckMove ? <div className="deck-direct-choice" style={{ left: pendingDeckMove.x, top: pendingDeckMove.y }}><button className="top" onClick={() => { commitMove(pendingDeckMove.owner, pendingDeckMove.from, pendingDeckMove.cardId, "deck", "top", pendingDeckMove.individual); setPendingDeckMove(null); setPendingMoveSelection(null); }} type="button">山札の上</button><button className="bottom" onClick={() => { commitMove(pendingDeckMove.owner, pendingDeckMove.from, pendingDeckMove.cardId, "deck", "bottom", pendingDeckMove.individual); setPendingDeckMove(null); setPendingMoveSelection(null); }} style={{ top: pendingDeckMove.height }} type="button">山札の下</button></div> : null}
       {pendingDestinationStack ? <StackDestinationMarkingMenu menu={pendingDestinationStack} /> : null}
@@ -2612,6 +2757,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       {privateZoneConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setPrivateZoneConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に見ますか？</h2><p>相手の非公開ゾーンを閲覧すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = privateZoneConfirm; if (onInspectionRequest) onInspectionRequest({ owner: pending.owner, cardId: pending.card.instanceId }); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { cardId: pending.card.instanceId, owner: pending.owner, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: `相手があなたの${zoneLabels[pending.zone]}を確認しました`, createdAt: Date.now() }] }; }); setPrivateZoneConfirm(null); }} type="button">見る</button><button className="secondary-button" onClick={() => setPrivateZoneConfirm(null)} type="button">キャンセル</button></section></div> : null}
       {inspectionConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setInspectionConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に行いますか？</h2><p>非公開カードを確認すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = inspectionConfirm; if (onInspectionRequest) onInspectionRequest(pending); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { ...pending, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: "相手が非公開カードを確認しました", createdAt: Date.now() }] }; }); setInspectionConfirm(null); }} type="button">YES</button><button className="secondary-button" onClick={() => setInspectionConfirm(null)} type="button">NO</button></section></div> : null}
     </div>
+    </LongPressDurationContext.Provider>
   );
 }
 

@@ -151,7 +151,7 @@ export function isWithinHorizontalScrollAngle(deltaX: number, deltaY: number) {
     && Math.abs(deltaY) <= Math.abs(deltaX) * Math.tan(ZONE_SCROLL_ANGLE_DEGREES * Math.PI / 180);
 }
 
-export const STACK_HOLD_PROGRESS_MS = 300;
+export const STACK_HOLD_PROGRESS_MS = 250;
 export const STACK_HOLD_MENU_MS = 500;
 
 export function stackHoldPhase(elapsedMs: number) {
