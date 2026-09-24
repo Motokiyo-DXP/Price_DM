@@ -5,6 +5,7 @@ import { pickCardPrintImageKey } from "@/lib/card-print-order";
 import { initialOnlineBoard } from "@/lib/playfield-board";
 import { createAuthServerSupabaseClient } from "@/lib/supabase-auth";
 import { loadLocalCardMetadata } from "@/lib/local-card-metadata";
+import { LONG_PRESS_DEFAULT_MS } from "@/lib/play-input-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +24,19 @@ export default async function PlaytestPage({
   if (!supabase) redirect("/login");
   const { data: claims, error: authError } = await supabase.auth.getClaims();
   if (authError || typeof claims?.claims?.sub !== "string") redirect("/login");
+  const userId = claims.claims.sub;
   if (source === "public" && !opponentDeckId) redirect(`/playtest/${deckId}/opponent?source=public`);
 
   const playerDeckQuery = supabase
     .from("decks")
     .select("id, name, format, deck_cards(canonical_card_id, card_print_id, quantity, sort_order, canonical_cards(name, cost, civilizations, card_types, card_prints(id, image_key, product_name, card_number, official_card_id)))")
     .eq("id", deckId);
-  const { data: deck, error } = await (source === "public"
-    ? playerDeckQuery.eq("visibility", "public")
-    : playerDeckQuery.eq("owner_id", claims.claims.sub)).single();
+  const [{ data: deck, error }, { data: profile }] = await Promise.all([
+    (source === "public"
+      ? playerDeckQuery.eq("visibility", "public")
+      : playerDeckQuery.eq("owner_id", userId)).single(),
+    supabase.from("profiles").select("long_press_ms").eq("user_id", userId).maybeSingle(),
+  ]);
   if (error || !deck) notFound();
 
   const { data: opponentDeck, error: opponentError } = opponentDeckId
@@ -76,7 +81,7 @@ export default async function PlaytestPage({
       <div className="playtest-page-heading">
         <p className="deck-versus"><span>{deck.name}</span><b>VS</b><span>{opponentDeck.name}</span></p>
       </div>
-      <PlaytestBoard cards={cards} deckFormat={deck.format} deckName={deck.name} initialState={initialState} opponentCards={opponentCards} opponentDeckFormat={opponentDeck.format} opponentDeckName={opponentDeck.name} />
+      <PlaytestBoard cards={cards} currentUserId={userId} deckFormat={deck.format} deckName={deck.name} initialLongPressMs={profile?.long_press_ms ?? LONG_PRESS_DEFAULT_MS} initialState={initialState} opponentCards={opponentCards} opponentDeckFormat={opponentDeck.format} opponentDeckName={opponentDeck.name} />
     </section>
   );
 }

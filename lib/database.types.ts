@@ -98,6 +98,7 @@ export type Database = {
           avatar_url: string | null
           deck_list_sort_mode: string
           unfiled_folder_sort_order: number
+          long_press_ms: number
           friend_code: string
           created_at: string
           updated_at: string
@@ -108,6 +109,7 @@ export type Database = {
           avatar_url?: string | null
           deck_list_sort_mode?: string
           unfiled_folder_sort_order?: number
+          long_press_ms?: number
           friend_code: string
           created_at?: string
           updated_at?: string
@@ -118,6 +120,7 @@ export type Database = {
           avatar_url?: string | null
           deck_list_sort_mode?: string
           unfiled_folder_sort_order?: number
+          long_press_ms?: number
           friend_code?: string
           created_at?: string
           updated_at?: string
