@@ -410,24 +410,26 @@ export function moveCardsBetweenZones(
     && moving.every((card) => card.stackId === movingStackId)
     && player[from].filter((card) => card.stackId === movingStackId).every((card) => ids.has(card.instanceId)),
   );
+  if (preservesCompleteStack) moving.sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
   const orders = typeof current.shieldPlacementOrder === "number"
     ? { p1: current.shieldPlacementOrder, p2: current.shieldPlacementOrder }
     : current.shieldPlacementOrder;
   const moved = moving.map((card, index) => {
     const defaults = moveDefaults(from, to, { turn: current.turn, shieldPlacementOrder: orders[owner] });
     const unbundleInHand = to === "hand" && Boolean(card.stackId);
+    const unbundleInDeck = to === "deck" && Boolean(card.stackId);
     return {
       ...card,
-      face: unbundleInHand ? "face_up" as CardFace : defaults.face,
+      face: unbundleInHand || unbundleInDeck ? "face_up" as CardFace : defaults.face,
       tapped: to === "mana" && isMulticolorCard(card),
       shieldMarker: defaults.shieldMarker ? { ...defaults.shieldMarker, order: orders[owner] + index } : null,
       markers: addSummoningSickness && to === "battle" && from !== "battle"
         ? ["summoning_sickness" as CardMarker]
         : [],
-      stackId: preservesCompleteStack && !unbundleInHand ? card.stackId : null,
-      stackOrder: preservesCompleteStack && !unbundleInHand ? card.stackOrder : null,
-      stackLayout: preservesCompleteStack && !unbundleInHand ? card.stackLayout : null,
-      stackPlacement: preservesCompleteStack && !unbundleInHand ? card.stackPlacement : null,
+      stackId: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackId : null,
+      stackOrder: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackOrder : null,
+      stackLayout: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackLayout : null,
+      stackPlacement: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackPlacement : null,
       attachedToStackId: null,
     };
   });
