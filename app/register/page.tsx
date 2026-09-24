@@ -4,12 +4,13 @@ import {
   FormEvent,
   KeyboardEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
 import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
-import { normalizeShopSearch } from "@/lib/search-normalization";
+import { normalizeJapaneseSearch, normalizeShopSearch } from "@/lib/search-normalization";
 import {
   mapRegistrationCardOptions,
   mapRegistrationCardPrints,
@@ -36,6 +37,7 @@ import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
 import { CardArtwork } from "@/components/card-artwork";
 import { getCardImageUrl } from "@/lib/card-image";
+import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 
 type SearchMode = "broad" | "precise";
 type RegistrationAccess = "checking" | "login_required" | "ready";
@@ -103,14 +105,17 @@ function registrationErrorMessage(code: string) {
 export default function RegisterPage() {
   const [games, setGames] = useState<RegistrationGame[]>([]);
   const [gameSlug, setGameSlug] = useState("duel-masters");
-  const [cardQuery, setCardQuery] = useState("");
+  const cardSearchInput = useImeRealtimeInput();
+  const cardQuery = cardSearchInput.value;
   const [cardOptions, setCardOptions] = useState<RegistrationCardOption[]>([]);
   const [selectedCard, setSelectedCard] = useState<RegistrationCardOption | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [cardPrints, setCardPrints] = useState<RegistrationCardPrint[]>([]);
   const [selectedPrintId, setSelectedPrintId] = useState("");
   const [loadingPrints, setLoadingPrints] = useState(false);
-  const [shopQuery, setShopQuery] = useState("");
+  const shopSearchInput = useImeRealtimeInput();
+  const shopQuery = shopSearchInput.value;
+  const [shopQueryCompositionRevision, setShopQueryCompositionRevision] = useState(0);
   const [shopPrefecture, setShopPrefecture] = useState("");
   const [shopOptions, setShopOptions] = useState<RegistrationShopOption[]>([]);
   const [shopTotalCount, setShopTotalCount] = useState(0);
@@ -134,6 +139,12 @@ export default function RegisterPage() {
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [observedOn] = useState(todayForDateInput);
+  const normalizedCardQuery = normalizeJapaneseSearch(cardQuery);
+  const normalizedShopQuery = normalizeShopSearch(shopQuery);
+  const searchCardQuery = useMemo(() => cardQuery.trim(), [normalizedCardQuery]);
+  const searchShopQuery = useMemo(() => shopQuery.trim(), [normalizedShopQuery]);
+  const shopSearchIdentity = useRef("");
+  shopSearchIdentity.current = `${normalizedShopQuery}|${shopPrefecture}|${selectedShop?.id ?? ""}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -192,7 +203,7 @@ export default function RegisterPage() {
     if (shop === null) return;
 
     setSelectedShop(shop);
-    setShopQuery(shop.name);
+    shopSearchInput.setValue(shop.name);
   }, []);
 
   useEffect(() => {
@@ -237,7 +248,7 @@ export default function RegisterPage() {
       const matchingGame = games.find((game) => game.id === data.game_id);
       if (matchingGame) setGameSlug(matchingGame.slug);
       setSelectedCard({ id: data.id, name: data.name, print_count: 0 });
-      setCardQuery(data.name);
+      cardSearchInput.setValue(data.name);
       setSuggestionsOpen(false);
       setSystemError(null);
     }
@@ -250,7 +261,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const query = cardQuery.trim();
+    const query = searchCardQuery;
 
     if (!gameSlug || query.length === 0) {
       setCardOptions([]);
@@ -291,11 +302,16 @@ export default function RegisterPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [cardQuery, gameSlug, searchMode]);
+  }, [searchCardQuery, gameSlug, searchMode]);
 
   useEffect(() => {
     let cancelled = false;
-    const query = shopQuery.trim();
+    const query = searchShopQuery;
+
+    if (shopSearchInput.isComposing()) {
+      setSearchingShops(false);
+      return;
+    }
 
     if ((query.length === 0 && !shopPrefecture) || selectedShop) {
       setShopOptions([]);
@@ -339,10 +355,11 @@ export default function RegisterPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [selectedShop, shopPrefecture, shopQuery]);
+  }, [selectedShop, shopPrefecture, searchShopQuery, shopQueryCompositionRevision]);
 
   async function loadMoreShops() {
     if (searchingShops || shopOptions.length >= shopTotalCount) return;
+    const requestIdentity = shopSearchIdentity.current;
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
       setSystemError("Supabaseの接続情報が設定されていません。");
@@ -356,6 +373,7 @@ export default function RegisterPage() {
       p_prefecture: shopPrefecture || undefined,
       p_query: normalizeShopSearch(shopQuery.trim()),
     });
+    if (shopSearchIdentity.current !== requestIdentity) return;
     setSearchingShops(false);
     if (error) {
       setSystemError("承認済み店舗を追加で読み込めませんでした。");
@@ -421,17 +439,21 @@ export default function RegisterPage() {
   function chooseCard(card: RegistrationCardOption) {
     setSelectedImageUrl(null);
     setSelectedCard(card);
-    setCardQuery(card.name);
+    cardSearchInput.setValue(card.name);
     setSuggestionsOpen(false);
   }
 
   function chooseShop(shop: RegistrationShopOption) {
     setSelectedShop(shop);
-    setShopQuery(shop.name);
+    shopSearchInput.setValue(shop.name);
     setShopSuggestionsOpen(false);
   }
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (isImeCompositionEnter(event, cardSearchInput.isComposing())) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === "Escape") {
       setSuggestionsOpen(false);
       return;
@@ -460,6 +482,10 @@ export default function RegisterPage() {
   }
 
   function handleShopKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (isImeCompositionEnter(event, shopSearchInput.isComposing())) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === "Escape") {
       setShopSuggestionsOpen(false);
       return;
@@ -478,13 +504,9 @@ export default function RegisterPage() {
       setActiveShopOptionIndex((current) =>
         current <= 0 ? shopOptions.length - 1 : current - 1,
       );
-    } else if (
-      event.key === "Enter" &&
-      shopSuggestionsOpen &&
-      activeShopOptionIndex >= 0
-    ) {
+    } else if (event.key === "Enter" && shopSuggestionsOpen) {
       event.preventDefault();
-      chooseShop(shopOptions[activeShopOptionIndex]);
+      chooseShop(shopOptions[activeShopOptionIndex >= 0 ? activeShopOptionIndex : 0]);
     }
   }
 
@@ -559,7 +581,7 @@ export default function RegisterPage() {
     }
 
     if (candidate.status === "already_approved") {
-      setShopQuery(name);
+      shopSearchInput.setValue(name);
       setSelectedShop(null);
       setShopSuggestionsOpen(true);
       setCandidateFeedback({
@@ -656,7 +678,7 @@ export default function RegisterPage() {
     }
 
     form.reset();
-    setCardQuery("");
+    cardSearchInput.setValue("");
     setCardOptions([]);
     setSelectedCard(null);
     setCardPrints([]);
@@ -722,7 +744,7 @@ export default function RegisterPage() {
             onChange={(event) => {
               setGameSlug(event.target.value);
               setSelectedCard(null);
-              setCardQuery("");
+              cardSearchInput.setValue("");
             }}
             disabled={games.length === 0}
           >
@@ -792,10 +814,12 @@ export default function RegisterPage() {
             onFocus={() => setSuggestionsOpen(true)}
             onKeyDown={handleCardKeyDown}
             onChange={(event) => {
-              setCardQuery(event.target.value);
+              cardSearchInput.onChange(event);
               setSelectedCard(null);
               setSuggestionsOpen(true);
             }}
+            onCompositionStart={cardSearchInput.onCompositionStart}
+            onCompositionEnd={cardSearchInput.onCompositionEnd}
             required
           />
 
@@ -862,9 +886,14 @@ export default function RegisterPage() {
             onFocus={() => setShopSuggestionsOpen(true)}
             onKeyDown={handleShopKeyDown}
             onChange={(event) => {
-              setShopQuery(event.target.value);
+              shopSearchInput.onChange(event);
               setSelectedShop(null);
               setShopSuggestionsOpen(true);
+            }}
+            onCompositionStart={shopSearchInput.onCompositionStart}
+            onCompositionEnd={(event) => {
+              shopSearchInput.onCompositionEnd(event);
+              setShopQueryCompositionRevision((current) => current + 1);
             }}
             required
           />
@@ -942,6 +971,9 @@ export default function RegisterPage() {
                 salePriceIsComposing.current = false;
                 setSalePriceInput(normalizePriceInput(event.currentTarget.value));
               }}
+              onKeyDown={(event) => {
+                if (isImeCompositionEnter(event, salePriceIsComposing.current)) event.preventDefault();
+              }}
               onChange={(event) => {
                 setSalePriceInput(
                   salePriceIsComposing.current
@@ -969,6 +1001,9 @@ export default function RegisterPage() {
               onCompositionEnd={(event) => {
                 buyPriceIsComposing.current = false;
                 setBuyPriceInput(normalizePriceInput(event.currentTarget.value));
+              }}
+              onKeyDown={(event) => {
+                if (isImeCompositionEnter(event, buyPriceIsComposing.current)) event.preventDefault();
               }}
               onChange={(event) => {
                 setBuyPriceInput(
