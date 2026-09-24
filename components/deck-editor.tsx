@@ -12,6 +12,8 @@ import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { DeckAnalysis } from "@/components/deck-analysis";
 import { MAX_MAIN_DECK_CARDS } from "@/lib/deck-validation";
+import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
+import { normalizeJapaneseSearch } from "@/lib/search-normalization";
 
 type ImageOption = { printId: number; url: string };
 type SearchCard = { id: number; name: string; name_kana: string | null; print_count: number; usage_count?: number; cost?: number | null; civilizations?: string[]; cardTypes?: string[]; imageUrl: string | null; imageOptions: ImageOption[]; productNames: string[]; cardNumbers: string[]; newestPrintId: number; hydrated?: boolean };
@@ -24,8 +26,8 @@ const SEARCH_PAGE_SIZE = 24;
 export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: DeckEditorInitialData; fallbackCosts?: Record<string, number> }) {
   const submitAction = useMemo(() => initialDeck ? updateDeckAction.bind(null, initialDeck.id) : createDeckAction, [initialDeck]);
   const [state, formAction, pending] = useActionState(submitAction, initialDeckActionState);
-  const [query, setQuery] = useState("");
-  const [isComposing, setIsComposing] = useState(false);
+  const cardSearchInput = useImeRealtimeInput();
+  const query = cardSearchInput.value;
   const [results, setResults] = useState<SearchCard[]>([]);
   const [cards, setCards] = useState<SelectedCard[]>(initialDeck?.cards ?? []);
   const [format, setFormat] = useState<DeckEditorInitialData["format"]>(initialDeck?.format ?? "original");
@@ -40,14 +42,16 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [sortOpen, setSortOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [productFilter, setProductFilter] = useState("");
-  const [productQuery, setProductQuery] = useState("");
+  const productSearchInput = useImeRealtimeInput();
+  const productQuery = productSearchInput.value;
+  const cardNumberSearchInput = useImeRealtimeInput();
+  const cardNumberFilter = cardNumberSearchInput.value;
   const [productCodeByName, setProductCodeByName] = useState<Record<string, string[]>>({});
   const [allProductNames, setAllProductNames] = useState<string[]>([]);
   const [allCardTypes, setAllCardTypes] = useState<string[]>([]);
   const [allCosts, setAllCosts] = useState<number[]>([]);
   const [filterOptionsError, setFilterOptionsError] = useState(false);
   const [productListOpen, setProductListOpen] = useState(false);
-  const [cardNumberFilter, setCardNumberFilter] = useState("");
   const [civilizationFilter, setCivilizationFilter] = useState<string[]>([]);
   const [civilizationMode, setCivilizationMode] = useState<"cup" | "cap">("cup");
   const [colorFilter, setColorFilter] = useState<"all" | "single" | "multi">("all");
@@ -87,6 +91,10 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   });
   const costOptions = allCosts;
   const visibleResults = results;
+  const normalizedQuery = normalizeJapaneseSearch(query);
+  const searchQuery = useMemo(() => query.trim(), [normalizedQuery]);
+  const normalizedCardNumberFilter = cardNumberFilter.trim().toLowerCase();
+  const searchCardNumberFilter = useMemo(() => cardNumberFilter.trim(), [normalizedCardNumberFilter]);
 
   useEffect(() => { resultCountRef.current = results.length; }, [results]);
 
@@ -123,9 +131,9 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     if (!supabase) { searchInFlightRef.current = false; setSearching(false); return; }
     const offset = append ? resultCountRef.current : 0;
     const searchArgs = {
-      p_query: query.trim(), p_limit: SEARCH_PAGE_SIZE, p_offset: offset, p_sort: searchSort,
+      p_query: searchQuery, p_limit: SEARCH_PAGE_SIZE, p_offset: offset, p_sort: searchSort,
       p_ascending: searchSortDirection === "asc",
-      p_product_name: productFilter || null, p_card_number: cardNumberFilter.trim() || null,
+      p_product_name: productFilter || null, p_card_number: searchCardNumberFilter || null,
       p_civilizations: civilizationFilter, p_civilization_mode: civilizationMode,
       p_color: colorFilter, p_card_types: cardTypeFilter ? [cardTypeFilter] : [],
       p_min_cost: minimumCost === "" ? null : Number(minimumCost),
@@ -188,12 +196,11 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         : page);
       searchInFlightRef.current = false;
       setSearching(false);
-  }, [query, fallbackCosts, searchSort, searchSortDirection, productFilter, cardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
+  }, [searchQuery, fallbackCosts, searchSort, searchSortDirection, productFilter, searchCardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
 
   useEffect(() => {
     const requestId = ++searchRequestRef.current;
     searchControllerRef.current?.abort();
-    if (isComposing) return;
     const controller = new AbortController();
     searchControllerRef.current = controller;
     searchInFlightRef.current = false;
@@ -202,7 +209,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     setSearching(true);
     const timer = window.setTimeout(() => { void loadSearchPage(false, requestId, controller.signal); }, CARD_SEARCH_DEBOUNCE_MS);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [isComposing, loadSearchPage]);
+  }, [loadSearchPage]);
 
   function handleResultScroll(event: React.UIEvent<HTMLDivElement>) {
     const target = event.currentTarget;
@@ -335,7 +342,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           })}
         </div>
         <div className="deck-search-bar"><div className="deck-search-input-row"><span aria-hidden="true">⌕</span>
-          <input aria-label="カード名" placeholder="カード名で検索" value={query} onChange={(event) => setQuery(event.target.value)} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={(event) => { setQuery(event.currentTarget.value); setIsComposing(false); }} />
+          <input aria-label="カード名" placeholder="カード名で検索" value={query} onChange={cardSearchInput.onChange} onCompositionStart={cardSearchInput.onCompositionStart} onCompositionEnd={cardSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, cardSearchInput.isComposing())) event.preventDefault(); }} />
         </div><div className="deck-search-controls-row">
           <div aria-label="文明で絞り込む" className="deck-search-civilizations">{[["", "すべて"], ["light", "光"], ["water", "水"], ["darkness", "闇"], ["fire", "火"], ["nature", "自然"], ["zero", "ゼロ"]].map(([value, label]) => <button aria-pressed={value ? civilizationFilter.includes(value) : civilizationFilter.length === 0} key={value || "all"} onClick={() => setCivilizationFilter((current) => value ? current.includes(value) ? current.filter((item) => item !== value) : [...current, value] : [])} type="button">{label}</button>)}</div>
           <div className="deck-search-actions"><select aria-label="検索結果の並び順" className="deck-search-sort-select" onChange={(event) => { const [sort, direction] = event.target.value.split(":") as [DeckSearchSortKey, SortDirection]; setSearchSort(sort); setSearchSortDirection(direction); }} value={`${searchSort}:${searchSortDirection}`}><option value="usage:desc">使用数順</option><option value="usage:asc">使用数順（昇順）</option><option value="relevance:asc">検索順</option><option value="name:asc">カード名順</option><option value="name:desc">カード名順（降順）</option><option value="release_date:desc">発売日順</option><option value="release_date:asc">発売日順（昇順）</option></select>
@@ -352,9 +359,9 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           <div className="deck-filter-field"><strong>コスト</strong><div className="deck-cost-range"><select aria-label="最小コスト" onChange={(event) => setMinimumCost(event.target.value)} value={minimumCost}><option value="">最小 未指定</option>{costOptions.map((cost) => <option key={cost} value={cost}>{cost}</option>)}</select><span>～</span><select aria-label="最大コスト" onChange={(event) => setMaximumCost(event.target.value)} value={maximumCost}><option value="">最大 未指定</option>{costOptions.map((cost) => <option key={cost} value={cost}>{cost}</option>)}</select></div></div>
           <label className="deck-filter-no-cost"><input checked={includeNoCost} onChange={(event) => setIncludeNoCost(event.target.checked)} type="checkbox" />コストなしを含める</label>
           <div className="deck-filter-field"><strong>カードタイプ</strong><div className="deck-card-type-picker"><button aria-expanded={cardTypeListOpen} onClick={() => setCardTypeListOpen((open) => !open)} type="button">{cardTypeFilter || "指定なし"} <span aria-hidden="true" className="ui-icon ui-icon-dropdown" /></button>{cardTypeListOpen ? <div className="deck-card-type-options"><button onClick={() => { setCardTypeFilter(""); setCardTypeListOpen(false); }} type="button">指定なし</button>{cardTypeOptions.map((value) => <button aria-selected={cardTypeFilter === value} key={value} onClick={() => { setCardTypeFilter(value); setCardTypeListOpen(false); }} type="button">{value}</button>)}</div> : null}</div></div>
-          <div className="deck-filter-field"><strong>収録商品</strong><div className="deck-product-picker"><div className="deck-product-input"><input aria-label="収録商品を検索" placeholder={productFilter || "商品名・商品コードで検索"} value={productQuery} onFocus={() => setProductListOpen(true)} onChange={(event) => { setProductQuery(event.target.value); setProductListOpen(true); }} /><button aria-label="収録商品をすべてに戻す" onClick={() => { setProductFilter(""); setProductQuery(""); setProductListOpen(false); }} type="button">{productFilter ? "×" : "すべて"}</button></div>{productListOpen ? <div className="deck-product-options"><button onClick={() => { setProductFilter(""); setProductQuery(""); setProductListOpen(false); }} type="button">すべて</button>{matchingProducts.map((name) => <button aria-selected={productFilter === name} key={name} onClick={() => { setProductFilter(name); setProductQuery(""); setProductListOpen(false); }} type="button">{name}{productCodeByName[name]?.length ? <small>{productCodeByName[name].join(" / ")}</small> : null}</button>)}{matchingProducts.length === 0 ? <p>該当する収録商品がありません</p> : null}</div> : null}</div></div>
-          <label>カード番号<input placeholder="例：DM24-RP1" value={cardNumberFilter} onChange={(event) => setCardNumberFilter(event.target.value)} /></label>
-          <button className="deck-filter-clear" onClick={() => { setProductFilter(""); setProductQuery(""); setProductListOpen(false); setCardNumberFilter(""); setCivilizationFilter([]); setCivilizationMode("cup"); setColorFilter("all"); setCardTypeFilter(""); setCardTypeListOpen(false); setMinimumCost(""); setMaximumCost(""); setIncludeNoCost(false); }} type="button">全条件クリア</button>
+          <div className="deck-filter-field"><strong>収録商品</strong><div className="deck-product-picker"><div className="deck-product-input"><input aria-label="収録商品を検索" placeholder={productFilter || "商品名・商品コードで検索"} value={productQuery} onFocus={() => setProductListOpen(true)} onChange={(event) => { productSearchInput.onChange(event); setProductListOpen(true); }} onCompositionStart={productSearchInput.onCompositionStart} onCompositionEnd={productSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, productSearchInput.isComposing())) event.preventDefault(); }} /><button aria-label="収録商品をすべてに戻す" onClick={() => { setProductFilter(""); productSearchInput.setValue(""); setProductListOpen(false); }} type="button">{productFilter ? "×" : "すべて"}</button></div>{productListOpen ? <div className="deck-product-options"><button onClick={() => { setProductFilter(""); productSearchInput.setValue(""); setProductListOpen(false); }} type="button">すべて</button>{matchingProducts.map((name) => <button aria-selected={productFilter === name} key={name} onClick={() => { setProductFilter(name); productSearchInput.setValue(""); setProductListOpen(false); }} type="button">{name}{productCodeByName[name]?.length ? <small>{productCodeByName[name].join(" / ")}</small> : null}</button>)}{matchingProducts.length === 0 ? <p>該当する収録商品がありません</p> : null}</div> : null}</div></div>
+          <label>カード番号<input placeholder="例：DM24-RP1" value={cardNumberFilter} onChange={cardNumberSearchInput.onChange} onCompositionStart={cardNumberSearchInput.onCompositionStart} onCompositionEnd={cardNumberSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, cardNumberSearchInput.isComposing())) event.preventDefault(); }} /></label>
+          <button className="deck-filter-clear" onClick={() => { setProductFilter(""); productSearchInput.setValue(""); setProductListOpen(false); cardNumberSearchInput.setValue(""); setCivilizationFilter([]); setCivilizationMode("cup"); setColorFilter("all"); setCardTypeFilter(""); setCardTypeListOpen(false); setMinimumCost(""); setMaximumCost(""); setIncludeNoCost(false); }} type="button">全条件クリア</button>
         </section> : null}
         {sortOpen ? <section className="deck-sort-modal-backdrop" onClick={() => setSortOpen(false)} role="presentation"><div aria-label="並べ替え方法選択" aria-modal="true" className="deck-sort-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-popover-heading"><strong>並べ替え方法選択</strong><button aria-label="並べ替えを閉じる" onClick={() => setSortOpen(false)} type="button">×</button></div>

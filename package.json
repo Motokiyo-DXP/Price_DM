@@ -34,7 +34,7 @@
     "test:routes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/card-route-validation.test.mjs",
     "test:maps": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/google-maps-url.test.mjs",
     "test:commerce-links": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/commerce-links.test.mjs",
-    "test:search": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/search-normalization.test.mjs lib/card-search-normalization-db.test.mjs lib/search-performance.test.mjs",
+    "test:search": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/search-normalization.test.mjs lib/card-search-normalization-db.test.mjs lib/search-performance.test.mjs lib/ime-search-input.test.mjs",
     "test:decks": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/deck-validation.test.mjs lib/deck-sorting.test.mjs lib/local-card-metadata.test.mjs lib/deck-icon.test.mjs lib/my-decks-browser.test.mjs",
     "test:rooms": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/game-room-validation.test.mjs lib/online-card-operation.test.mjs lib/online-board-change.test.mjs lib/online-room-snapshot.test.mjs lib/online-lobby-deck-picker.test.mjs lib/online-lobby-presence.test.mjs lib/online-lobby-room-id-join.test.mjs lib/online-match-single-participation.test.mjs lib/battle-notification-dismissal.test.mjs lib/profile-icon.test.mjs",
     "test:rule": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test \"lib/rule-engine/**/*.test.mjs\"",

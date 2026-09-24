@@ -13,11 +13,13 @@ import {
 } from "@/lib/admin-shop-details";
 import { JAPAN_PREFECTURES } from "@/lib/prefectures";
 import { normalizeShopSearch } from "@/lib/search-normalization";
+import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 
 export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
   const router = useRouter();
   const [shopId, setShopId] = useState(shops[0]?.id ?? 0);
-  const [filter, setFilter] = useState("");
+  const shopFilterInput = useImeRealtimeInput();
+  const filter = shopFilterInput.value;
   const [state, formAction, pending] = useActionState(
     updateShopDetailsAction,
     initialShopRegistrationActionState,
@@ -92,7 +94,9 @@ export function AdminShopDetailsForm({ shops }: { shops: AdminShopDetails[] }) {
       <label>
         店舗を絞り込む
         <input
-          onChange={(event) => setFilter(event.target.value)}
+          onChange={shopFilterInput.onChange}
+          onCompositionStart={shopFilterInput.onCompositionStart}
+          onCompositionEnd={shopFilterInput.onCompositionEnd}
           placeholder="店舗名・読み・別名・所在地で絞り込む"
           type="search"
           value={filter}
