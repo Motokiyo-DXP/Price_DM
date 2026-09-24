@@ -84,6 +84,7 @@ import { getContextualActions, getOtherContextualActions } from "@/lib/play-cont
 import type { CardMarker } from "@/lib/playfield-board";
 import { isCircleGesture, type GesturePoint } from "@/lib/circle-gesture";
 import { resolvePlaytestInitialState } from "@/lib/playtest-initial-state";
+import { beginDeckInspectionSession } from "@/lib/deck-inspection-session";
 
 export { initialBoard, initialOnlineBoard } from "@/lib/playfield-board";
 export type { BoardState, CardInstance, DeckCard, PlayerId } from "@/lib/playfield-board";
@@ -160,6 +161,22 @@ function startZoneInertia(container: HTMLElement | null, initialVelocity: number
   };
   const firstFrame = window.requestAnimationFrame(coast);
   zoneInertiaFrames.set(container, firstFrame);
+}
+
+function updateZoneScroll(
+  container: HTMLElement | null,
+  startLeft: number,
+  origin: { x: number },
+  point: { clientX: number; clientY: number },
+  lastPoint: { current: { at: number; x: number; y: number } | null },
+  velocity: { current: number },
+) {
+  if (!container) return;
+  container.scrollLeft = startLeft - (point.clientX - origin.x);
+  const now = performance.now();
+  const previous = lastPoint.current;
+  if (previous && now > previous.at) velocity.current = -(point.clientX - previous.x) / (now - previous.at);
+  lastPoint.current = { at: now, x: point.clientX, y: point.clientY };
 }
 
 function animateShuffleFeedback(resolveTargets: () => Iterable<HTMLElement>) {
@@ -604,13 +621,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       clearDropGuide();
       if (longPressTimer.current !== null) window.clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
-      if (zoneScrollContainer.current) {
-        zoneScrollContainer.current.scrollLeft = zoneScrollStartLeft.current - deltaX;
-        const now = performance.now();
-        const previous = zoneScrollLastPoint.current;
-        if (previous && now > previous.at) zoneScrollVelocity.current = -(event.clientX - previous.x) / (now - previous.at);
-        zoneScrollLastPoint.current = { at: now, x: event.clientX, y: event.clientY };
-      }
+      updateZoneScroll(zoneScrollContainer.current, zoneScrollStartLeft.current, start.current, event, zoneScrollLastPoint, zoneScrollVelocity);
       return;
     }
     if (Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > 8) {
@@ -631,7 +642,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
         document.querySelectorAll<HTMLElement>(".deck-insert-before").forEach((element) => element.classList.remove("deck-insert-before"));
         const targetCard = elements
           .map((element) => element.closest<HTMLElement>("[data-card-id]"))
-          .find((element) => element?.dataset.cardId && element.dataset.cardId !== interactionCardId.current);
+          .find((element) => element?.dataset.cardId && element.dataset.cardId !== interactionCardId.current && viewer.contains(element));
         targetCard?.classList.add("deck-insert-before");
         return;
       }
@@ -1123,14 +1134,13 @@ function DeckViewer({ cards, mode, onClose, onDoubleTap, onMove, onReorder, onRe
 
   function handleEmptyPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const start = emptyPointerStart.current;
-    if (!start || !isWithinHorizontalScrollAngle(event.clientX - start.x, event.clientY - start.y)) return;
-    if (Math.abs(event.clientX - start.x) <= 8) return;
+    if (!start || !shouldUseZoneScroll({
+      dragActivated: false,
+      horizontalWithinScrollAngle: isWithinHorizontalScrollAngle(event.clientX - start.x, event.clientY - start.y),
+      isScrolling: emptyScrollGesture.current,
+    })) return;
     emptyScrollGesture.current = true;
-    event.currentTarget.scrollLeft = start.scrollLeft - (event.clientX - start.x);
-    const now = performance.now();
-    const previous = emptyScrollLastPoint.current;
-    if (previous && now > previous.at) emptyScrollVelocity.current = -(event.clientX - previous.x) / (now - previous.at);
-    emptyScrollLastPoint.current = { at: now, x: event.clientX, y: event.clientY };
+    updateZoneScroll(event.currentTarget, start.scrollLeft, start, event, emptyScrollLastPoint, emptyScrollVelocity);
   }
 
   function handleEmptyPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
@@ -2345,7 +2355,8 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     }
     commit((current) => inspectDeckCards(current, pending.owner, pending.useMax ? "max" : count, pending.takeFrom));
     if (!pending.useMax) setDeckDialCounts((current) => ({ ...current, [pending.owner]: count }));
-    setDeckInspection({ count: pending.useMax ? "max" : count, mode: pending.useMax ? "cost" : "deck", owner: pending.owner, showFaces: pending.showFaces, takeFrom: pending.takeFrom, maxSession: pending.useMax ? { topIds: [], bottomIds: [] } : undefined });
+    const nextInspection: DeckInspection = { count: pending.useMax ? "max" : count, mode: "deck", owner: pending.owner, showFaces: pending.showFaces, takeFrom: pending.takeFrom, maxSession: pending.useMax ? { topIds: [], bottomIds: [] } : undefined };
+    setDeckInspection(beginDeckInspectionSession(nextInspection));
     setDeckViewerSelection([]);
     setDeckViewerOpen(true);
     setDeckViewConfirm(null);
