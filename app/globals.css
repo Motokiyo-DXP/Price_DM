@@ -1640,7 +1640,8 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
   .deck-chart-y-axis{font-size:clamp(7px,1vh,10px);line-height:1}
   .deck-civilization-table{display:grid;flex:0 1 auto;grid-template-rows:repeat(4,minmax(0,1fr));min-height:0}
   .deck-civilization-table>div{min-height:0}
-  .deck-multicolor-content{min-height:0}
+  .deck-multicolor-content{container-type:size;min-height:0}
+  .deck-analysis-multicolor-panel .deck-analysis-pie{flex-basis:min(clamp(54px,6vw,82px),max(0px,100cqh))}
   .deck-mana-chart,.deck-mana-chart>div,.deck-mana-chart>div>div{min-height:0}
   .deck-mana-chart>div>div{flex:0 0 calc(100% - 14px);height:calc(100% - 14px)}
 }
