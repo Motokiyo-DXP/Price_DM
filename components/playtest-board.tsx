@@ -941,7 +941,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       </button>
       {!deckViewer ? <LongPressProgress label="長押し操作が有効になるまでの残り時間" meter={holdProgress} /> : null}
       <CardDragPreview preview={dragPreview} />
-      {!deckViewer ? <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} /> : null}
+      <DeckPlacementPreview owner={owner} preview={specialPreview?.kind === "deck" ? specialPreview.deckPlacement ?? null : null} />
       {!deckViewer ? <StackHoldProgress meter={stackHoldProgress} /> : null}
       {!deckViewer && specialPreview?.kind === "stack" ? <StackDestinationMarkingMenu menu={{ pointerX: dragPreview?.x ?? specialPreview.centerX, pointerY: dragPreview?.y ?? specialPreview.centerY, x: specialPreview.centerX, y: specialPreview.centerY }} /> : null}
     </>

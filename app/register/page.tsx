@@ -126,6 +126,7 @@ export default function RegisterPage() {
   const [shopOptions, setShopOptions] = useState<RegistrationShopOption[]>([]);
   const [shopTotalCount, setShopTotalCount] = useState(0);
   const [selectedShop, setSelectedShop] = useState<RegistrationShopOption | null>(null);
+  const [shopQueryCompositionRevision, setShopQueryCompositionRevision] = useState(0);
   const [searchingShops, setSearchingShops] = useState(false);
   const [shopSuggestionsOpen, setShopSuggestionsOpen] = useState(false);
   const [activeShopOptionIndex, setActiveShopOptionIndex] = useState(-1);
@@ -398,7 +399,7 @@ export default function RegisterPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [selectedShop, shopPrefecture, searchShopQuery]);
+  }, [selectedShop, shopPrefecture, searchShopQuery, shopQueryCompositionRevision]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1032,6 +1033,7 @@ export default function RegisterPage() {
             onCompositionStart={shopSearchInput.onCompositionStart}
             onCompositionEnd={(event) => {
               shopSearchInput.onCompositionEnd(event);
+              setShopQueryCompositionRevision((current) => current + 1);
               if (normalizeShopSearch(event.currentTarget.value) !== normalizedShopQuery) {
                 resetShopSearchResults();
                 setSelectedShop(null);
