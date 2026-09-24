@@ -4,12 +4,14 @@ import {
   FormEvent,
   KeyboardEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
 import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
-import { normalizeShopSearch } from "@/lib/search-normalization";
+import { normalizeJapaneseSearch, normalizeShopSearch } from "@/lib/search-normalization";
+import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 import {
   mapRegistrationCardOptions,
   mapRegistrationCardPrints,
@@ -108,14 +110,18 @@ function registrationErrorMessage(code: string) {
 export default function RegisterPage() {
   const [games, setGames] = useState<RegistrationGame[]>([]);
   const [gameSlug, setGameSlug] = useState("duel-masters");
-  const [cardQuery, setCardQuery] = useState("");
+  const cardSearchInput = useImeRealtimeInput();
+  const cardQuery = cardSearchInput.value;
+  const setCardQuery = cardSearchInput.setValue;
   const [cardOptions, setCardOptions] = useState<RegistrationCardOption[]>([]);
   const [selectedCard, setSelectedCard] = useState<RegistrationCardOption | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [cardPrints, setCardPrints] = useState<RegistrationCardPrint[]>([]);
   const [selectedPrintId, setSelectedPrintId] = useState("");
   const [loadingPrints, setLoadingPrints] = useState(false);
-  const [shopQuery, setShopQuery] = useState("");
+  const shopSearchInput = useImeRealtimeInput();
+  const shopQuery = shopSearchInput.value;
+  const setShopQuery = shopSearchInput.setValue;
   const [shopPrefecture, setShopPrefecture] = useState("");
   const [shopOptions, setShopOptions] = useState<RegistrationShopOption[]>([]);
   const [shopTotalCount, setShopTotalCount] = useState(0);
@@ -136,18 +142,19 @@ export default function RegisterPage() {
   const [buyPriceInput, setBuyPriceInput] = useState("");
   const salePriceIsComposing = useRef(false);
   const buyPriceIsComposing = useRef(false);
-  const cardQueryIsComposing = useRef(false);
-  const shopQueryIsComposing = useRef(false);
   const shopSearchRequestSequence = useRef(0);
   const cardSearchAbortController = useRef<AbortController | null>(null);
   const cardSearchRequestSequence = useRef(0);
   const cardSearchInputStartedAt = useRef<number | null>(null);
   const prefillAttempted = useRef(false);
-  const [cardQueryCompositionRevision, setCardQueryCompositionRevision] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [observedOn] = useState(todayForDateInput);
+  const normalizedCardQuery = normalizeJapaneseSearch(cardQuery);
+  const normalizedShopQuery = normalizeShopSearch(shopQuery);
+  const searchCardQuery = useMemo(() => cardQuery.trim(), [normalizedCardQuery]);
+  const searchShopQuery = useMemo(() => shopQuery.trim(), [normalizedShopQuery]);
 
   useEffect(() => {
     let cancelled = false;
@@ -264,12 +271,12 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const query = cardQuery.trim();
+    const query = searchCardQuery;
     const requestSequence = ++cardSearchRequestSequence.current;
 
     cardSearchAbortController.current?.abort();
 
-    if (!gameSlug || query.length === 0 || cardQueryIsComposing.current) {
+    if (!gameSlug || query.length === 0) {
       setCardOptions([]);
       setSearchingCards(false);
       setActiveOptionIndex(-1);
@@ -278,10 +285,7 @@ export default function RegisterPage() {
 
     setSearchingCards(true);
     const timer = window.setTimeout(async () => {
-      if (
-        cardQueryIsComposing.current ||
-        requestSequence !== cardSearchRequestSequence.current
-      ) {
+      if (requestSequence !== cardSearchRequestSequence.current) {
         return;
       }
       const supabase = createBrowserSupabaseClient();
@@ -333,17 +337,16 @@ export default function RegisterPage() {
       window.clearTimeout(timer);
       cardSearchAbortController.current?.abort();
     };
-  }, [cardQuery, cardQueryCompositionRevision, gameSlug, searchMode]);
+  }, [searchCardQuery, gameSlug, searchMode]);
 
   useEffect(() => {
     let cancelled = false;
-    const query = shopQuery.trim();
+    const query = searchShopQuery;
     const requestSequence = ++shopSearchRequestSequence.current;
 
     if (
       (query.length === 0 && !shopPrefecture) ||
-      selectedShop ||
-      shopQueryIsComposing.current
+      selectedShop
     ) {
       setShopOptions([]);
       setShopTotalCount(0);
@@ -395,7 +398,7 @@ export default function RegisterPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [selectedShop, shopPrefecture, shopQuery]);
+  }, [selectedShop, shopPrefecture, searchShopQuery]);
 
   useEffect(() => {
     let cancelled = false;
@@ -531,6 +534,10 @@ export default function RegisterPage() {
   }
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (isImeCompositionEnter(event, cardSearchInput.isComposing())) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === "Escape") {
       setSuggestionsOpen(false);
       return;
@@ -559,6 +566,10 @@ export default function RegisterPage() {
   }
 
   function handleShopKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (isImeCompositionEnter(event, shopSearchInput.isComposing())) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === "Escape") {
       setShopSuggestionsOpen(false);
       return;
@@ -578,7 +589,6 @@ export default function RegisterPage() {
         current <= 0 ? shopOptions.length - 1 : current - 1,
       );
     } else if (event.key === "Enter" && shopSuggestionsOpen) {
-      if (event.nativeEvent.isComposing || shopQueryIsComposing.current) return;
       const shop = selectShopOption({
         activeIndex: activeShopOptionIndex,
         isComposing: false,
@@ -692,7 +702,7 @@ export default function RegisterPage() {
       selectedShop,
       selection: {
         activeIndex: -1,
-        isComposing: shopQueryIsComposing.current,
+        isComposing: shopSearchInput.isComposing(),
         options: shopOptions,
         searchComplete:
           shopQuery.trim().length > 0 &&
@@ -819,7 +829,7 @@ export default function RegisterPage() {
   const canAutoSelectFirstShop =
     selectedShop === null &&
     shopQuery.trim().length > 0 &&
-    !shopQueryIsComposing.current &&
+    !shopSearchInput.isComposing() &&
     !searchingShops &&
     shopSearchComplete &&
     shopOptions.length > 0;
@@ -934,27 +944,23 @@ export default function RegisterPage() {
             value={cardQuery}
             onFocus={() => setSuggestionsOpen(true)}
             onKeyDown={handleCardKeyDown}
-            onCompositionStart={() => {
-              cardQueryIsComposing.current = true;
+            onCompositionStart={(event) => {
+              cardSearchInput.onCompositionStart(event);
               cardSearchAbortController.current?.abort();
               setSearchingCards(false);
             }}
             onCompositionEnd={(event) => {
-              cardQueryIsComposing.current = false;
+              cardSearchInput.onCompositionEnd(event);
               cardSearchInputStartedAt.current = performance.now();
               performance.clearMeasures("register-card-search-input-to-render");
-              setCardQuery(event.currentTarget.value);
               setSelectedCard(null);
               setSuggestionsOpen(true);
-              setCardQueryCompositionRevision((current) => current + 1);
             }}
             onChange={(event) => {
               cardSearchAbortController.current?.abort();
-              if (!cardQueryIsComposing.current) {
-                cardSearchInputStartedAt.current = performance.now();
-                performance.clearMeasures("register-card-search-input-to-render");
-              }
-              setCardQuery(event.target.value);
+              cardSearchInputStartedAt.current = performance.now();
+              performance.clearMeasures("register-card-search-input-to-render");
+              cardSearchInput.onChange(event);
               setSelectedCard(null);
               setSuggestionsOpen(true);
             }}
@@ -1023,15 +1029,20 @@ export default function RegisterPage() {
             value={shopQuery}
             onFocus={() => setShopSuggestionsOpen(true)}
             onKeyDown={handleShopKeyDown}
-            onCompositionStart={() => {
-              shopQueryIsComposing.current = true;
-            }}
+            onCompositionStart={shopSearchInput.onCompositionStart}
             onCompositionEnd={(event) => {
-              shopQueryIsComposing.current = false;
-              updateShopQuery(event.currentTarget.value);
+              shopSearchInput.onCompositionEnd(event);
+              if (normalizeShopSearch(event.currentTarget.value) !== normalizedShopQuery) {
+                resetShopSearchResults();
+                setSelectedShop(null);
+                setShopSuggestionsOpen(true);
+              }
             }}
             onChange={(event) => {
-              updateShopQuery(event.target.value);
+              shopSearchInput.onChange(event);
+              resetShopSearchResults();
+              setSelectedShop(null);
+              setShopSuggestionsOpen(true);
             }}
             required
           />
@@ -1126,6 +1137,9 @@ export default function RegisterPage() {
                 salePriceIsComposing.current = false;
                 setSalePriceInput(normalizePriceInput(event.currentTarget.value));
               }}
+              onKeyDown={(event) => {
+                if (isImeCompositionEnter(event, salePriceIsComposing.current)) event.preventDefault();
+              }}
               onChange={(event) => {
                 setSalePriceInput(
                   salePriceIsComposing.current
@@ -1153,6 +1167,9 @@ export default function RegisterPage() {
               onCompositionEnd={(event) => {
                 buyPriceIsComposing.current = false;
                 setBuyPriceInput(normalizePriceInput(event.currentTarget.value));
+              }}
+              onKeyDown={(event) => {
+                if (isImeCompositionEnter(event, buyPriceIsComposing.current)) event.preventDefault();
               }}
               onChange={(event) => {
                 setBuyPriceInput(

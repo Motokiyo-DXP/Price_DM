@@ -6,6 +6,7 @@ import { importPublicDeckAction, importSharedDeckAction } from "@/app/decks/acti
 import { CardArtwork } from "@/components/card-artwork";
 import { resolveCardArtworkUrl } from "@/lib/card-image";
 import { getDeckPreview, hasDeckPreview, setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
+import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 
 function zoneName(zone: string) {
   if (zone === "gr") return "超GRゾーン";
@@ -34,7 +35,8 @@ function formatName(format: string) {
 
 export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[]; shareToken: string | null }) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const deckSearchInput = useImeRealtimeInput();
+  const query = deckSearchInput.value;
   const [format, setFormat] = useState("all");
   const [sort, setSort] = useState<"popular" | "updated">("popular");
   const [selected, setSelected] = useState<PublicDeckItem | null>(null);
@@ -98,7 +100,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
   return (
     <div className="public-deck-search">
       <div className="public-deck-controls">
-        <label className="public-deck-query"><span aria-hidden="true">⌕</span><input aria-label="公開デッキを検索" onChange={(event) => setQuery(event.target.value)} placeholder="デッキ名・収録カードを入力" value={query} /></label>
+        <label className="public-deck-query"><span aria-hidden="true">⌕</span><input aria-label="公開デッキを検索" onChange={deckSearchInput.onChange} onCompositionStart={deckSearchInput.onCompositionStart} onCompositionEnd={deckSearchInput.onCompositionEnd} placeholder="デッキ名・収録カードを入力" value={query} /></label>
         <select aria-label="フォーマット" onChange={(event) => setFormat(event.target.value)} value={format}>
           <option value="all">すべてのフォーマット</option>
           <option value="original">オリジナル</option>

@@ -17,6 +17,8 @@ import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { readFavoriteCardIds } from "@/lib/favorite-cards";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import cartIcon from "@/SVG/カートのアイコン素材.svg";
+import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
+import { normalizeJapaneseSearch } from "@/lib/search-normalization";
 
 type MarketListProps = {
   initialCards: CardSummary[];
@@ -36,8 +38,8 @@ const trendClass = (trend: Trend, stale: boolean) => {
 };
 
 export function MarketList({ initialCards, loadError }: MarketListProps) {
-  const [query, setQuery] = useState("");
-  const [isComposing, setIsComposing] = useState(false);
+  const cardSearchInput = useImeRealtimeInput();
+  const query = cardSearchInput.value;
   const searchRequestSequence = useRef(0);
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
   const [remoteSearch, setRemoteSearch] = useState<{
@@ -119,22 +121,18 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     () => new Map(initialCards.map((card) => [card.id, card])),
     [initialCards],
   );
+  const normalizedQuery = normalizeJapaneseSearch(query);
+  const searchQuery = useMemo(() => query.trim(), [normalizedQuery]);
 
   useEffect(() => {
     let cancelled = false;
     let controller: AbortController | null = null;
     const requestSequence = ++searchRequestSequence.current;
-    const trimmedQuery = query.trim();
+    const trimmedQuery = searchQuery;
     const searchKey = `${searchMode}:${trimmedQuery}`;
 
     if (!trimmedQuery) {
       setRemoteSearch(null);
-      setSearchingCards(false);
-      setSearchError(null);
-      return;
-    }
-
-    if (isComposing) {
       setSearchingCards(false);
       setSearchError(null);
       return;
@@ -209,7 +207,7 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       window.clearTimeout(timer);
       controller?.abort();
     };
-  }, [isComposing, pricedCardsById, query, searchMode]);
+  }, [pricedCardsById, searchQuery, searchMode]);
 
   const toggleFavorite = async (id: string) => {
     if (favoriteUserId === undefined) {
@@ -297,21 +295,12 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
             aria-label="カード検索"
             placeholder="カード名を入力"
             value={query}
-            onChange={(event) => {
-              const value = event.target.value;
-              setQuery(value);
-            }}
-            onCompositionStart={() => {
-              setIsComposing(true);
-            }}
-            onCompositionEnd={(event) => {
-              setIsComposing(false);
-              const value = event.currentTarget.value;
-              setQuery(value);
-            }}
+            onChange={cardSearchInput.onChange}
+            onCompositionStart={cardSearchInput.onCompositionStart}
+            onCompositionEnd={cardSearchInput.onCompositionEnd}
           />
           {query && (
-            <button type="button" aria-label="カード名を消去" onClick={() => setQuery("")}>
+            <button type="button" aria-label="カード名を消去" onClick={() => cardSearchInput.setValue("")}>
               ×
             </button>
           )}
