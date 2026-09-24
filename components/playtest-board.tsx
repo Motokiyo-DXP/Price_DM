@@ -2415,7 +2415,9 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
 
   function moveDeckViewerCard(owner: PlayerId, _from: PlayZone, cardId: string, to: PlayZone, targetCardId?: string, choice?: "deck_top" | "deck_bottom" | "face_up_top" | "face_down_top" | "face_up_bottom" | "face_down_bottom" | "face_up_spread") {
     if (!deckInspection || deckInspection.owner !== owner) return;
-    const ids = deckViewerSelection.includes(cardId) ? deckViewerSelection : [cardId];
+    const ids = deckViewerSelection.includes(cardId)
+      ? deckViewerSelection
+      : [...resolveDraggedCardIds(board.players[owner].deckInspection, cardId)];
     if (to === "deck") {
       returnDeckViewerSelection(choice === "deck_bottom" ? "bottom" : "top", ids);
       return;
