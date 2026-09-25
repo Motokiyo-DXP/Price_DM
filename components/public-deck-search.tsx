@@ -6,6 +6,7 @@ import { importPublicDeckAction, importSharedDeckAction } from "@/app/decks/acti
 import { CardArtwork } from "@/components/card-artwork";
 import { resolveCardArtworkUrl } from "@/lib/card-image";
 import { getDeckPreview, hasDeckPreview, setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
+import { formatJapaneseDate } from "@/lib/japanese-date";
 import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 
 function zoneName(zone: string) {
@@ -121,7 +122,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
               <small>作成者：{deck.ownerName}</small>
               {deck.description ? <p>{deck.description}</p> : <p>公開デッキの構成を確認できます。</p>}
               <div className="public-deck-cards">{deck.cardNames.slice(0, 3).map((name) => <span key={name}>{name}</span>)}</div>
-              <footer><span>メイン {deck.cardCount}枚</span><span>・</span><time dateTime={deck.updatedAt}>{new Date(deck.updatedAt).toLocaleDateString("ja-JP")}</time></footer>
+              <footer><span>メイン {deck.cardCount}枚</span><span>・</span><time dateTime={deck.updatedAt}>{formatJapaneseDate(deck.updatedAt)}</time></footer>
             </div>
             <div className="public-deck-actions">
               <form action={importPublicDeckAction}>

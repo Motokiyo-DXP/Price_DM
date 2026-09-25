@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getVisiblePrimaryNavigationPath } from "@/lib/primary-navigation";
 
 const destinations = [
   { href: "/deck-search", label: "デッキ検索", icon: "/navigation/deck-search.svg" },
@@ -12,16 +14,19 @@ const destinations = [
   { href: "/rooms", label: "オンライン", icon: "/navigation/online.svg" },
 ] as const;
 
-const visiblePaths = new Set<string>(destinations.map(({ href }) => href));
-
 export function PrimaryNavigation() {
   const pathname = usePathname();
-  if (!visiblePaths.has(pathname)) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  const activePath = getVisiblePrimaryNavigationPath(pathname, mounted);
+  if (activePath === null) return null;
 
   return (
     <nav aria-label="主要ページ" className="primary-navigation">
       {destinations.map(({ href, label, icon }) => (
-        <Link aria-current={pathname === href ? "page" : undefined} href={href} key={href}>
+        <Link aria-current={activePath === href ? "page" : undefined} href={href} key={href}>
           <Image alt="" aria-hidden="true" height={26} src={icon} width={26} />
           <span>{label}</span>
         </Link>
