@@ -4,7 +4,6 @@ export const PLAY_INPUT_DEFAULTS = {
   longPressMs: 400,
   markingSelectionPx: 42,
   specialMoveSelectionPx: 48,
-  dragonYobinionBranchPx: 170,
   circleMinimumPoints: 12,
 } as const;
 

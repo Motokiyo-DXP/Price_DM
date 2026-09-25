@@ -94,7 +94,7 @@ import { beginDeckInspectionSession } from "@/lib/deck-inspection-session";
 export { initialBoard, initialOnlineBoard } from "@/lib/playfield-board";
 export type { BoardState, CardInstance, DeckCard, PlayerId } from "@/lib/playfield-board";
 export type ServerShuffleRequest = { owner: PlayerId; zone: PlayZone; mode: "deck" | "selection" | "stack"; cardIds?: string[]; stackId?: string };
-export type ServerYobinionRequest = { owner: PlayerId; sourceId: string; dragonOnly: boolean };
+export type ServerYobinionRequest = { owner: PlayerId; sourceId: string };
 export type ServerInspectionRequest = { owner: PlayerId; cardId: string };
 export type ServerDeckInspectionRequest = { owner: PlayerId; count: number | "max"; takeFrom: "top" | "bottom" };
 export type ServerEffectWarningRequest = { owner: PlayerId; cardId: string };
@@ -1614,7 +1614,6 @@ function MarkingMenu({
       >
         <span className="marking-menu-anchor" aria-hidden="true" />
         {menu.branch !== "move" ? <span className="marking-menu-pointer-line" aria-hidden="true" style={{ transform: `rotate(${lineAngle}deg)`, width: lineLength }} /> : null}
-        {menu.branch === null && selected?.action === "yobinion" && lineLength >= 170 ? <span className="dragon-yobinion-branch" style={{ left: Math.cos(lineAngle * Math.PI / 180) * 190, top: Math.sin(lineAngle * Math.PI / 180) * 190 }}>ドラゴンヨビニオン</span> : null}
         {menu.branch === "move" ? (
           <div className="marking-menu-branch">
             <strong>移動先</strong>
@@ -1767,7 +1766,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const markerTap = useRef<{ x: number; y: number; time: number } | null>(null);
   const markerPointerDown = useRef<{ x: number; y: number } | null>(null);
   const [targetSource, setTargetSource] = useState<{ cardId: string; owner: PlayerId } | null>(null);
-  const [yobinionSourceMode, setYobinionSourceMode] = useState<{ owner: PlayerId; dragon: boolean } | null>(null);
+  const [yobinionSourceMode, setYobinionSourceMode] = useState<{ owner: PlayerId } | null>(null);
   const [privateZoneConfirm, setPrivateZoneConfirm] = useState<{ owner: PlayerId; zone: PlayZone; card: CardInstance } | null>(null);
   const [inspectionConfirm, setInspectionConfirm] = useState<{ owner: PlayerId; cardId: string } | null>(null);
   const [deckViewConfirm, setDeckViewConfirm] = useState<DeckViewConfirmState | null>(null);
@@ -2144,13 +2143,13 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     commit((current) => toggleCardTapWithProductionShadow(current, owner, zone, cardId, { clearKeepTappedOnUntap: true }));
   }
 
-  function executeYobinion(owner: PlayerId, sourceId: string, dragonOnly: boolean) {
+  function executeYobinion(owner: PlayerId, sourceId: string) {
     if (onYobinionRequest) {
-      onYobinionRequest({ owner, sourceId, dragonOnly });
+      onYobinionRequest({ owner, sourceId });
       return;
     }
     commit((current) => {
-      const next = runYobinion(current, owner, sourceId, dragonOnly);
+      const next = runYobinion(current, owner, sourceId);
       setInteractionNotice(next === current ? "ヨビニオンの対象が見つかりませんでした" : "ヨビニオンで対象をバトルゾーンへ移動しました");
       return next;
     });
@@ -2159,7 +2158,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   function handleCardTap(owner: PlayerId, zone: PlayZone, cardId: string) {
     if (pendingMoveSelection) return;
     if (yobinionSourceMode) {
-      if (zone === "battle" && owner === yobinionSourceMode.owner) executeYobinion(owner, cardId, yobinionSourceMode.dragon);
+      if (zone === "battle" && owner === yobinionSourceMode.owner) executeYobinion(owner, cardId);
       setYobinionSourceMode(null);
       return;
     }
@@ -2295,8 +2294,8 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       animateShuffleFeedback(() => cardShuffleFeedbackTargets([shuffledId]));
     }
     if (action === "yobinion") {
-      if (markingMenu.zone === "battle") executeYobinion(markingMenu.owner, markingMenu.card.instanceId, false);
-      else setYobinionSourceMode({ owner: markingMenu.owner, dragon: false });
+      if (markingMenu.zone === "battle") executeYobinion(markingMenu.owner, markingMenu.card.instanceId);
+      else setYobinionSourceMode({ owner: markingMenu.owner });
     }
     if (action === "effect_warning") {
       if (onEffectWarningRequest) onEffectWarningRequest({ owner: markingMenu.owner, cardId: markingMenu.card.instanceId });
@@ -2325,12 +2324,6 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       return;
     }
     if (selected.action === "other" && markingMenu.branch === null) {
-      setMarkingMenu(null);
-      return;
-    }
-    if (selected.action === "yobinion" && Math.hypot(x - center.x, y - center.y) >= 170) {
-      if (markingMenu.zone === "battle") executeYobinion(markingMenu.owner, markingMenu.card.instanceId, true);
-      else setYobinionSourceMode({ owner: markingMenu.owner, dragon: true });
       setMarkingMenu(null);
       return;
     }
@@ -2695,7 +2688,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
         if (notice.revealedCard) setDetail(notice.revealedCard);
         commit((current) => ({ ...current, notifications: (current.notifications ?? []).filter((item) => item.id !== notice.id) }));
       }} type="button">{notice.message}</button>)}
-      {selectionMode || targetSource || yobinionSourceMode || pendingMoveSelection ? <div className="play-mode-toolbar"><strong>{pendingMoveSelection ? "移動先のゾーンをタップ" : selectionMode ? `複数選択：${selectedCards.size}枚` : targetSource ? `対象指定：${selectedCards.size}枚` : yobinionSourceMode?.dragon ? "ドラゴンヨビニオン：発動元を選択" : "ヨビニオン：発動元を選択"}</strong><button onClick={() => { setSelectionMode(false); setTargetSource(null); setYobinionSourceMode(null); setPendingMoveSelection(null); setPendingZoneCardChoice(null); setInteractionNotice(null); setSelectedCards(new Set()); }} type="button">完了／キャンセル</button></div> : null}
+      {selectionMode || targetSource || yobinionSourceMode || pendingMoveSelection ? <div className="play-mode-toolbar"><strong>{pendingMoveSelection ? "移動先のゾーンをタップ" : selectionMode ? `複数選択：${selectedCards.size}枚` : targetSource ? `対象指定：${selectedCards.size}枚` : "ヨビニオン：発動元を選択"}</strong><button onClick={() => { setSelectionMode(false); setTargetSource(null); setYobinionSourceMode(null); setPendingMoveSelection(null); setPendingZoneCardChoice(null); setInteractionNotice(null); setSelectedCards(new Set()); }} type="button">完了／キャンセル</button></div> : null}
       <div className="battle-history-actions"><div className="battle-primary-actions"><button onClick={() => setSettingsOpen(true)} type="button">設定</button><button onClick={onResetRequest ?? reset} type="button">{resetLabel ?? "リセット"}</button></div></div>
       <div className="battle-fields">
         <BattlePlayer deckInspection={deckInspection?.owner === displayPlayers[0] ? deckViewerNode : null} selectedCards={selectedCards} openedStack={openedStack} onCloseStack={() => setOpenedStack(null)} onUnbundleStack={(owner, zone, stackId) => { commit((current) => unbundleStack(current, owner, zone, stackId)); setOpenedStack(null); }} activeAuxiliaryZone={activeAuxiliaryZones[displayPlayers[0]]} board={board} buttonsCollapsed={opponentButtonsCollapsed} collapsed={opponentCollapsed} controlledPlayer={controlledPlayer} deckName={deckNames[displayPlayers[0]]} format={deckFormats[displayPlayers[0]]} owner={displayPlayers[0]} position="top" view={visibilityPlayer} revealHiddenCards={revealHiddenCards} privateReveal={onlineReveal} onToggleReveal={onlineReveal && !readOnly ? toggleReveal : undefined} onBackgroundTap={exitMultiSelect} onButtonsCollapse={() => setOpponentButtonsCollapsed((value) => !value)} onCircle={handleCircle} onCollapse={() => setOpponentCollapsed((value) => !value)} onDetails={setDetail} onDoubleTap={handleCardDoubleTap} onDraw={draw} onMove={moveCard} onMarkingMenuStart={openMarkingMenu} onMarkingMenuMove={moveMarkingMenuPointer} onMarkingMenuEnd={finishMarkingMenu} onOpenExternalZones={setExternalZonePickerOwner} onOptions={openOptions} onSelectAuxiliaryZone={selectAuxiliaryZone} onTap={handleCardTap} onUntapZone={untapZone} onZoneSelect={selectMoveDestination} />

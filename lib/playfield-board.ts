@@ -293,7 +293,7 @@ export function flipStackCards(current: BoardState, owner: PlayerId, zone: PlayZ
   return { ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: source.map((card) => card.stackId === stackId ? { ...card, face } : card) } } };
 }
 
-export function runYobinion(current: BoardState, owner: PlayerId, sourceId: string, dragonOnly = false, random = Math.random): BoardState {
+export function runYobinion(current: BoardState, owner: PlayerId, sourceId: string, random = Math.random): BoardState {
   const source = Object.values(current.players[owner]).flat().find((card) => card.instanceId === sourceId && resolveCardCost(card.name, card.cost) !== null);
   if (!source) return current;
   const sourceCost = resolveCardCost(source.name, source.cost);
@@ -303,7 +303,7 @@ export function runYobinion(current: BoardState, owner: PlayerId, sourceId: stri
     const types = card.cardTypes ?? [];
     const isCreature = types.some((type) => type.includes("クリーチャー"));
     const candidateCost = resolveCardCost(card.name, card.cost);
-    return candidateCost !== null && candidateCost < sourceCost && isCreature && (!dragonOnly || card.name.includes("ドラゴン") || types.some((type) => type.includes("ドラゴン")));
+    return candidateCost !== null && candidateCost < sourceCost && isCreature;
   });
   if (matchIndex < 0) return current;
   const revealed = deck.slice(0, matchIndex);

@@ -9,6 +9,12 @@ declare
   v_found boolean;
   v_card jsonb;
 begin
+  if pg_catalog.to_regprocedure('public.run_game_yobinion(uuid,bigint,text,text,boolean)') is not null then
+    raise exception 'legacy five-argument yobinion RPC still exists';
+  end if;
+  if pg_catalog.to_regprocedure('public.run_game_yobinion(uuid,bigint,text,text)') is null then
+    raise exception 'four-argument yobinion RPC is missing';
+  end if;
   select id into v_host from auth.users order by created_at limit 1;
   if v_host is null then raise exception 'test requires one existing auth user'; end if;
   insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
@@ -30,7 +36,7 @@ begin
 
   perform pg_catalog.set_config('request.jwt.claim.sub',v_host::text,true);
   select result.state,result.state_version,result.found into v_state,v_version,v_found
-  from public.run_game_yobinion(v_room,1,'p1','maruru',false) result;
+  from public.run_game_yobinion(v_room,1,'p1','maruru') result;
   if not v_found or v_version <> 2 then raise exception 'yobinion did not run'; end if;
   if v_state #>> '{players,p1,battle,1,name}' <> '天災 デドダム' then raise exception 'dedodam was not moved to battle'; end if;
   if pg_catalog.jsonb_array_length(v_state #> '{players,p1,deck}') <> 2 then raise exception 'deck count is wrong'; end if;
@@ -39,9 +45,5 @@ begin
   if v_state #>> '{notifications,0,revealedCard,name}' <> '天災 デドダム' then raise exception 'revealed notification missing'; end if;
   select pg_catalog.count(*) into v_version from public.game_room_actions where room_id=v_room and action_kind='board_update';
   if v_version <> 1 then raise exception 'history missing'; end if;
-
-  select result.state,result.state_version,result.found into v_state,v_version,v_found
-  from public.run_game_yobinion(v_room,2,'p1','maruru',true) result;
-  if v_found or v_version <> 2 then raise exception 'not-found dragon yobinion changed state'; end if;
 end $$;
 rollback;

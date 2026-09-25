@@ -1437,7 +1437,7 @@ export type Database = {
         Returns: { state: Json; state_version: number }[]
       }
       run_game_yobinion: {
-        Args: { p_room_id: string; p_expected_version: number; p_owner: string; p_source_id: string; p_dragon_only?: boolean }
+        Args: { p_room_id: string; p_expected_version: number; p_owner: string; p_source_id: string }
         Returns: { state: Json; state_version: number; found: boolean }[]
       }
       set_game_card_inspection: {

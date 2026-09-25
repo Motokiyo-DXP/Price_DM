@@ -197,7 +197,6 @@ export function OnlineMatchBoard({ roomId, returnLobbyId, userId, isHost, isSpec
       p_expected_version: versionRef.current,
       p_owner: request.owner,
       p_source_id: request.sourceId,
-      p_dragon_only: request.dragonOnly,
     });
     if (yobinionError || !data?.[0]) {
       setError("ヨビニオンを同期できませんでした。最新の盤面を取得します。");
