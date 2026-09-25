@@ -20,6 +20,7 @@ type SearchCard = { id: number; name: string; name_kana: string | null; print_co
 type SelectedCard = { canonicalCardId: number; cardPrintId: number | null; name: string; quantity: number; imageUrl: string | null; cost?: number | null; civilizations?: string[] };
 type DeckTab = "main" | "gr" | "special";
 type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
+type SearchStatus = "idle" | "searching" | "success" | "empty" | "error";
 export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; cards: SelectedCard[] };
 const SEARCH_PAGE_SIZE = 24;
 
@@ -31,13 +32,16 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [results, setResults] = useState<SearchCard[]>([]);
   const [cards, setCards] = useState<SelectedCard[]>(initialDeck?.cards ?? []);
   const [format, setFormat] = useState<DeckEditorInitialData["format"]>(initialDeck?.format ?? "original");
-  const [searching, setSearching] = useState(false);
   const [hasMoreResults, setHasMoreResults] = useState(true);
+  const [searchStatus, setSearchStatus] = useState<SearchStatus>("idle");
+  const [searchStatusKey, setSearchStatusKey] = useState("");
+  const [resultsSearchKey, setResultsSearchKey] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DeckTab>("main");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SearchCard | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [selectedCardDetailsLoading, setSelectedCardDetailsLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
@@ -61,8 +65,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [maximumCost, setMaximumCost] = useState("");
   const [includeNoCost, setIncludeNoCost] = useState(false);
   const [imageFilter, setImageFilter] = useState<"all" | "with" | "without">("all");
-  const [searchSort, setSearchSort] = useState<DeckSearchSortKey>("usage");
-  const [searchSortDirection, setSearchSortDirection] = useState<SortDirection>("desc");
+  const [searchSort, setSearchSort] = useState<DeckSearchSortKey>("relevance");
+  const [searchSortDirection, setSearchSortDirection] = useState<SortDirection>("asc");
   // A new deck has no persisted order yet, so keep the historical cost-ascending default.
   // Existing decks continue to render their saved sort_order unchanged.
   const [deckSort, setDeckSort] = useState<DeckSortKey | null>(initialDeck ? null : "cost");
@@ -71,6 +75,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const searchRequestRef = useRef(0);
   const searchControllerRef = useRef<AbortController | null>(null);
   const searchInFlightRef = useRef(false);
+  const cardDetailsRequestRef = useRef(0);
   const total = useMemo(() => cards.reduce((sum, card) => sum + card.quantity, 0), [cards]);
   const deckLimit = MAX_MAIN_DECK_CARDS;
   const orderedCards = useMemo(() => deckSort ? sortDeckCards(cards, deckSort, deckSortDirection) : cards, [cards, deckSort, deckSortDirection]);
@@ -95,6 +100,25 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const searchQuery = useMemo(() => query.trim(), [normalizedQuery]);
   const normalizedCardNumberFilter = cardNumberFilter.trim().toLowerCase();
   const searchCardNumberFilter = useMemo(() => cardNumberFilter.trim(), [normalizedCardNumberFilter]);
+  const currentSearchKey = JSON.stringify({
+    p_query: searchQuery,
+    p_limit: SEARCH_PAGE_SIZE,
+    p_offset: null,
+    p_sort: searchSort,
+    p_ascending: searchSortDirection === "asc",
+    p_product_name: productFilter || null,
+    p_card_number: searchCardNumberFilter || null,
+    p_civilizations: civilizationFilter,
+    p_civilization_mode: civilizationMode,
+    p_color: colorFilter,
+    p_card_types: cardTypeFilter ? [cardTypeFilter] : [],
+    p_min_cost: minimumCost === "" ? null : Number(minimumCost),
+    p_max_cost: maximumCost === "" ? null : Number(maximumCost),
+    p_no_cost: includeNoCost,
+    p_image: imageFilter,
+  });
+  const currentSearchStatus = searchStatusKey === currentSearchKey ? searchStatus : "searching";
+  const resultsAreCurrent = resultsSearchKey === currentSearchKey;
 
   useEffect(() => { resultCountRef.current = results.length; }, [results]);
 
@@ -125,10 +149,15 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const loadSearchPage = useCallback(async (append: boolean, requestId: number, signal: AbortSignal) => {
     if (searchInFlightRef.current) return;
     searchInFlightRef.current = true;
-    if (!append) setSearching(true);
-    setSearchError(null);
     const supabase = createBrowserSupabaseClient();
-    if (!supabase) { searchInFlightRef.current = false; setSearching(false); return; }
+    if (!supabase) {
+      if (!append && requestId === searchRequestRef.current) {
+        setSearchError("カード検索を利用できません。");
+        setSearchStatus("error");
+      }
+      searchInFlightRef.current = false;
+      return;
+    }
     const offset = append ? resultCountRef.current : 0;
     const searchArgs = {
       p_query: searchQuery, p_limit: SEARCH_PAGE_SIZE, p_offset: offset, p_sort: searchSort,
@@ -140,62 +169,62 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       p_max_cost: maximumCost === "" ? null : Number(maximumCost),
       p_no_cost: includeNoCost, p_image: imageFilter,
     };
-    const { data, error } = await supabase.rpc("search_deck_cards_filtered", searchArgs).abortSignal(signal);
-    if (requestId !== searchRequestRef.current || signal.aborted) return;
-    if (error) {
-      if (!append) setResults([]);
-      setHasMoreResults(false);
-      setSearchError("カード検索に失敗しました。もう一度お試しください。");
-      searchInFlightRef.current = false;
-      setSearching(false);
+    const searchKey = JSON.stringify({ ...searchArgs, p_offset: null });
+    let data;
+    let error;
+    try {
+      ({ data, error } = await supabase.rpc("search_deck_cards_filtered", searchArgs).abortSignal(signal));
+    } catch {
+      if (requestId === searchRequestRef.current && !signal.aborted) {
+        setSearchError("カード検索に失敗しました。もう一度お試しください。");
+        setSearchStatus("error");
+        searchInFlightRef.current = false;
+      }
       return;
     }
-      const pageRows = (data ?? []).filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string");
-      const basePage: SearchCard[] = pageRows.map((row) => ({
-        id: row.id, name: row.name, name_kana: row.name_kana || null, print_count: row.print_count,
-        usage_count: "usage_count" in row ? row.usage_count : 0, cost: fallbackCosts[row.name],
-        imageUrl: null, imageOptions: [], productNames: [], cardNumbers: [], newestPrintId: 0, hydrated: false,
-      }));
-      setResults((current) => append ? [...current, ...basePage.filter((card) => !current.some((existing) => existing.id === card.id))] : basePage);
-      setHasMoreResults(basePage.length === SEARCH_PAGE_SIZE);
-      setSearching(false);
-      const ids = basePage.map((row) => row.id);
-      const [{ data: prints }, { data: metadata }] = ids.length === 0
-        ? [{ data: [] }, { data: [] }]
-        : await Promise.all([
-          supabase.from("card_prints").select("id, canonical_card_id, image_key, product_name, card_number, official_card_id").in("canonical_card_id", ids).order("id").abortSignal(signal),
-          supabase.from("canonical_cards").select("id, cost, civilizations, card_types").in("id", ids).abortSignal(signal),
-        ]);
-      if (requestId !== searchRequestRef.current || signal.aborted) return;
-      const imageOptions = new Map<number, ImageOption[]>();
-      const products = new Map<number, Set<string>>();
-      const cardNumbers = new Map<number, Set<string>>();
-      const newestPrintIds = new Map<number, number>();
-      const costs = new Map((metadata ?? []).map((card) => [card.id, card.cost]));
-      const civilizations = new Map((metadata ?? []).map((card) => [card.id, card.civilizations]));
-      const cardTypes = new Map((metadata ?? []).map((card) => [card.id, card.card_types]));
-      for (const print of sortCardPrintsOldestFirst(prints ?? [])) {
-        newestPrintIds.set(print.canonical_card_id, Math.max(newestPrintIds.get(print.canonical_card_id) ?? 0, print.id));
-        if (print.product_name) products.set(print.canonical_card_id, (products.get(print.canonical_card_id) ?? new Set()).add(print.product_name));
-        if (print.card_number) cardNumbers.set(print.canonical_card_id, (cardNumbers.get(print.canonical_card_id) ?? new Set()).add(print.card_number));
-        if (print.image_key) {
-          const options = imageOptions.get(print.canonical_card_id) ?? [];
-          const url = getCardImageUrl(print.image_key);
-          if (url && !options.some((option) => option.url === url)) imageOptions.set(print.canonical_card_id, [...options, { printId: print.id, url }]);
-        }
-      }
-      if (requestId !== searchRequestRef.current || signal.aborted) return;
-      const page = pageRows.map((row) => {
-          const options = imageOptions.get(row.id) ?? [];
-          return { id: row.id, name: row.name, name_kana: row.name_kana || null, print_count: row.print_count, usage_count: "usage_count" in row ? row.usage_count : 0, cost: costs.get(row.id) ?? fallbackCosts[row.name], civilizations: civilizations.get(row.id), cardTypes: cardTypes.get(row.id),
-            imageUrl: options[0]?.url ?? null, imageOptions: options,
-            productNames: Array.from(products.get(row.id) ?? []), cardNumbers: Array.from(cardNumbers.get(row.id) ?? []), newestPrintId: newestPrintIds.get(row.id) ?? 0, hydrated: true };
-        });
-      setResults((current) => append
-        ? current.map((card) => page.find((item) => item.id === card.id) ?? card)
-        : page);
+    if (requestId !== searchRequestRef.current || signal.aborted) return;
+    if (error) {
+      setSearchError("カード検索に失敗しました。もう一度お試しください。");
+      setSearchStatus("error");
+      setHasMoreResults(false);
       searchInFlightRef.current = false;
-      setSearching(false);
+      return;
+    }
+    const page = (data ?? [])
+      .filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string")
+      .map((row) => {
+        const representativePrintId = Number.isSafeInteger(row.representative_print_id)
+          ? row.representative_print_id
+          : null;
+        const imageUrl = typeof row.image_key === "string" ? getCardImageUrl(row.image_key) : null;
+        return {
+          id: row.id,
+          name: row.name,
+          name_kana: row.name_kana || null,
+          print_count: row.print_count,
+          usage_count: row.usage_count,
+          cost: row.cost ?? fallbackCosts[row.name],
+          civilizations: row.civilizations ?? [],
+          cardTypes: row.card_types ?? [],
+          imageUrl,
+          imageOptions: imageUrl && representativePrintId !== null
+            ? [{ printId: representativePrintId, url: imageUrl }]
+            : [],
+          productNames: [],
+          cardNumbers: [],
+          newestPrintId: representativePrintId ?? 0,
+          hydrated: false,
+        };
+      });
+    if (requestId !== searchRequestRef.current || signal.aborted) return;
+    setResults((current) => append
+      ? [...current, ...page.filter((card) => !current.some((existing) => existing.id === card.id))]
+      : page);
+    setResultsSearchKey(searchKey);
+    setHasMoreResults(page.length === SEARCH_PAGE_SIZE);
+    if (!append || page.length > 0) setSearchStatus(page.length > 0 ? "success" : append ? "success" : "empty");
+    setSearchError(null);
+    searchInFlightRef.current = false;
   }, [searchQuery, fallbackCosts, searchSort, searchSortDirection, productFilter, searchCardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
 
   useEffect(() => {
@@ -204,16 +233,17 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     const controller = new AbortController();
     searchControllerRef.current = controller;
     searchInFlightRef.current = false;
-    setResults([]);
     setHasMoreResults(true);
-    setSearching(true);
+    setSearchStatusKey(currentSearchKey);
+    setSearchStatus("searching");
+    setSearchError(null);
     const timer = window.setTimeout(() => { void loadSearchPage(false, requestId, controller.signal); }, CARD_SEARCH_DEBOUNCE_MS);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [loadSearchPage]);
+  }, [currentSearchKey, loadSearchPage]);
 
   function handleResultScroll(event: React.UIEvent<HTMLDivElement>) {
     const target = event.currentTarget;
-    if (hasMoreResults && !searchInFlightRef.current && target.scrollWidth - target.scrollLeft - target.clientWidth < 240) {
+    if (resultsSearchKey === currentSearchKey && currentSearchStatus === "success" && hasMoreResults && !searchInFlightRef.current && target.scrollWidth - target.scrollLeft - target.clientWidth < 240) {
       const controller = searchControllerRef.current;
       if (controller) void loadSearchPage(true, searchRequestRef.current, controller.signal);
     }
@@ -239,9 +269,54 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     if (cards.length === 0 || window.confirm("メインデッキのカードをすべて外しますか？")) setCards([]);
   }
 
-  function openCard(card: SearchCard) {
+  function closeCard() {
+    cardDetailsRequestRef.current += 1;
+    setSelectedCardDetailsLoading(false);
+    setSelectedCard(null);
+  }
+
+  async function openCard(card: SearchCard) {
+    const requestId = ++cardDetailsRequestRef.current;
     setSelectedCard(card);
     setSelectedImageUrl(cards.find((item) => item.canonicalCardId === card.id)?.imageUrl ?? card.imageUrl);
+    if (card.hydrated) {
+      setSelectedCardDetailsLoading(false);
+      return;
+    }
+
+    setSelectedCardDetailsLoading(true);
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setSelectedCardDetailsLoading(false);
+      return;
+    }
+    const { data: prints, error } = await supabase
+      .from("card_prints")
+      .select("id, image_key, product_name, card_number, official_card_id")
+      .eq("canonical_card_id", card.id)
+      .is("deleted_at", null)
+      .order("id");
+    if (requestId !== cardDetailsRequestRef.current) return;
+    setSelectedCardDetailsLoading(false);
+    if (error) return;
+
+    const orderedPrints = sortCardPrintsOldestFirst(prints ?? []);
+    const imageOptions = orderedPrints.flatMap((print) => {
+      const url = getCardImageUrl(print.image_key);
+      return url ? [{ printId: print.id, url }] : [];
+    });
+    const hydratedCard: SearchCard = {
+      ...card,
+      imageUrl: card.imageUrl ?? imageOptions[0]?.url ?? null,
+      imageOptions,
+      productNames: [...new Set(orderedPrints.flatMap((print) => print.product_name ? [print.product_name] : []))],
+      cardNumbers: [...new Set(orderedPrints.flatMap((print) => print.card_number ? [print.card_number] : []))],
+      newestPrintId: Math.max(0, ...orderedPrints.map((print) => print.id)),
+      hydrated: true,
+    };
+    setSelectedCard(hydratedCard);
+    setSelectedImageUrl((current) => current ?? hydratedCard.imageUrl);
+    setResults((current) => current.map((item) => item.id === card.id ? hydratedCard : item));
   }
 
   async function openDeckCard(card: SelectedCard) {
@@ -264,6 +339,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       newestPrintId: Math.max(0, ...(prints ?? []).map((print) => print.id)),
       cost: card.cost,
       civilizations: card.civilizations,
+      hydrated: true,
     });
   }
 
@@ -324,19 +400,22 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         <aside className="deck-maker-desktop-side">
           <DeckAnalysis cards={cards} inline />
           <section className="deck-search-shelf">
-        <div className="deck-result-strip" aria-live="polite" onScroll={handleResultScroll}>
-          {searchError ? <p role="alert">{searchError}</p> : visibleResults.length === 0 ? searching ? <p>検索中…</p> : <p>条件に一致するカードがありません</p> : visibleResults.map((card, index) => {
+        <div aria-busy={currentSearchStatus === "searching"} className="deck-result-strip" aria-live="polite" onScroll={handleResultScroll}>
+          {currentSearchStatus === "searching" ? <p role="status">{visibleResults.length > 0 && !resultsAreCurrent ? "検索中… 前の結果は操作できません" : "検索中…"}</p> : null}
+          {currentSearchStatus === "error" ? <p role="alert">{searchError ?? "カード検索に失敗しました。もう一度お試しください。"}</p> : null}
+          {currentSearchStatus === "empty" ? <p>条件に一致するカードがありません</p> : null}
+          {currentSearchStatus !== "error" && visibleResults.map((card, index) => {
             const quantity = cards.find((item) => item.canonicalCardId === card.id)?.quantity ?? 0;
             const cannotAdd = total >= deckLimit || quantity >= 4;
             return <article className="deck-result-card" key={card.id}>
-              <button aria-label={`${card.name}の詳細を開く`} className="deck-result-card-art" disabled={!card.hydrated} onClick={() => openCard(card)} title={`${card.name}の詳細を開く`} type="button">
+              <button aria-label={`${card.name}の詳細を開く`} className="deck-result-card-art" disabled={!resultsAreCurrent} onClick={() => void openCard(card)} title={`${card.name}の詳細を開く`} type="button">
                 <CardArtwork eager={index === 0} imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 760px) 84px, 180px" />
                 {quantity > 0 ? <strong>{quantity}</strong> : null}
               </button>
               <span className="deck-result-card-name">{card.name}</span>
               <div className="deck-result-card-actions" aria-label={`${card.name}をデッキで増減`}>
                 <button aria-label={`${card.name}を1枚減らす`} disabled={quantity === 0} onClick={() => removeCard(card.id)} type="button">−</button>
-                <button aria-label={`${card.name}を1枚増やす`} disabled={cannotAdd || !card.hydrated} onClick={() => addCard(card)} type="button">＋</button>
+                <button aria-label={`${card.name}を1枚増やす`} disabled={!resultsAreCurrent || cannotAdd} onClick={() => addCard(card)} type="button">＋</button>
               </div>
             </article>;
           })}
@@ -372,13 +451,13 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </aside>
       </div>
 
-      {selectedCard ? <div className="deck-card-modal-backdrop" onClick={() => setSelectedCard(null)} role="presentation">
+      {selectedCard ? <div className="deck-card-modal-backdrop" onClick={closeCard} role="presentation">
         <section aria-label={`${selectedCard.name}のカード詳細`} aria-modal="true" className="deck-card-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-card-modal-main">
             <CardArtwork className="deck-card-modal-art" eager imageUrl={selectedImageUrl} name={selectedCard.name} sizes="(max-width: 600px) 88vw, 430px" />
           </div>
           <div className="deck-card-variants" aria-label="別イラスト一覧">
-            {selectedCard.imageOptions.length > 0 ? selectedCard.imageOptions.map((option, index) => <button aria-label={`イラスト${index + 1}を選択`} aria-pressed={selectedImageUrl === option.url} key={option.printId} onClick={() => selectIllustration(option)} type="button">
+            {selectedCardDetailsLoading ? <p role="status">イラストを読み込み中…</p> : selectedCard.imageOptions.length > 0 ? selectedCard.imageOptions.map((option, index) => <button aria-label={`イラスト${index + 1}を選択`} aria-pressed={selectedImageUrl === option.url} key={option.printId} onClick={() => selectIllustration(option)} type="button">
               <CardArtwork eager imageUrl={option.url} name={`${selectedCard.name} イラスト${index + 1}`} sizes="90px" />
             </button>) : <p>別イラスト画像はまだ登録されていません。</p>}
           </div>
@@ -389,7 +468,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
               <strong>{cards.find((item) => item.canonicalCardId === selectedCard.id)?.quantity ?? 0}<small>/4枚</small></strong>
               <button aria-label="1枚増やす" disabled={total >= deckLimit || (cards.find((item) => item.canonicalCardId === selectedCard.id)?.quantity ?? 0) >= 4} onClick={() => addCard(selectedCard, selectedImageUrl)} type="button">＋</button>
             </span></div>
-            <button className="deck-card-modal-close" onClick={() => setSelectedCard(null)} type="button"><span aria-hidden="true">×</span>閉じる</button>
+            <button className="deck-card-modal-close" onClick={closeCard} type="button"><span aria-hidden="true">×</span>閉じる</button>
           </div>
         </section>
       </div> : null}

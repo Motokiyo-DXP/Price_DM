@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { CardArtwork } from "@/components/card-artwork";
-import { getCardImageUrl } from "@/lib/card-image";
-import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { CardSummary, Trend } from "@/lib/types";
 import {
   SearchMode,
@@ -25,7 +23,7 @@ type MarketListProps = {
   loadError: string | null;
 };
 
-type MarketSort = "all-updated" | "own-updated" | "release-date";
+type MarketSort = "search" | "all-updated" | "own-updated" | "release-date";
 
 const yen = (value: number | null) =>
   value === null ? "—" : `${value.toLocaleString("ja-JP")}円`;
@@ -46,12 +44,13 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     key: string;
     cards: CardSummary[];
   } | null>(null);
-  const [searchingCards, setSearchingCards] = useState(false);
+  const [searchStatus, setSearchStatus] = useState<"idle" | "searching" | "success" | "empty" | "error">("idle");
+  const [searchStatusKey, setSearchStatusKey] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoriteUserId, setFavoriteUserId] = useState<string | null | undefined>(undefined);
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
-  const [sortMode, setSortMode] = useState<MarketSort>("all-updated");
+  const [sortMode, setSortMode] = useState<MarketSort>("search");
   const [sortMetadata, setSortMetadata] = useState<Record<string, {
     allAccountsUpdatedAt: string | null;
     ownAccountUpdatedAt: string | null;
@@ -123,6 +122,10 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   );
   const normalizedQuery = normalizeJapaneseSearch(query);
   const searchQuery = useMemo(() => query.trim(), [normalizedQuery]);
+  const currentSearchKey = `${searchMode}:${searchQuery}`;
+  const currentSearchStatus = searchStatusKey === currentSearchKey
+    ? searchStatus
+    : searchQuery ? "searching" : "idle";
 
   useEffect(() => {
     let cancelled = false;
@@ -133,19 +136,21 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
 
     if (!trimmedQuery) {
       setRemoteSearch(null);
-      setSearchingCards(false);
       setSearchError(null);
+      setSearchStatusKey(searchKey);
+      setSearchStatus("idle");
       return;
     }
 
-    setSearchingCards(true);
+    setSearchStatusKey(searchKey);
+    setSearchStatus("searching");
     setSearchError(null);
     const timer = window.setTimeout(async () => {
       const supabase = createBrowserSupabaseClient();
       if (!supabase) {
         if (!cancelled) {
-          setSearchingCards(false);
           setSearchError("カード検索を利用できません。しばらくしてから再度お試しください。");
+          setSearchStatus("error");
         }
         return;
       }
@@ -162,44 +167,23 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         }).abortSignal(controller.signal));
       } catch {
         if (!cancelled && requestSequence === searchRequestSequence.current) {
-          setSearchingCards(false);
           setSearchError("カード候補を読み込めませんでした。");
+          setSearchStatus("error");
         }
         return;
       }
 
       if (cancelled || requestSequence !== searchRequestSequence.current) return;
       if (error) {
-        setSearchingCards(false);
         setSearchError("カード候補を読み込めませんでした。");
+        setSearchStatus("error");
         return;
       }
 
       const mappedCards = mapMarketSearchResults(data, pricedCardsById);
       setRemoteSearch({ key: searchKey, cards: mappedCards });
-      setSearchingCards(false);
-
-      const ids = mappedCards.map((card) => Number(card.id));
-      if (ids.length) {
-        let prints;
-        try {
-          ({ data: prints } = await supabase.from("card_prints")
-            .select("id, canonical_card_id, image_key, product_name, card_number, official_card_id")
-            .in("canonical_card_id", ids).not("image_key", "is", null).is("deleted_at", null).order("id")
-            .abortSignal(controller.signal));
-        } catch {
-          return;
-        }
-        if (cancelled || requestSequence !== searchRequestSequence.current) return;
-        const oldestImages = new Map<number, string>();
-        for (const print of sortCardPrintsOldestFirst(prints ?? [])) {
-          if (print.image_key && !oldestImages.has(print.canonical_card_id)) oldestImages.set(print.canonical_card_id, print.image_key);
-        }
-        for (const card of mappedCards) card.imageUrl = getCardImageUrl(oldestImages.get(Number(card.id))) ?? card.imageUrl;
-        setRemoteSearch((current) => current?.key === searchKey
-          ? { key: searchKey, cards: mappedCards }
-          : current);
-      }
+      setSearchStatus(mappedCards.length > 0 ? "success" : "empty");
+      setSearchError(null);
     }, CARD_SEARCH_DEBOUNCE_MS);
 
     return () => {
@@ -234,13 +218,13 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   };
 
   const cards = useMemo(() => {
-    const trimmedQuery = query.trim();
+    const trimmedQuery = searchQuery;
     const searchKey = `${searchMode}:${trimmedQuery}`;
     const matchingCards = trimmedQuery && remoteSearch?.key === searchKey
       ? remoteSearch.cards
       : initialCards.filter((card) => {
       return (
-        searchTextMatches(
+          searchTextMatches(
           query,
           [
             card.name,
@@ -251,6 +235,8 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         )
       );
     });
+    if (trimmedQuery && sortMode === "search") return matchingCards;
+    const effectiveSortMode = sortMode === "search" ? "all-updated" : sortMode;
     const sortedCards = [...matchingCards].sort((a, b) => {
       const favoriteOrder = Number(favorites.includes(b.id)) - Number(favorites.includes(a.id));
       if (favoriteOrder) return favoriteOrder;
@@ -260,19 +246,19 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       const bReleaseDate = bMeta?.latestReleaseDate ?? b.latestReleaseDate;
       const dateCompare = (left: string | null | undefined, right: string | null | undefined) =>
         (right ? Date.parse(right) : 0) - (left ? Date.parse(left) : 0);
-      if (sortMode === "release-date") {
+      if (effectiveSortMode === "release-date") {
         return dateCompare(aReleaseDate, bReleaseDate) || Number(a.id) - Number(b.id);
       }
-      const updateField = sortMode === "own-updated" ? "ownAccountUpdatedAt" : "allAccountsUpdatedAt";
-      const aUpdated = aMeta?.[updateField] ?? (sortMode === "all-updated" ? a.allAccountsUpdatedAt : null);
-      const bUpdated = bMeta?.[updateField] ?? (sortMode === "all-updated" ? b.allAccountsUpdatedAt : null);
+      const updateField = effectiveSortMode === "own-updated" ? "ownAccountUpdatedAt" : "allAccountsUpdatedAt";
+      const aUpdated = aMeta?.[updateField] ?? (effectiveSortMode === "all-updated" ? a.allAccountsUpdatedAt : null);
+      const bUpdated = bMeta?.[updateField] ?? (effectiveSortMode === "all-updated" ? b.allAccountsUpdatedAt : null);
       if (aUpdated && bUpdated) return dateCompare(aUpdated, bUpdated) || dateCompare(aReleaseDate, bReleaseDate) || Number(a.id) - Number(b.id);
       if (aUpdated) return -1;
       if (bUpdated) return 1;
       return dateCompare(aReleaseDate, bReleaseDate) || Number(a.id) - Number(b.id);
     });
     return sortedCards;
-  }, [favorites, initialCards, query, remoteSearch, searchMode, sortMetadata, sortMode]);
+  }, [favorites, initialCards, query, searchQuery, remoteSearch, searchMode, sortMetadata, sortMode]);
 
   return (
     <div className="market-shell">
@@ -332,7 +318,8 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
 
       <label className="market-sort-control">
         並び替え
-        <select aria-label="カードの並び替え" value={sortMode} onChange={(event) => setSortMode(event.target.value as MarketSort)}>
+        <select aria-label="カードの並び替え" value={searchQuery || sortMode !== "search" ? sortMode : "all-updated"} onChange={(event) => setSortMode(event.target.value as MarketSort)}>
+          {searchQuery ? <option value="search">検索順</option> : null}
           <option value="all-updated">更新順・全アカウント</option>
           <option value="own-updated">更新順・自アカウント</option>
           <option value="release-date">収録日順</option>
@@ -341,14 +328,20 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
 
       {favoriteError && <p className="notice error" role="alert">{favoriteError}</p>}
 
-      {searchError && (
+      {currentSearchStatus === "error" && searchError && (
         <p className="notice error" role="alert">
           {searchError}
         </p>
       )}
 
       <p className="market-result-count" aria-live="polite">
-        {searchingCards ? "検索中…" : `検索結果 ${cards.length}件`}
+        {currentSearchStatus === "searching"
+          ? "検索中…"
+          : currentSearchStatus === "error"
+            ? "検索できませんでした"
+            : currentSearchStatus === "empty"
+              ? "条件に一致するカードはありません"
+              : `検索結果 ${cards.length}件`}
       </p>
 
       <div className="grid">
@@ -408,11 +401,12 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         ))}
       </div>
 
-      {!loadError && !searchError && !searchingCards && cards.length === 0 && (
+      {!loadError && !searchError && currentSearchStatus === "idle" && initialCards.length === 0 && (
+        <p className="empty">登録済みのカードはありません。</p>
+      )}
+      {!loadError && !searchError && currentSearchStatus === "empty" && cards.length === 0 && (
         <p className="empty">
-          {initialCards.length === 0
-            ? "登録済みのカードはありません。"
-            : "条件に一致するカードはありません。"}
+          条件に一致するカードはありません。
         </p>
       )}
       </div>

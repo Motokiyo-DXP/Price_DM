@@ -1274,7 +1274,18 @@ export type Database = {
           p_no_cost?: boolean
           p_image?: string
         }
-        Returns: { id: number; name: string; name_kana: string | null; print_count: number; usage_count: number }[]
+        Returns: {
+          id: number
+          name: string
+          name_kana: string | null
+          print_count: number
+          usage_count: number
+          representative_print_id: number | null
+          image_key: string | null
+          cost: number | null
+          civilizations: string[]
+          card_types: string[]
+        }[]
       }
       retire_stale_game_rooms: {
         Args: Record<PropertyKey, never>
@@ -1743,7 +1754,7 @@ export type Database = {
       }
       search_market_cards: {
         Args: { p_query: string; p_game_slug?: string; p_limit?: number; p_mode?: string }
-        Returns: { id: number; game_name: string; name: string; name_kana: string | null; print_count: number }[]
+        Returns: { id: number; game_name: string; name: string; name_kana: string | null; print_count: number; image_key: string | null }[]
       }
       search_canonical_cards: {
         Args: {
