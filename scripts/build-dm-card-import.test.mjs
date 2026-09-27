@@ -35,7 +35,9 @@ test("現行の正規カード・収録版・検索語へ冪等なSQLを生成�
   assert.match(sql, /card_texts text\[\]/);
   assert.match(sql, /races_complete boolean not null/);
   assert.match(sql, /card_texts_complete boolean not null/);
-  assert.match(sql, /order by race_values\.race collate "C"/);
+  assert.equal((sql.match(/select distinct race_values\.race collate "C" as race/g) ?? []).length, 2);
+  assert.equal((sql.match(/order by race\s/g) ?? []).length, 2);
+  assert.doesNotMatch(sql, /select distinct race_values\.race\s[\s\S]{0,250}?order by race_values\.race collate "C"/);
   assert.match(sql, /card_texts = case[\s\S]*?source\.card_texts_complete/);
   assert.match(sql, /group by source\.name/);
   assert.match(sql, /on conflict \(game_id, name\) where deleted_at is null/);

@@ -21,6 +21,9 @@ test("rules update validates print identities and builds one transaction with co
   const sql = buildCardRulesUpdateSql(records);
   assert.match(sql, /^begin;/);
   assert.match(sql, /official_card_id text not null primary key/);
+  assert.equal((sql.match(/select distinct race_values\.race collate "C" as race/g) ?? []).length, 1);
+  assert.match(sql, /select distinct race_values\.race collate "C" as race[\s\S]*?order by race\s/);
+  assert.doesNotMatch(sql, /select distinct race_values\.race\s[\s\S]{0,250}?order by race_values\.race collate "C"/);
   assert.match(sql, /update public\.canonical_cards[\s\S]*set races = source\.races/);
   assert.match(sql, /update public\.card_prints[\s\S]*set card_texts = source\.card_texts/);
   assert.match(sql, /count\(distinct canonical\.id\) <> 1/);

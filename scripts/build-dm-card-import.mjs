@@ -243,12 +243,12 @@ canonical_source as (
     case when bool_and(source.races_complete) then coalesce((
       select array_agg(ordered_races.race)
       from (
-        select distinct race_values.race
+        select distinct race_values.race collate "C" as race
         from dm_card_import_source as race_source
         cross join lateral unnest(race_source.races) as race_values(race)
         where race_source.name = source.name
           and pg_catalog.btrim(race_values.race) <> ''
-        order by race_values.race collate "C"
+        order by race
       ) as ordered_races
     ), '{}'::text[]) else null::text[] end as races
   from dm_card_import_source as source
@@ -303,12 +303,12 @@ with canonical_races as (
     case when bool_and(source.races_complete) then coalesce((
       select array_agg(ordered_races.race)
       from (
-        select distinct race_values.race
+        select distinct race_values.race collate "C" as race
         from dm_card_import_source as race_source
         cross join lateral unnest(race_source.races) as race_values(race)
         where race_source.name = source.name
           and pg_catalog.btrim(race_values.race) <> ''
-        order by race_values.race collate "C"
+        order by race
       ) as ordered_races
     ), '{}'::text[]) else null::text[] end as races
   from dm_card_import_source as source

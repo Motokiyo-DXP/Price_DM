@@ -165,12 +165,12 @@ begin
     select names.name, coalesce((
       select array_agg(sorted_races.race)
       from (
-        select distinct race_values.race
+        select distinct race_values.race collate "C" as race
         from dm_card_rules_source as race_source
         cross join lateral unnest(race_source.races) as race_values(race)
         where race_source.name = names.name
           and pg_catalog.btrim(race_values.race) <> ''
-        order by race_values.race collate "C"
+        order by race
       ) as sorted_races
     ), '{}'::text[]) as races
     from (select distinct name from dm_card_rules_source) as names
