@@ -1,4 +1,5 @@
 import { getCardImageUrl } from "./card-image.ts";
+import type { CardPrintImageChoice } from "./card-print-order.ts";
 import { STOCK_STATUS_LABELS, type CardSummary } from "./types.ts";
 
 type PricedCardsById = ReadonlyMap<string, CardSummary>;
@@ -26,6 +27,7 @@ function isDisplayText(value: unknown, maxLength: number): value is string {
 export function mapMarketSearchResults(
   value: unknown,
   pricedCardsById: PricedCardsById,
+  printRepresentativesById?: ReadonlyMap<number, CardPrintImageChoice>,
 ): CardSummary[] {
   if (!Array.isArray(value)) return [];
 
@@ -42,15 +44,19 @@ export function mapMarketSearchResults(
 
     const id = String(row.id);
     const pricedCard = pricedCardsById.get(id);
+    const representative = printRepresentativesById?.get(row.id);
+    const imageUrl = representative
+      ? getCardImageUrl(representative.imageKey)
+      : printRepresentativesById
+        ? pricedCard?.imageUrl ?? null
+        : typeof row.image_key === "string"
+          ? getCardImageUrl(row.image_key)
+          : null;
     if (pricedCard) {
       return [
         {
           ...pricedCard,
-          imageUrl:
-            pricedCard.imageUrl ??
-            (typeof row.image_key === "string"
-              ? getCardImageUrl(row.image_key)
-              : null),
+          imageUrl: imageUrl ?? pricedCard.imageUrl,
         },
       ];
     }
@@ -58,7 +64,7 @@ export function mapMarketSearchResults(
     return [
       {
         id,
-        imageUrl: typeof row.image_key === "string" ? getCardImageUrl(row.image_key) : null,
+        imageUrl,
         game: row.game_name,
         name: row.name,
         nameKana:

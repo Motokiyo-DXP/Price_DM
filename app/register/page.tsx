@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
-import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
+import { pickCardPrint, sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { normalizeJapaneseSearch, normalizeShopSearch } from "@/lib/search-normalization";
 import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 import {
@@ -117,6 +117,13 @@ export default function RegisterPage() {
   const [selectedCard, setSelectedCard] = useState<RegistrationCardOption | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [cardPrints, setCardPrints] = useState<RegistrationCardPrint[]>([]);
+  const [previewPrints, setPreviewPrints] = useState<Array<{
+    id: number;
+    image_key: string | null;
+    product_name: string | null;
+    card_number: string | null;
+    official_card_id: string | null;
+  }>>([]);
   const [selectedPrintId, setSelectedPrintId] = useState("");
   const [loadingPrints, setLoadingPrints] = useState(false);
   const shopSearchInput = useImeRealtimeInput();
@@ -478,6 +485,7 @@ export default function RegisterPage() {
     if (!selectedCard) {
       setSelectedImageUrl(null);
       setCardPrints([]);
+      setPreviewPrints([]);
       setSelectedPrintId("");
       setLoadingPrints(false);
       return;
@@ -503,15 +511,16 @@ export default function RegisterPage() {
       });
 
     void supabase.from("card_prints")
-      .select("image_key")
+      .select("id, image_key, product_name, card_number, official_card_id")
       .eq("canonical_card_id", selectedCard.id)
       .not("image_key", "is", null)
       .is("deleted_at", null)
       .order("id", { ascending: true })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) setSelectedImageUrl(getCardImageUrl(data?.image_key));
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        const prints = error ? [] : data ?? [];
+        setPreviewPrints(prints);
+        setSelectedImageUrl(getCardImageUrl(pickCardPrint(prints, selectedPrintId ? Number(selectedPrintId) : null)?.image_key));
       });
 
     return () => {
@@ -521,6 +530,8 @@ export default function RegisterPage() {
 
   function chooseCard(card: RegistrationCardOption) {
     setSelectedImageUrl(null);
+    setSelectedPrintId("");
+    setPreviewPrints([]);
     setSelectedCard(card);
     setCardQuery(card.name);
     setSuggestionsOpen(false);
@@ -1199,7 +1210,11 @@ export default function RegisterPage() {
               <label htmlFor="cardPrintId">
                 収録版
                 <select id="cardPrintId" name="cardPrintId" value={selectedPrintId}
-                  onChange={(event) => setSelectedPrintId(event.target.value)} disabled={loadingPrints}>
+                  onChange={(event) => {
+                    const printId = event.target.value;
+                    setSelectedPrintId(printId);
+                    setSelectedImageUrl(getCardImageUrl(pickCardPrint(previewPrints, printId ? Number(printId) : null)?.image_key));
+                  }} disabled={loadingPrints}>
                   <option value="">{loadingPrints ? "収録版を読み込み中…" : "収録版を定めない（推奨）"}</option>
                   {cardPrints.map((cardPrint) => (
                     <option key={cardPrint.id} value={cardPrint.id}>

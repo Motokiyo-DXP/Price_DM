@@ -5,6 +5,7 @@ export type DeckCard = { canonicalCardId: number; name: string; quantity: number
 export type CardInstance = {
   instanceId: string;
   canonicalCardId: number;
+  cardPrintId?: number | null;
   name: string;
   imageUrl: string | null;
   cost?: number | null;

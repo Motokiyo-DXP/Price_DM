@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { getCardImageUrl } from "./card-image";
-import { sortCardPrintsOldestFirst } from "./card-print-order";
+import { pickCardPrintRepresentativesByCanonicalCardId } from "./card-print-order";
 import { mapMarketSummaryRow } from "./market-data-mapping";
 import { createServerSupabaseClient } from "./supabase";
 import type { CardSummary } from "./types";
@@ -57,12 +57,12 @@ async function fetchMarketCards(): Promise<CardSummary[]> {
         card.latestReleaseDate = row?.latest_release_date ?? null;
       }
     }
-    const prints = printResults.flatMap(({ data }) => data ?? []);
-    const oldestImages = new Map<number, string>();
-    for (const print of sortCardPrintsOldestFirst(prints ?? [])) {
-      if (print.image_key && !oldestImages.has(print.canonical_card_id)) oldestImages.set(print.canonical_card_id, print.image_key);
+    const representatives = pickCardPrintRepresentativesByCanonicalCardId(
+      printResults.flatMap(({ data }) => data ?? []),
+    );
+    for (const card of cards) {
+      card.imageUrl = getCardImageUrl(representatives.get(Number(card.id))?.imageKey) ?? card.imageUrl;
     }
-    for (const card of cards) card.imageUrl = getCardImageUrl(oldestImages.get(Number(card.id))) ?? card.imageUrl;
   }
 
   return cards;

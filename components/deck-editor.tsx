@@ -5,7 +5,8 @@ import { createDeckAction, updateDeckAction } from "@/app/decks/actions";
 import { initialDeckActionState } from "@/app/decks/action-state";
 import { CardArtwork } from "@/components/card-artwork";
 import { getCardImageUrl } from "@/lib/card-image";
-import { sortCardPrintsOldestFirst } from "@/lib/card-print-order";
+import { pickCardPrintRepresentativesByCanonicalCardId, sortCardPrintsOldestFirst } from "@/lib/card-print-order";
+import { mapDeckSearchResults, type DeckSearchCard } from "@/lib/deck-search-mapping";
 import { invalidateDeckPreviewCache } from "@/lib/deck-preview-cache";
 import { sortDeckCards, type DeckSortKey, type SortDirection } from "@/lib/deck-sorting";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
@@ -16,7 +17,7 @@ import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realti
 import { normalizeJapaneseSearch } from "@/lib/search-normalization";
 
 type ImageOption = { printId: number; url: string };
-type SearchCard = { id: number; name: string; name_kana: string | null; print_count: number; usage_count?: number; cost?: number | null; civilizations?: string[]; cardTypes?: string[]; imageUrl: string | null; imageOptions: ImageOption[]; productNames: string[]; cardNumbers: string[]; newestPrintId: number; hydrated?: boolean };
+type SearchCard = DeckSearchCard;
 type SelectedCard = { canonicalCardId: number; cardPrintId: number | null; name: string; quantity: number; imageUrl: string | null; cost?: number | null; civilizations?: string[] };
 type DeckTab = "main" | "gr" | "special";
 type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
@@ -190,32 +191,30 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       searchInFlightRef.current = false;
       return;
     }
-    const page = (data ?? [])
-      .filter((row) => Number.isSafeInteger(row.id) && typeof row.name === "string")
-      .map((row) => {
-        const representativePrintId = Number.isSafeInteger(row.representative_print_id)
-          ? row.representative_print_id
-          : null;
-        const imageUrl = typeof row.image_key === "string" ? getCardImageUrl(row.image_key) : null;
-        return {
-          id: row.id,
-          name: row.name,
-          name_kana: row.name_kana || null,
-          print_count: row.print_count,
-          usage_count: row.usage_count,
-          cost: row.cost ?? fallbackCosts[row.name],
-          civilizations: row.civilizations ?? [],
-          cardTypes: row.card_types ?? [],
-          imageUrl,
-          imageOptions: imageUrl && representativePrintId !== null
-            ? [{ printId: representativePrintId, url: imageUrl }]
-            : [],
-          productNames: [],
-          cardNumbers: [],
-          newestPrintId: representativePrintId ?? 0,
-          hydrated: false,
-        };
-      });
+    const rows = Array.isArray(data) ? data : [];
+    const canonicalCardIds = [...new Set(rows.flatMap((row) =>
+      row && typeof row === "object" && Number.isSafeInteger(row.id) ? [Number(row.id)] : [],
+    ))];
+    const printQueries = Array.from({ length: Math.ceil(canonicalCardIds.length / 20) }, (_, index) =>
+      supabase.from("card_prints")
+        .select("id, canonical_card_id, image_key, product_name, card_number, official_card_id")
+        .in("canonical_card_id", canonicalCardIds.slice(index * 20, (index + 1) * 20))
+        .not("image_key", "is", null)
+        .is("deleted_at", null)
+        .order("id")
+        .abortSignal(signal),
+    );
+    let printResults: Awaited<(typeof printQueries)[number]>[] = [];
+    try {
+      printResults = await Promise.all(printQueries);
+    } catch {
+      // Keep usable search results if the optional artwork batch fails.
+    }
+    if (requestId !== searchRequestRef.current || signal.aborted) return;
+    const representatives = pickCardPrintRepresentativesByCanonicalCardId(
+      printResults.flatMap(({ data: prints }) => prints ?? []),
+    );
+    const page = mapDeckSearchResults(data, representatives, fallbackCosts);
     if (requestId !== searchRequestRef.current || signal.aborted) return;
     setResults((current) => append
       ? [...current, ...page.filter((card) => !current.some((existing) => existing.id === card.id))]

@@ -11,6 +11,7 @@ import {
   searchTextMatches,
 } from "@/lib/search-normalization";
 import { mapMarketSearchResults } from "@/lib/market-search-mapping";
+import { pickCardPrintRepresentativesByCanonicalCardId } from "@/lib/card-print-order";
 import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { readFavoriteCardIds } from "@/lib/favorite-cards";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
@@ -180,7 +181,30 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         return;
       }
 
-      const mappedCards = mapMarketSearchResults(data, pricedCardsById);
+      const rows = Array.isArray(data) ? data : [];
+      const canonicalCardIds = [...new Set(rows.flatMap((row) =>
+        row && typeof row === "object" && Number.isSafeInteger(row.id) ? [Number(row.id)] : [],
+      ))];
+      const printQueries = Array.from({ length: Math.ceil(canonicalCardIds.length / 20) }, (_, index) =>
+        supabase.from("card_prints")
+          .select("id, canonical_card_id, image_key, product_name, card_number, official_card_id")
+          .in("canonical_card_id", canonicalCardIds.slice(index * 20, (index + 1) * 20))
+          .not("image_key", "is", null)
+          .is("deleted_at", null)
+          .order("id")
+          .abortSignal(controller!.signal),
+      );
+      let printResults: Awaited<(typeof printQueries)[number]>[] = [];
+      try {
+        printResults = await Promise.all(printQueries);
+      } catch {
+        // Keep usable search results if the optional artwork batch fails.
+      }
+      if (cancelled || requestSequence !== searchRequestSequence.current) return;
+      const representatives = pickCardPrintRepresentativesByCanonicalCardId(
+        printResults.flatMap(({ data: prints }) => prints ?? []),
+      );
+      const mappedCards = mapMarketSearchResults(data, pricedCardsById, representatives);
       setRemoteSearch({ key: searchKey, cards: mappedCards });
       setSearchStatus(mappedCards.length > 0 ? "success" : "empty");
       setSearchError(null);

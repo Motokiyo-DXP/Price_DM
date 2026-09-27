@@ -9,6 +9,7 @@ import { parseRemoteCardOperation, type RemoteCardOperation } from "@/lib/online
 import { readNewerRoomSnapshot } from "@/lib/online-room-snapshot";
 import { describeOpponentBoardChange } from "@/lib/online-board-change";
 import { LONG_PRESS_DEFAULT_MS } from "@/lib/play-input-settings";
+import { collectBoardCanonicalCardIdsNeedingImages, resolveOnlineBoardCardImages } from "@/lib/online-board-card-images";
 
 export type OnlineDeckSnapshot = { name: string; format?: string; cards: unknown[] };
 type RoomPresence = { user_id: string; display_name: string; connection_role: string; last_seen_at: string | null; is_online: boolean };
@@ -21,6 +22,8 @@ export function OnlineMatchBoard({ roomId, returnLobbyId, userId, isHost, isSpec
   const [version, setVersion] = useState(stateVersion);
   const versionRef = useRef(stateVersion);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const imageResolutionInFlightRef = useRef(new Set<number>());
+  const resolvedImageCardIdsRef = useRef(new Set<number>());
   const [connection, setConnection] = useState("接続中");
   const [onlineCount, setOnlineCount] = useState(1);
   const [roomPresence, setRoomPresence] = useState<RoomPresence[]>([]);
@@ -55,6 +58,34 @@ export function OnlineMatchBoard({ roomId, returnLobbyId, userId, isHost, isSpec
   }
 
   useEffect(() => { boardRef.current = board; }, [board]);
+
+  useEffect(() => {
+    if (!board || !supabase) return;
+    const canonicalCardIds = collectBoardCanonicalCardIdsNeedingImages(board)
+      .filter((id) => !resolvedImageCardIdsRef.current.has(id) && !imageResolutionInFlightRef.current.has(id));
+    if (!canonicalCardIds.length) return;
+    canonicalCardIds.forEach((id) => imageResolutionInFlightRef.current.add(id));
+    const idBatches = Array.from({ length: Math.ceil(canonicalCardIds.length / 20) }, (_, index) =>
+      canonicalCardIds.slice(index * 20, (index + 1) * 20),
+    );
+    const printQueries = idBatches.map((ids) => supabase.from("card_prints")
+      .select("id, canonical_card_id, image_key, product_name, card_number, official_card_id")
+      .in("canonical_card_id", ids)
+      .not("image_key", "is", null)
+      .is("deleted_at", null)
+      .order("id"));
+    void Promise.allSettled(printQueries).then((results) => {
+      const prints = results.flatMap((result, index) => {
+        const ids = idBatches[index];
+        if (result.status === "fulfilled" && !result.value.error) {
+          ids.forEach((id) => resolvedImageCardIdsRef.current.add(id));
+          return result.value.data ?? [];
+        }
+        return [];
+      });
+      setBoard((current) => current ? resolveOnlineBoardCardImages(current, prints) : current);
+    }).finally(() => canonicalCardIds.forEach((id) => imageResolutionInFlightRef.current.delete(id)));
+  }, [board, supabase]);
 
   const refreshHistoryStatus = useCallback(async () => {
     if (!supabase || isSpectator) return;

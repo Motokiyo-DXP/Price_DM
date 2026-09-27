@@ -7,6 +7,8 @@ export type OrderableCardPrint = {
   official_card_id?: string | null;
 };
 
+export type CardPrintImageChoice = { printId: number; imageKey: string };
+
 const productCodesByLength = Object.keys(DM_PRODUCT_RELEASE_DATES).sort((a, b) => b.length - a.length);
 
 function normalizedProductText(value: string | null | undefined) {
@@ -66,11 +68,30 @@ export function sortCardPrintsOldestFirst<T extends OrderableCardPrint>(prints: 
     .map(({ print }) => print);
 }
 
+export function pickCardPrint<T extends OrderableCardPrint & { image_key?: string | null }>(
+  prints: readonly T[],
+  preferredPrintId?: number | null,
+): T | null {
+  return prints.find((print) => print.id === preferredPrintId && print.image_key)
+    ?? sortCardPrintsOldestFirst(prints).find((print) => print.image_key)
+    ?? null;
+}
+
 export function pickCardPrintImageKey<T extends OrderableCardPrint & { image_key?: string | null }>(
   prints: readonly T[],
   preferredPrintId?: number | null,
 ): string | null {
-  return prints.find((print) => print.id === preferredPrintId && print.image_key)?.image_key
-    ?? sortCardPrintsOldestFirst(prints).find((print) => print.image_key)?.image_key
-    ?? null;
+  return pickCardPrint(prints, preferredPrintId)?.image_key ?? null;
+}
+
+type CanonicalCardPrint = OrderableCardPrint & { canonical_card_id: number; image_key?: string | null };
+
+export function pickCardPrintRepresentativesByCanonicalCardId(prints: readonly CanonicalCardPrint[]): Map<number, CardPrintImageChoice> {
+  const representatives = new Map<number, CardPrintImageChoice>();
+  for (const print of sortCardPrintsOldestFirst(prints)) {
+    if (print.image_key && !representatives.has(print.canonical_card_id)) {
+      representatives.set(print.canonical_card_id, { printId: print.id, imageKey: print.image_key });
+    }
+  }
+  return representatives;
 }
