@@ -5,6 +5,7 @@ import { canonicalizeDuelMastersCard } from "./dm-canonical-equivalents.mjs";
 const CARD_PATH = ".local/dm-cards-full.jsonl";
 const METADATA_PATH = ".local/dm-card-metadata.jsonl";
 const CARD_TYPES_PATH = ".local/dm-card-types.jsonl";
+const RULES_PATH = ".local/dm-card-rules.jsonl";
 const CHECKPOINT_PATH = ".local/dm-cards-full-checkpoint.json";
 const OUTPUT_DIRECTORY = ".local/dm-import-sql";
 const DEFAULT_CHUNK_SIZE = 100;
@@ -51,6 +52,71 @@ function validateCard(card, index) {
   if (card.card_types !== undefined && (!Array.isArray(card.card_types) || card.card_types.some((value) => typeof value !== "string" || !value.trim()))) {
     throw new Error(`Card ${index + 1} has invalid card types.`);
   }
+  if (card.races !== undefined && (!Array.isArray(card.races) || card.races.some((value) => typeof value !== "string" || !value.trim()))) {
+    throw new Error(`Card ${index + 1} has invalid races.`);
+  }
+  if (card.card_texts !== undefined && (!Array.isArray(card.card_texts) || card.card_texts.length === 0 || card.card_texts.some((value) => typeof value !== "string"))) {
+    throw new Error(`Card ${index + 1} has invalid card texts.`);
+  }
+}
+
+function canonicalCardName(card) {
+  return canonicalizeDuelMastersCard(card, officialCardId(card)).name;
+}
+
+export function mergeCanonicalRaces(cards) {
+  const groups = new Map();
+  for (const card of cards) {
+    const name = canonicalCardName(card);
+    const group = groups.get(name) ?? { complete: true, races: new Set() };
+    if (!Array.isArray(card.races) || card.races_complete === false) {
+      group.complete = false;
+    } else {
+      for (const race of card.races) {
+        if (typeof race !== "string") throw new Error(`Card ${card.name} has an invalid race.`);
+        if (race.trim()) group.races.add(race.trim());
+      }
+    }
+    groups.set(name, group);
+  }
+
+  return cards.map((card) => {
+    const group = groups.get(canonicalCardName(card));
+    const merged = { ...card, races_complete: group.complete };
+    if (group.complete) {
+      merged.races = [...group.races].sort();
+    }
+    return merged;
+  });
+}
+
+export function mergePrintRules(cards, rules) {
+  const cardsById = new Map(cards.map((card) => [officialCardId(card), card]));
+  const rulesById = new Map();
+  for (const [index, rule] of rules.entries()) {
+    const id = rule?.official_card_id;
+    if (typeof id !== "string" || !id.trim() || officialCardId(rule) !== id) {
+      throw new Error(`Rules record ${index + 1} has an official ID that does not match its URL.`);
+    }
+    const card = cardsById.get(id);
+    if (!card) throw new Error(`Rules record ${index + 1} references an unknown official card ID: ${id}`);
+    if (canonicalCardName(rule) !== canonicalCardName(card)) {
+      throw new Error(`Rules record ${index + 1} has a name that does not match official card ID ${id}.`);
+    }
+    if (!Array.isArray(rule.races) || rule.races.some((race) => typeof race !== "string" || !race.trim())) {
+      throw new Error(`Rules record ${index + 1} has invalid races.`);
+    }
+    if (!Array.isArray(rule.card_texts) || rule.card_texts.length === 0 || rule.card_texts.some((text) => typeof text !== "string")) {
+      throw new Error(`Rules record ${index + 1} has invalid card texts.`);
+    }
+    if (rulesById.has(id)) throw new Error(`Duplicate rules record for official card ID ${id}.`);
+    rulesById.set(id, rule);
+  }
+
+  return cards.map((card) => {
+    const rule = rulesById.get(officialCardId(card));
+    return rule ? { ...card, races: rule.races, card_texts: rule.card_texts } : card;
+  });
 }
 
 export function mergeCardMetadata(cards, metadata) {
@@ -82,14 +148,17 @@ async function loadCards() {
     ...await readOptionalJsonl(METADATA_PATH),
     ...await readOptionalJsonl(CARD_TYPES_PATH),
   ];
-  const mergedCards = mergeCardMetadata(cards, metadata);
+  const mergedCards = mergePrintRules(
+    mergeCardMetadata(cards, metadata),
+    await readOptionalJsonl(RULES_PATH),
+  );
   const deduplicated = new Map();
   for (const [index, card] of mergedCards.entries()) {
     validateCard(card, index);
     const key = officialCardId(card);
     if (!deduplicated.has(key)) deduplicated.set(key, card);
   }
-  return [...deduplicated.values()];
+  return mergeCanonicalRaces([...deduplicated.values()]);
 }
 
 function sourceValues(cards) {
@@ -101,6 +170,10 @@ function sourceValues(cards) {
       ${card.cost ?? "null"},
       ${sqlTextArray(card.civilizations)},
       ${sqlTextArray(card.card_types)},
+      ${Array.isArray(card.races) ? sqlTextArray(card.races) : "null"},
+      ${Array.isArray(card.races) && card.races_complete !== false},
+      ${Array.isArray(card.card_texts) ? sqlTextArray(card.card_texts) : "null"},
+      ${Array.isArray(card.card_texts)},
       ${sqlText(officialCardId(card))},
       ${sqlText(card.card_number?.trim() || null)},
       ${sqlText(card.product_name?.trim() || null)},
@@ -111,8 +184,16 @@ function sourceValues(cards) {
 }
 
 export function buildCanonicalImportSql(cards) {
-  cards.forEach(validateCard);
-  const values = sourceValues(cards.map((card) => canonicalizeDuelMastersCard(card, officialCardId(card))));
+  const seenIds = new Set();
+  cards.forEach((card, index) => {
+    validateCard(card, index);
+    const id = officialCardId(card);
+    if (seenIds.has(id)) throw new Error(`Duplicate official card id: ${id}`);
+    seenIds.add(id);
+  });
+  const values = sourceValues(mergeCanonicalRaces(
+    cards.map((card) => canonicalizeDuelMastersCard(card, officialCardId(card))),
+  ));
 
   return `begin;
 
@@ -122,15 +203,20 @@ create temporary table dm_card_import_source (
   cost smallint,
   civilizations text[] not null,
   card_types text[] not null,
-  official_card_id text not null,
+  races text[],
+  races_complete boolean not null,
+  card_texts text[],
+  card_texts_complete boolean not null,
+  official_card_id text not null primary key,
   card_number text,
   product_name text,
   official_url text not null
 ) on commit drop;
 
 insert into dm_card_import_source(
-  name, generated_reading, cost, civilizations, card_types, official_card_id,
-  card_number, product_name, official_url
+  name, generated_reading, cost, civilizations, card_types, races, races_complete,
+  card_texts, card_texts_complete, official_card_id, card_number, product_name,
+  official_url
 )
 values
     ${values};
@@ -152,7 +238,19 @@ canonical_source as (
     coalesce(
       max(nullif(source.card_types, '{}'::text[])::text)::text[],
       '{}'::text[]
-    ) as card_types
+    ) as card_types,
+    bool_and(source.races_complete) as races_complete,
+    case when bool_and(source.races_complete) then coalesce((
+      select array_agg(ordered_races.race)
+      from (
+        select distinct race_values.race
+        from dm_card_import_source as race_source
+        cross join lateral unnest(race_source.races) as race_values(race)
+        where race_source.name = source.name
+          and pg_catalog.btrim(race_values.race) <> ''
+        order by race_values.race collate "C"
+      ) as ordered_races
+    ), '{}'::text[]) else null::text[] end as races
   from dm_card_import_source as source
   group by source.name
 )
@@ -163,6 +261,7 @@ insert into public.canonical_cards(
   cost,
   civilizations,
   card_types,
+  races,
   source_name,
   source_name_kana,
   source_checked_at
@@ -174,6 +273,7 @@ select
   source.cost,
   source.civilizations,
   source.card_types,
+  coalesce(source.races, '{}'::text[]),
   source.name,
   null,
   pg_catalog.now()
@@ -196,12 +296,42 @@ set name_kana = excluded.name_kana,
     updated_at = pg_catalog.now()
 where not public.canonical_cards.manually_locked;
 
+with canonical_races as (
+  select
+    source.name,
+    bool_and(source.races_complete) as races_complete,
+    case when bool_and(source.races_complete) then coalesce((
+      select array_agg(ordered_races.race)
+      from (
+        select distinct race_values.race
+        from dm_card_import_source as race_source
+        cross join lateral unnest(race_source.races) as race_values(race)
+        where race_source.name = source.name
+          and pg_catalog.btrim(race_values.race) <> ''
+        order by race_values.race collate "C"
+      ) as ordered_races
+    ), '{}'::text[]) else null::text[] end as races
+  from dm_card_import_source as source
+  group by source.name
+)
+update public.canonical_cards as canonical
+set races = source.races,
+    updated_at = pg_catalog.now()
+from canonical_races as source
+join public.tcg_games as game on game.slug = 'duel-masters'
+where canonical.game_id = game.id
+  and canonical.name = source.name
+  and canonical.deleted_at is null
+  and not canonical.manually_locked
+  and source.races_complete;
+
 insert into public.card_prints(
   canonical_card_id,
   official_card_id,
   card_number,
   product_name,
   official_url,
+  card_texts,
   source_checked_at
 )
 select distinct
@@ -210,6 +340,7 @@ select distinct
   source.card_number,
   source.product_name,
   source.official_url,
+  coalesce(source.card_texts, '{}'::text[]),
   pg_catalog.now()
 from dm_card_import_source as source
 join public.tcg_games as game
@@ -224,6 +355,15 @@ set canonical_card_id = excluded.canonical_card_id,
     card_number = excluded.card_number,
     product_name = coalesce(public.card_prints.product_name, excluded.product_name),
     official_url = excluded.official_url,
+    card_texts = case
+      when exists (
+        select 1
+        from dm_card_import_source as source
+        where source.official_card_id = excluded.official_card_id
+          and source.card_texts_complete
+      ) then excluded.card_texts
+      else public.card_prints.card_texts
+    end,
     source_checked_at = excluded.source_checked_at,
     updated_at = pg_catalog.now()
 where not public.card_prints.manually_locked;

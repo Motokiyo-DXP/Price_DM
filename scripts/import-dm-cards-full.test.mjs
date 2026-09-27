@@ -106,6 +106,30 @@ test("one malformed card is isolated, recorded, and succeeds on a later retry", 
   assert.equal(persistedFailures, 2);
 });
 
+test("a successful full import retains canonical races and per-print face rules", async () => {
+  const detailUrl = "https://dm.takaratomy.co.jp/card/detail/?id=rules-print";
+  const appended = [];
+  const result = await processFetchedCard({
+    appendRecord: async (card) => appended.push(card),
+    detailHtml: "official page",
+    detailUrl,
+    failures: new Map(),
+    knownUrls: new Set(),
+    page: 1,
+    parseDetail: () => ({
+      name: "ツインカード",
+      official_url: detailUrl,
+      races: ["種族A"],
+      card_texts: ["クリーチャー側。", "呪文側。"],
+    }),
+    buildMetadata: async () => ({ name_kana: "ついんかーど", aliases: [], aliases_kana: [] }),
+    persistFailures: async () => {},
+  });
+  assert.equal(result.status, "saved");
+  assert.deepEqual(appended[0].races, ["種族A"]);
+  assert.deepEqual(appended[0].card_texts, ["クリーチャー側。", "呪文側。"]);
+});
+
 test("a URL already present in output is not parsed or appended twice", async () => {
   const detailUrl = "https://dm.takaratomy.co.jp/card/detail/?id=known";
   const knownUrls = new Set([detailUrl]);

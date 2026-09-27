@@ -31,6 +31,7 @@
 | canonical_cards.cost | smallint | 可 / NULL | CHECK NULL または 0–99、C: 印刷コスト。空欄/適用なしは NULL、0 と区別 |
 | canonical_cards.civilizations | text[] | 不可 / `{}` | CHECK 6種類の部分集合、最大6要素。C: 公式文明を slug 配列へ |
 | canonical_cards.card_types | text[] | 不可 / `{}` | CHECK 最大8、空文字要素禁止。C: 公式「カードの種類」；複数面は複数値 |
+| canonical_cards.races | text[] | 不可 / `{}` | C: 公式「種族」。全print/カード面の非空種族を重複除去し、決定的な順序で保持 |
 | canonical_cards.metadata_synced_at | timestamptz | 可 / NULL | ―: メタデータ同期専用。基本 import は設定しない |
 | card_prints.id | bigint | 不可 / identity always | PK、自 |
 | card_prints.canonical_card_id | bigint | 不可 / なし | FK canonical restrict、X: `(game_id,name)` で解決 |
@@ -39,6 +40,7 @@
 | card_prints.card_number | text | 可 / NULL | C: 公式番号を表記通り。単独 unique ではない |
 | card_prints.product_name | text | 可 / NULL | C: 公式収録名。`card_products.product_name` と別列 |
 | card_prints.official_url | text | 可 / NULL | C: `https://dm.takaratomy.co.jp/card/detail/?id=...` |
+| card_prints.card_texts | text[] | 不可 / `{}` | C: 公式「特殊能力」のルールテキスト。配列要素はカード面表示順、面内の能力は改行区切り。フレーバーは含めない |
 | card_prints.manually_locked | boolean | 不可 / false | 自/運用。true は上書きしない |
 | card_prints.source_checked_at | timestamptz | 可 / NULL | X: 公式確認日時 |
 | card_prints.created_at, updated_at | timestamptz 各 | 不可 / now() | 自/更新時 X |
@@ -75,7 +77,8 @@
 - 文明: 光=`light`、水=`water`、闇=`darkness`、火=`fire`、自然=`nature`、ゼロ/無色=`zero`。公式セルを `/` `／` `・` で分割し重複除去。DB CHECK は配列順や重複を強制しない。既存多色データの順番にもばらつきがあるため、恣意的にソートせず公式表示順を保持する。色数は `cardinality(civilizations)` の派生値で独立列なし。
 - `card_types`: 公式「カードの種類」を文字列配列で保存。DB は閉じた enum **ではない**。2026-09-15 のライブに存在する値は `GR`, `エグザイル・クリーチャー`, `オーラ`, `クリーチャー`, `クロスギア`, `サイキック`, `その他`, `タマシード`, `デュエリスト`, `デュエルメイト`, `ドラグハート`, `フィールド`, `呪文`, `城`, `進化クリーチャー`, `進化クリーチャー(墓地進化V)`。これは既存値の一覧で、新しい公式値を禁止する規則ではない。未知値は自動で言い換えずレビュー。
 - `cost`: JSON number の整数 0–99、文字列にしない。公式コスト空欄は `null`（0 ではない）。DB コメントは「未登録または非該当」と両義的なので、必須取得失敗と公式空欄を区別するには収集証拠が必要。
-- 種族、パワー、能力・フレーバー文、レアリティ、イラストレーター、ルビは現行カードテーブルに **保存列なし**。勝手に列や検索語へ詰めない。HTML/改行の格納契約も存在しない。将来の拡張は別途設計・承認が必要。
+- `races` は公式ページのカード面ごとの種族を `/` 区切りで読み、全面・全printをcanonical単位で重複除去して保持する。`card_texts` は公式「特殊能力」の各カード面を1要素にし、面内の各能力を改行区切りで保持する。空テキスト要素は面数を保つため許可し、フレーバー欄は含めない。
+- パワー、フレーバー文、レアリティ、イラストレーター、ルビはカードDBへ取り込まない。種族/カードテキストの検索IndexやUI利用も別タスクとする。
 - 名前/番号/商品名の全半角・記号は公式表記を維持し、前後空白のみ除く。名前同一性は DB の厳密な text 比較。`normalize_card_search` は検索語用に NFKC→カタカナをひらがな化→英字小文字化→英字/ひらがな/漢字以外を除去する（名前自体は変換しない）。`dm-canonical-equivalents.mjs` に公式IDごとの例外名があるため、同一判定前に既存例外と照合する。読みが公式未掲載なら捏造せず NULL。改行は JSONL のレコード区切り LF、文字列内は JSON escape とする。
 
 ## 5. ID生成
@@ -100,7 +103,9 @@ DB は外部画像 URL を保存せず `card_prints.image_key`（拡張子なし
 |---|---|
 | `scripts/import-dm-cards-full.mjs` / `npm run import:dm:full` | 公式サイト一覧/詳細の crawler、`.local/dm-cards-full.jsonl` と checkpoint/failures。`parseCardDetail` は `scripts/import-dm-cards-sample.mjs`。公式 robots 等を確認する処理あり |
 | `scripts/validate-dm-card-import.mjs` / `npm run validate:dm:import` | 全件 JSONL と checkpoint、metadata/types の網羅・公式URL・重複・禁止項目検証。単独の小規模 ChatGPT ファイルにそのまま適用不可 |
-| `scripts/build-dm-card-import.mjs` / `npm run build:dm:import` | 上記 JSONL と `.local/dm-card-metadata.jsonl`, `.local/dm-card-types.jsonl` を名前で merge、SQL chunks と manifest 生成。checkpoint `complete` 必須（試験時のみ `--allow-partial`）。部分入力でも既存 `name_kana` を NULL で上書きし得るため無改造で本番流用しない |
+| `scripts/build-dm-card-import.mjs` / `npm run build:dm:import` | 上記 JSONL と `.local/dm-card-metadata.jsonl`, `.local/dm-card-types.jsonl`, `.local/dm-card-rules.jsonl` を mergeし、SQL chunks と manifest を生成。ルール情報はofficial IDでprintへ結合、canonical種族は全printをunion。checkpoint `complete` 必須（試験時のみ `--allow-partial`） |
+| `scripts/backfill-dm-card-rules.mjs` / `npm run backfill:dm:rules` | 既存JSONLの各print URLから種族/能力テキストを取得し、`.local/dm-card-rules.jsonl` とfailure logを生成 |
+| `scripts/build-dm-card-rules-update.mjs` / `npm run build:dm:rules-update` | backfill JSONLをofficial IDで照合し、canonical種族とprint別テキストをtransaction内で更新するSQLを生成 |
 | `scripts/apply-dm-card-import.mjs` / `npm run apply:dm:import:linked -- --confirm-production --project-ref=<linked-ref>` | 完全カタログ manifest、明示確認、リンク先一致を要求して SQL chunks 適用。**今回は実行禁止** |
 | `scripts/build-dm-product-release-import.mjs`, `scripts/sync-dm-card-images.mjs`, `scripts/build-dm-card-image-sql.mjs` | 商品発売日・画像の別系統。管理画面からの一般カード import、任意 JSONL の dry-run/件数付き importer は確認できない |
 
