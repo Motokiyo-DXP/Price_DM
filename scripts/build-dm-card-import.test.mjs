@@ -55,10 +55,13 @@ test("現行の正規カード・収録版・検索語へ冪等なSQLを生成�
   assert.match(sql, /lower\(prints\.official_card_id\) = lower\(source\.official_card_id\)/);
   assert.match(sql, /set official_card_id = source\.official_card_id/);
   assert.match(sql, /insert into public\.card_prints/);
+  const printInsert = sql.split("insert into public.card_prints(")[1].split("insert into public.card_search_terms(")[0];
+  assert.match(printInsert, /select\s+canonical\.id,\s+source\.official_card_id/);
+  assert.doesNotMatch(printInsert, /select distinct/u);
   assert.match(sql, /on conflict \(official_card_id\)/);
   assert.match(sql, /product_name = coalesce\(public\.card_prints\.product_name, excluded\.product_name\)/);
   assert.match(sql, /insert into public\.card_search_terms/);
-  assert.match(sql, /select distinct on \(canonical\.id, public\.normalize_card_search\(source\.name\)\)/);
+  assert.match(sql, /select distinct on \(canonical\.id, public\.normalize_card_search\(source\.name\)\)[\s\S]*?'official_name'[\s\S]*?source\.name collate "C"/);
   assert.match(sql, /select distinct on \(canonical\.id, public\.normalize_card_search\(source\.generated_reading\)\)/);
   assert.match(sql, /order by canonical\.id, public\.normalize_card_search\(source\.generated_reading\), source\.generated_reading collate "C"/);
   assert.match(sql, /'machine_reading'/);
@@ -100,6 +103,20 @@ test("NFKC表記違いのメタデータも同一カードへ適用する", () =
     [{ name: "テスト <A>", card_types: ["クリーチャー"] }],
   );
   assert.deepEqual(merged[0].card_types, ["クリーチャー"]);
+});
+
+test("canonical metadata does not replace the official URL of each print", () => {
+  const cards = [
+    { ...CARD, official_url: "https://dm.takaratomy.co.jp/card/detail/?id=print-a" },
+    { ...CARD, official_url: "https://dm.takaratomy.co.jp/card/detail/?id=print-b" },
+  ];
+  const merged = mergeCardMetadata(cards, [{
+    name: CARD.name,
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=metadata-source",
+    power_text: "5000",
+    power_value: 5000,
+  }]);
+  assert.deepEqual(merged.map((card) => card.official_url), cards.map((card) => card.official_url));
 });
 
 test("同名カードの種族を全printから空要素なしで決定的にunionする", () => {

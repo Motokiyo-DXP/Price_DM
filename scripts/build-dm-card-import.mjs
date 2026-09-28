@@ -165,7 +165,14 @@ export function mergeCardMetadata(cards, metadata) {
       byName.set(canonicalCardNameKey(record.name), record);
     }
   }
-  return cards.map((card) => ({ ...card, ...(byName.get(canonicalCardNameKey(card.name)) ?? {}) }));
+  return cards.map((card) => {
+    const metadataRecord = byName.get(canonicalCardNameKey(card.name));
+    return {
+      ...card,
+      ...(metadataRecord ?? {}),
+      official_url: card.official_url ?? metadataRecord?.official_url,
+    };
+  });
 }
 
 async function readOptionalJsonl(path) {
@@ -427,7 +434,7 @@ insert into public.card_prints(
   card_texts,
   source_checked_at
 )
-select distinct on (canonical.id, public.normalize_card_search(source.name))
+select
   canonical.id,
   source.official_card_id,
   source.card_number,
@@ -470,7 +477,7 @@ insert into public.card_search_terms(
   verified,
   priority
 )
-select distinct
+select distinct on (canonical.id, public.normalize_card_search(source.name))
   canonical.id,
   source.name,
   public.normalize_card_search(source.name),
