@@ -13,9 +13,13 @@ const CARD = {
   name_kana: "テストカード",
   card_number: "1/100",
   product_name: "テスト商品",
+  cost: 7,
+  cost_is_infinite: false,
   card_types: ["クリーチャー"],
   races: ["種族A"],
   card_texts: ["能力A。"],
+  power_text: "5000",
+  power_value: 5000,
   official_url: "https://dm.takaratomy.co.jp/card/detail/?id=test-1",
 };
 
@@ -31,6 +35,12 @@ test("現行の正規カード・収録版・検索語へ冪等なSQLを生成�
 
   assert.match(sql, /insert into public\.canonical_cards/);
   assert.match(sql, /card_types/);
+  assert.match(sql, /cost_is_infinite boolean not null/);
+  assert.match(sql, /power_text text/);
+  assert.match(sql, /power_value integer/);
+  assert.match(sql, /cost_is_infinite = excluded\.cost_is_infinite/);
+  assert.match(sql, /power_text = excluded\.power_text/);
+  assert.match(sql, /power_value = excluded\.power_value/);
   assert.match(sql, /races text\[\]/);
   assert.match(sql, /card_texts text\[\]/);
   assert.match(sql, /races_complete boolean not null/);
@@ -135,6 +145,26 @@ test("rules backfill records are joined by matching official print ID", () => {
   assert.deepEqual(merged[0].card_texts, [""]);
   assert.throws(() => mergePrintRules([CARD], [{ ...rule, official_card_id: "other-id" }]), /does not match its URL/);
   assert.throws(() => mergePrintRules([CARD], [{ ...rule, name: "別カード" }]), /does not match official card ID/);
+});
+
+test("canonical metadata SQL keeps infinite cost, special power, and print text/races together", () => {
+  const card = {
+    ...CARD,
+    name: "∞ test",
+    cost: null,
+    cost_is_infinite: true,
+    power_text: "∞",
+    power_value: null,
+    races: ["ドラゴン", "種族B"],
+    card_texts: ["能力。", ""],
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=infinite-test",
+  };
+  const sql = buildCanonicalImportSql([card]);
+  assert.match(sql, /null,\s*true/);
+  assert.match(sql, /array\['ドラゴン', '種族B'\]::text\[\]/);
+  assert.match(sql, /'∞',\s*null/);
+  assert.match(sql, /coalesce\(bool_or\(source\.cost_is_infinite\), false\)/);
+  assert.match(sql, /source\.card_texts_complete/);
 });
 
 test("rules import accepts only audited official name differences and keeps the source canonical name", () => {

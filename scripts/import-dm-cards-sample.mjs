@@ -18,6 +18,24 @@ function normalizeText(value) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeFullWidthDigits(value) {
+  return value.replace(/[０-９]/g, (character) =>
+    String.fromCharCode(character.charCodeAt(0) - 0xfee0),
+  );
+}
+
+export function parseOfficialCardPowerValue(powerText) {
+  if (typeof powerText !== "string") return null;
+  const normalized = normalizeFullWidthDigits(powerText.trim());
+  const numericText = normalized.match(/^\d+$/u)?.[0];
+  const zeroPlusText = normalized.match(/^0+\+$/u)?.[0];
+  const valueText = numericText ?? (zeroPlusText ? zeroPlusText.slice(0, -1) : null);
+  if (valueText === null) return null;
+
+  const value = Number(valueText);
+  return Number.isSafeInteger(value) ? value : null;
+}
+
 function normalizeRuleText(value) {
   return value
     .replace(/\u00a0/gu, " ")
@@ -252,11 +270,12 @@ export function parseCardDetail(html, officialUrl) {
   if (!name) throw new Error(`Could not find the card name for ${officialUrl}`);
 
   const costText = normalizeText($(".cardDetail td.cost").first().text());
-  const normalizedCost = costText.replace(/[０-９]/g, (character) =>
-    String.fromCharCode(character.charCodeAt(0) - 0xfee0),
-  );
-  const costMatch = normalizedCost.match(/\d+/);
-  const cost = costMatch ? Number.parseInt(costMatch[0], 10) : null;
+  const normalizedCost = normalizeFullWidthDigits(costText);
+  const numericCost = /^\d+$/u.test(normalizedCost)
+    ? Number.parseInt(normalizedCost, 10)
+    : null;
+  const costIsInfinite = costText === "∞";
+  const powerText = $(".cardDetail td.power").first().text().trim() || null;
   const civilizationMap = new Map([
     ["光", "light"],
     ["水", "water"],
@@ -295,10 +314,15 @@ export function parseCardDetail(html, officialUrl) {
     card_texts: cardTexts,
     card_types: cardTypes,
     civilizations,
-    cost: Number.isSafeInteger(cost) && cost >= 0 && cost <= 99 ? cost : null,
+    cost: Number.isSafeInteger(numericCost) && numericCost >= 0 && numericCost <= 99
+      ? numericCost
+      : null,
+    cost_is_infinite: costIsInfinite,
     name,
     name_kana: null,
     official_url: officialUrl,
+    power_text: powerText,
+    power_value: parseOfficialCardPowerValue(powerText),
     product_name: findProductName($, officialId),
     races,
   };

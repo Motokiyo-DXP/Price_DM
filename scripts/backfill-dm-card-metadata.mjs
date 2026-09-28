@@ -42,6 +42,33 @@ export function selectCanonicalSources(cards, completedNames = new Set()) {
   return [...sources.values()];
 }
 
+export function isMetadataRecordComplete(record) {
+  return Boolean(
+    record &&
+      Object.hasOwn(record, "cost") &&
+      typeof record.cost_is_infinite === "boolean" &&
+      Array.isArray(record.civilizations) &&
+      Array.isArray(record.card_types) &&
+      Object.hasOwn(record, "power_text") &&
+      (record.power_text === null || typeof record.power_text === "string") &&
+      Object.hasOwn(record, "power_value") &&
+      (record.power_value === null || Number.isSafeInteger(record.power_value)),
+  );
+}
+
+export function createMetadataRecord(name, parsed, officialUrl) {
+  return {
+    name,
+    cost: parsed.cost,
+    cost_is_infinite: parsed.cost_is_infinite,
+    civilizations: parsed.civilizations,
+    card_types: parsed.card_types,
+    power_text: parsed.power_text,
+    power_value: parsed.power_value,
+    official_url: officialUrl,
+  };
+}
+
 function createRateLimitedFetcher(delayMs) {
   let nextStartAt = 0;
   let queue = Promise.resolve();
@@ -79,7 +106,7 @@ async function main() {
   const cards = recordsFromJsonl(await readFile(SOURCE_PATH, "utf8"));
   const completed = new Set(
     recordsFromJsonl(await readOptional(OUTPUT_PATH))
-      .filter((record) => Object.hasOwn(record, "cost") && Array.isArray(record.civilizations))
+      .filter(isMetadataRecordComplete)
       .map((record) => record.name),
   );
   const pending = selectCanonicalSources(cards, completed).slice(0, limit ?? undefined);
@@ -108,7 +135,7 @@ async function main() {
           }
         }
         if (!parsed || !successfulUrl) throw lastError ?? new Error("No usable official print URL.");
-        await appendFile(OUTPUT_PATH, `${JSON.stringify({ name: source.name, cost: parsed.cost, civilizations: parsed.civilizations, card_types: parsed.card_types, official_url: successfulUrl })}\n`, "utf8");
+        await appendFile(OUTPUT_PATH, `${JSON.stringify(createMetadataRecord(source.name, parsed, successfulUrl))}\n`, "utf8");
         succeeded += 1;
       } catch (error) {
         await appendFile(FAILURE_PATH, `${JSON.stringify({ name: source.name, official_urls: source.officialUrls, error: error instanceof Error ? error.message : String(error), checked_at: new Date().toISOString() })}\n`, "utf8");

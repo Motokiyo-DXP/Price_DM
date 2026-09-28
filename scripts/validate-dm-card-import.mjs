@@ -114,11 +114,15 @@ export function validateCardMetadataCoverage(records, metadata, cardTypes) {
     .filter((record) => typeof record?.name === "string")
     .map((record) => [record.name.trim(), record]));
   let metadataMissing = 0;
+  let infiniteCostMissing = 0;
+  let powerMetadataMissing = 0;
   let civilizationMissing = 0;
   let cardTypesMissing = 0;
   for (const name of canonicalNames) {
     const cardMetadata = metadataByName.get(name);
     if (!cardMetadata || !("cost" in cardMetadata)) metadataMissing += 1;
+    if (!cardMetadata || typeof cardMetadata.cost_is_infinite !== "boolean") infiniteCostMissing += 1;
+    if (!cardMetadata || !("power_text" in cardMetadata) || !("power_value" in cardMetadata)) powerMetadataMissing += 1;
     if (!cardMetadata || !Array.isArray(cardMetadata.civilizations)) civilizationMissing += 1;
     const typeMetadata = typesByName.get(name);
     if (!typeMetadata || !Array.isArray(typeMetadata.card_types) || typeMetadata.card_types.length === 0) cardTypesMissing += 1;
@@ -127,9 +131,11 @@ export function validateCardMetadataCoverage(records, metadata, cardTypes) {
     canonical_name_count: canonicalNames.size,
     metadata_name_count: metadataByName.size,
     metadata_missing_count: metadataMissing,
+    cost_is_infinite_missing_count: infiniteCostMissing,
+    power_metadata_missing_count: powerMetadataMissing,
     civilization_missing_count: civilizationMissing,
     card_types_missing_count: cardTypesMissing,
-    complete: metadataMissing === 0 && civilizationMissing === 0 && cardTypesMissing === 0,
+    complete: metadataMissing === 0 && infiniteCostMissing === 0 && powerMetadataMissing === 0 && civilizationMissing === 0 && cardTypesMissing === 0,
   };
 }
 
@@ -166,7 +172,7 @@ async function main() {
   const metadataResult = validateCardMetadataCoverage(records, metadata, cardTypes);
   console.log(JSON.stringify({ ...catalogResult, metadata: metadataResult }, null, 2));
   if (catalogResult.complete && !metadataResult.complete) {
-    throw new Error(`Card metadata is incomplete: ${metadataResult.metadata_missing_count} metadata, ${metadataResult.civilization_missing_count} civilizations, ${metadataResult.card_types_missing_count} card types missing.`);
+    throw new Error(`Card metadata is incomplete: ${metadataResult.metadata_missing_count} costs, ${metadataResult.cost_is_infinite_missing_count} infinite-cost flags, ${metadataResult.power_metadata_missing_count} powers, ${metadataResult.civilization_missing_count} civilizations, ${metadataResult.card_types_missing_count} card types missing.`);
   }
 }
 

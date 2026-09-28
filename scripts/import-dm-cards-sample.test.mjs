@@ -6,13 +6,15 @@ import {
   parseArguments,
   parseCardDetail,
   parseCardList,
+  parseOfficialCardPowerValue,
 } from "./import-dm-cards-sample.mjs";
 
-function cardFace({ civilization = "光", cost = "3", cardType = "クリーチャー", race = "", abilities = "", flavor = "" } = {}) {
+function cardFace({ civilization = "光", cost = "3", power = "", cardType = "クリーチャー", race = "", abilities = "", flavor = "" } = {}) {
   return `
     <div class="cardDetail">
       <table><tbody><tr><th><p>カードの種類</p></th><td class="type">${cardType}</td><th><p>文明</p></th><td class="civil">${civilization}</td></tr></tbody></table>
       <table><tbody><tr><th><p>コスト</p></th><td class="cost">${cost}</td></tr></tbody></table>
+      <table><tbody><tr><th><p>パワー</p></th><td class="power">${power}</td></tr></tbody></table>
       <table><tbody><tr><th><p>種族</p></th><td class="race">${race}</td></tr></tbody></table>
       <table><tbody><tr><th class="full"><p>特殊能力</p></th></tr><tr><td class="skills full">${abilities}</td></tr></tbody></table>
       <table><tbody><tr><th class="full"><p>フレーバー</p></th></tr><tr><td class="flavor full">${flavor}</td></tr></tbody></table>
@@ -69,6 +71,7 @@ test("parseCardDetail extracts existing index fields and one-face races/rules te
     ${cardFace({
       civilization: "光/火",
       cost: "10",
+      power: "17000",
       race: "ヒューマノイド/アーマード・ドラゴン",
       abilities: "<li>能力１。</li><li>能力２。</li>",
       flavor: "これはフレーバー。",
@@ -86,10 +89,13 @@ test("parseCardDetail extracts existing index fields and one-face races/rules te
       card_types: ["クリーチャー"],
       civilizations: ["light", "fire"],
       cost: 10,
+      cost_is_infinite: false,
       name: "竜皇神 ボルシャック・バクテラス",
       name_kana: null,
       official_url:
         "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex2-MC001",
+      power_text: "17000",
+      power_value: 17000,
       product_name: "DM26-EX2 悪感謝祭 カリスマBEST",
       races: ["ヒューマノイド", "アーマード・ドラゴン"],
     },
@@ -102,6 +108,45 @@ test("parseCardDetail normalizes Unicode race notation without fuzzy-merging dis
   })}`;
   const parsed = parseCardDetail(html, "https://dm.takaratomy.co.jp/card/detail/?id=race-normalization");
   assert.deepEqual(parsed.races, ["アーマード・ドラゴン", "ヒューマノイド"]);
+});
+
+test("printed infinity cost and power stay distinct from missing values", () => {
+  const parsed = parseCardDetail(
+    `<h3 class="card-name">∞龍 ゲンムエンペラー</h3>${cardFace({ cost: "∞", power: "∞", race: "ドラゴン" })}`,
+    "https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-TD001",
+  );
+  assert.equal(parsed.cost, null);
+  assert.equal(parsed.cost_is_infinite, true);
+  assert.equal(parsed.power_text, "∞");
+  assert.equal(parsed.power_value, null);
+});
+
+test("printed 0000+ keeps its form without parsing ability modifiers as base power", () => {
+  const parsed = parseCardDetail(
+    `<h3 class="card-name">圧倒するレオパルズ・ホーン</h3>${cardFace({
+      cost: "6",
+      power: "0000+",
+      race: "ビーストフォーク",
+      abilities: "このクリーチャーのパワーを+1000する。",
+    })}`,
+    "https://dm.takaratomy.co.jp/card/detail/?id=dm26rp1-006",
+  );
+  assert.equal(parsed.power_text, "0000+");
+  assert.equal(parsed.power_value, 0);
+  assert.equal(parseOfficialCardPowerValue("１２３４"), 1234);
+  assert.equal(parseOfficialCardPowerValue("3000+"), null);
+  assert.equal(parseOfficialCardPowerValue("未知"), null);
+});
+
+test("spells with no printed power keep both power fields null", () => {
+  const parsed = parseCardDetail(
+    `<h3 class="card-name">無限皇帝の顕現</h3>${cardFace({ cardType: "呪文", cost: "2", race: "" })}`,
+    "https://dm.takaratomy.co.jp/card/detail/?id=dmrp15-039",
+  );
+  assert.equal(parsed.cost, 2);
+  assert.equal(parsed.cost_is_infinite, false);
+  assert.equal(parsed.power_text, null);
+  assert.equal(parsed.power_value, null);
 });
 
 test("parseCardDetail keeps twin-pact rules per face and unions races without the race-less spell face", () => {

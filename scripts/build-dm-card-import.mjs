@@ -6,6 +6,7 @@ import {
   normalizeDuelMastersRaceName,
   resolveDuelMastersRulesCanonicalName,
 } from "./dm-canonical-equivalents.mjs";
+import { parseOfficialCardPowerValue } from "./import-dm-cards-sample.mjs";
 
 const CARD_PATH = ".local/dm-cards-full.jsonl";
 const METADATA_PATH = ".local/dm-card-metadata.jsonl";
@@ -48,8 +49,21 @@ function validateCard(card, index) {
   if (!officialCardId(card)) {
     throw new Error(`Card ${index + 1} has no official card id.`);
   }
-  if (card.cost !== undefined && card.cost !== null && (!Number.isSafeInteger(card.cost) || card.cost < 0 || card.cost > 99)) {
+  if (!Object.hasOwn(card, "cost") || (card.cost !== null && (!Number.isSafeInteger(card.cost) || card.cost < 0 || card.cost > 99))) {
     throw new Error(`Card ${index + 1} has an invalid cost.`);
+  }
+  if (typeof card.cost_is_infinite !== "boolean" || (card.cost_is_infinite && card.cost !== null)) {
+    throw new Error(`Card ${index + 1} has an invalid infinite cost flag.`);
+  }
+  if (card.power_text !== null && typeof card.power_text !== "string") {
+    throw new Error(`Card ${index + 1} has invalid power text.`);
+  }
+  if (card.power_value !== null && (!Number.isSafeInteger(card.power_value) || card.power_value < 0)) {
+    throw new Error(`Card ${index + 1} has an invalid power value.`);
+  }
+  if (!Object.hasOwn(card, "power_text") || !Object.hasOwn(card, "power_value")
+    || card.power_value !== parseOfficialCardPowerValue(card.power_text)) {
+    throw new Error(`Card ${index + 1} has inconsistent printed power metadata.`);
   }
   if (card.civilizations !== undefined && (!Array.isArray(card.civilizations) || card.civilizations.some((value) => typeof value !== "string" || !CIVILIZATIONS.has(value)))) {
     throw new Error(`Card ${index + 1} has invalid civilizations.`);
@@ -193,12 +207,15 @@ function sourceValues(cards) {
       ${sqlText(card.name.trim())},
       ${sqlText(card.name_kana?.trim() || null)},
       ${card.cost ?? "null"},
+      ${card.cost_is_infinite},
       ${sqlTextArray(card.civilizations)},
       ${sqlTextArray(card.card_types)},
       ${Array.isArray(card.races) ? sqlTextArray(card.races) : "null"},
       ${Array.isArray(card.races) && card.races_complete !== false},
       ${Array.isArray(card.card_texts) ? sqlTextArray(card.card_texts) : "null"},
       ${Array.isArray(card.card_texts)},
+      ${sqlText(card.power_text)},
+      ${card.power_value ?? "null"},
       ${sqlText(officialCardId(card))},
       ${sqlText(card.card_number?.trim() || null)},
       ${sqlText(card.product_name?.trim() || null)},
@@ -224,12 +241,15 @@ create temporary table dm_card_import_source (
   name text not null,
   generated_reading text,
   cost smallint,
+  cost_is_infinite boolean not null,
   civilizations text[] not null,
   card_types text[] not null,
   races text[],
   races_complete boolean not null,
   card_texts text[],
   card_texts_complete boolean not null,
+  power_text text,
+  power_value integer,
   official_card_id text not null primary key,
   card_number text,
   product_name text,
@@ -237,9 +257,9 @@ create temporary table dm_card_import_source (
 ) on commit drop;
 
 insert into dm_card_import_source(
-  name, generated_reading, cost, civilizations, card_types, races, races_complete,
-  card_texts, card_texts_complete, official_card_id, card_number, product_name,
-  official_url
+  name, generated_reading, cost, cost_is_infinite, civilizations, card_types,
+  races, races_complete, card_texts, card_texts_complete, power_text, power_value,
+  official_card_id, card_number, product_name, official_url
 )
 values
     ${values};
@@ -253,7 +273,8 @@ canonical_source as (
   select
     source.name,
     max(source.generated_reading) as generated_reading,
-    max(source.cost) as cost,
+    case when coalesce(bool_or(source.cost_is_infinite), false) then null else max(source.cost) end as cost,
+    coalesce(bool_or(source.cost_is_infinite), false) as cost_is_infinite,
     coalesce(
       max(nullif(source.civilizations, '{}'::text[])::text)::text[],
       '{}'::text[]
@@ -262,6 +283,8 @@ canonical_source as (
       max(nullif(source.card_types, '{}'::text[])::text)::text[],
       '{}'::text[]
     ) as card_types,
+    max(source.power_text) as power_text,
+    max(source.power_value) as power_value,
     bool_and(source.races_complete) as races_complete,
     case when bool_and(source.races_complete) then coalesce((
       select array_agg(ordered_races.race)
@@ -282,9 +305,12 @@ insert into public.canonical_cards(
   name,
   name_kana,
   cost,
+  cost_is_infinite,
   civilizations,
   card_types,
   races,
+  power_text,
+  power_value,
   source_name,
   source_name_kana,
   source_checked_at
@@ -294,9 +320,12 @@ select
   source.name,
   source.generated_reading,
   source.cost,
+  source.cost_is_infinite,
   source.civilizations,
   source.card_types,
   coalesce(source.races, '{}'::text[]),
+  source.power_text,
+  source.power_value,
   source.name,
   null,
   pg_catalog.now()
@@ -304,7 +333,8 @@ from canonical_source as source
 cross join duel_masters
 on conflict (game_id, normalized_name_nfkc) where deleted_at is null do update
 set name_kana = excluded.name_kana,
-    cost = coalesce(excluded.cost, public.canonical_cards.cost),
+    cost = excluded.cost,
+    cost_is_infinite = excluded.cost_is_infinite,
     civilizations = case
       when cardinality(excluded.civilizations) > 0 then excluded.civilizations
       else public.canonical_cards.civilizations
@@ -313,6 +343,8 @@ set name_kana = excluded.name_kana,
       when cardinality(excluded.card_types) > 0 then excluded.card_types
       else public.canonical_cards.card_types
     end,
+    power_text = excluded.power_text,
+    power_value = excluded.power_value,
     source_name = excluded.source_name,
     source_name_kana = excluded.source_name_kana,
     source_checked_at = excluded.source_checked_at,

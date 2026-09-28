@@ -90,13 +90,15 @@ test("公式の無文明カードは完了扱いにし、種類の欠損だけ�
   assert.deepEqual(
     validateCardMetadataCoverage(
       [CARD],
-      [{ name: CARD.name, cost: null, civilizations: [] }],
+      [{ name: CARD.name, cost: null, cost_is_infinite: false, power_text: null, power_value: null, civilizations: [] }],
       [],
     ),
     {
       canonical_name_count: 1,
       metadata_name_count: 1,
       metadata_missing_count: 0,
+      cost_is_infinite_missing_count: 0,
+      power_metadata_missing_count: 0,
       civilization_missing_count: 0,
       card_types_missing_count: 1,
       complete: false,
