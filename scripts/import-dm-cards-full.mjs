@@ -13,7 +13,7 @@ const BASE_URL = "https://dm.takaratomy.co.jp";
 const CARD_SEARCH_URL = `${BASE_URL}/card/`;
 const ROBOTS_URL = `${BASE_URL}/robots.txt`;
 const USER_AGENT =
-  "TCG-Souba-Checker/0.1 (personal noncommercial card index; no images or card text)";
+  "TCG-Souba-Checker/0.1 (personal noncommercial card index; official rules text, no images)";
 const DEFAULT_DELAY_MS = 1_000;
 const MIN_DELAY_MS = 750;
 const OUTPUT_PATH = ".local/dm-cards-full.jsonl";

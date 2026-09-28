@@ -2,12 +2,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import { load } from "cheerio";
+import { normalizeDuelMastersRaceName } from "./dm-canonical-equivalents.mjs";
 
 const BASE_URL = "https://dm.takaratomy.co.jp";
 const CARD_SEARCH_URL = `${BASE_URL}/card/`;
 const ROBOTS_URL = `${BASE_URL}/robots.txt`;
 const USER_AGENT =
-  "TCG-Souba-Checker/0.1 (personal noncommercial card-index sample; no images)";
+  "TCG-Souba-Checker/0.1 (personal noncommercial card-index sample; rules text, no images)";
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 const DEFAULT_DELAY_MS = 1_000;
@@ -15,6 +16,61 @@ const MIN_DELAY_MS = 750;
 
 function normalizeText(value) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeRuleText(value) {
+  return value
+    .replace(/\u00a0/gu, " ")
+    .split(/\r?\n/u)
+    .map((line) => line.replace(/[\t\f\v ]+/gu, " ").trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+function nodeText($, node) {
+  if (node.type === "text") return node.data ?? "";
+  if (node.type !== "tag") return "";
+  if (node.name === "br") return "\n";
+  if (node.name === "img") {
+    const alt = $(node).attr("alt");
+    return typeof alt === "string" ? alt : "";
+  }
+  return (node.children ?? []).map((child) => nodeText($, child)).join("");
+}
+
+function cardFaceRules($, face, officialUrl) {
+  const raceCells = $(face).find("td.race");
+  if (raceCells.length !== 1) {
+    throw new Error(`Could not find exactly one race field for a card face in ${officialUrl}`);
+  }
+
+  const abilityTables = $(face).find("table").filter((_, table) =>
+    $(table).find("th").toArray().some((heading) =>
+      normalizeText($(heading).text()) === "特殊能力",
+    ),
+  );
+  if (abilityTables.length !== 1) {
+    throw new Error(`Could not find exactly one special-ability section for a card face in ${officialUrl}`);
+  }
+
+  const abilityCells = abilityTables.first().find("td.skills");
+  if (abilityCells.length !== 1) {
+    throw new Error(`Could not find the special-ability text cell for a card face in ${officialUrl}`);
+  }
+
+  const abilities = abilityCells.first().children("li").toArray();
+  const cardText = abilities.length > 0
+    ? abilities.map((ability) => normalizeRuleText(nodeText($, ability)))
+      .filter(Boolean)
+      .join("\n")
+    : normalizeRuleText(nodeText($, abilityCells.first().get(0)));
+
+  const races = normalizeText(raceCells.first().text())
+    .split(/[\/／]/u)
+    .map(normalizeDuelMastersRaceName)
+    .filter(Boolean);
+
+  return { cardText, races };
 }
 
 function parsePositiveInteger(value, label) {
@@ -226,8 +282,17 @@ export function parseCardDetail(html, officialUrl) {
       .filter(Boolean),
   )];
 
+  const cardFaces = $(".cardDetail").toArray();
+  if (cardFaces.length === 0) {
+    throw new Error(`Could not find card faces for ${officialUrl}`);
+  }
+  const faceRules = cardFaces.map((face) => cardFaceRules($, face, officialUrl));
+  const races = [...new Set(faceRules.flatMap((face) => face.races))];
+  const cardTexts = faceRules.map((face) => face.cardText);
+
   return {
     card_number: cardNumber || null,
+    card_texts: cardTexts,
     card_types: cardTypes,
     civilizations,
     cost: Number.isSafeInteger(cost) && cost >= 0 && cost <= 99 ? cost : null,
@@ -235,6 +300,7 @@ export function parseCardDetail(html, officialUrl) {
     name_kana: null,
     official_url: officialUrl,
     product_name: findProductName($, officialId),
+    races,
   };
 }
 

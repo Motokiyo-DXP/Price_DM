@@ -35,6 +35,14 @@ test("完了済み公式カタログの件数と対象項目を検証する", ()
   );
 });
 
+test("種族とカード面別の特殊能力テキストを受け入れる", () => {
+  const result = validateCardCatalog(
+    [{ ...CARD, races: ["ドラゴン"], card_texts: ["S・トリガー\n能力。", ""] }],
+    { complete: false, total_available: 1 },
+  );
+  assert.equal(result.forbidden_fields_present, false);
+});
+
 test("公式ページに名称がないプレースホルダーを全件件数へ含める", () => {
   const unavailable = [
     {

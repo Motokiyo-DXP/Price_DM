@@ -365,6 +365,7 @@ export type Database = {
           aliases_kana: string[]
           civilizations: string[]
           card_types: string[]
+          races: string[]
           cost: number | null
           created_at: string
           deleted_at: string | null
@@ -384,6 +385,7 @@ export type Database = {
           aliases_kana?: string[]
           civilizations?: string[]
           card_types?: string[]
+          races?: string[]
           cost?: number | null
           created_at?: string
           deleted_at?: string | null
@@ -403,6 +405,7 @@ export type Database = {
           aliases_kana?: string[]
           civilizations?: string[]
           card_types?: string[]
+          races?: string[]
           cost?: number | null
           created_at?: string
           deleted_at?: string | null
@@ -430,6 +433,7 @@ export type Database = {
       card_prints: {
         Row: {
           canonical_card_id: number
+          card_texts: string[]
           card_number: string | null
           created_at: string
           deleted_at: string | null
@@ -450,6 +454,7 @@ export type Database = {
         }
         Insert: {
           canonical_card_id: number
+          card_texts?: string[]
           card_number?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -470,6 +475,7 @@ export type Database = {
         }
         Update: {
           canonical_card_id?: number
+          card_texts?: string[]
           card_number?: string | null
           created_at?: string
           deleted_at?: string | null

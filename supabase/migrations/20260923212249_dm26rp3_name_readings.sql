@@ -1,41 +1,48 @@
 begin;
+create temporary table dm26rp3_name_correction_target (
+  canonical_card_id bigint not null primary key
+) on commit drop;
+insert into dm26rp3_name_correction_target(canonical_card_id)
+select cards.id
+from public.canonical_cards as cards
+join public.tcg_games as games on games.id = cards.game_id
+where games.slug = 'duel-masters'
+  and cards.deleted_at is null
+  and cards.name in (
+    '鉄初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク',
+    '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク'
+  );
 do $$
 begin
-  if (
-    select count(*)
-    from public.canonical_cards as cards
-    join public.tcg_games as games on games.id = cards.game_id
-    where cards.id = 43753
-      and games.slug = 'duel-masters'
-      and cards.deleted_at is null
-      and cards.name in (
-        '鉄初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク',
-        '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク'
-      )
-  ) <> 1 then
+  if (select count(*) from dm26rp3_name_correction_target) <> 1 then
     raise exception 'DM26-RP3 card-name correction target mismatch';
   end if;
 end;
 $$;
-update public.canonical_cards
+update public.canonical_cards as cards
 set name = '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク',
     source_name = '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク',
     updated_at = pg_catalog.now()
-where id = 43753
-  and name = '鉄初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク';
+from dm26rp3_name_correction_target as target
+join public.tcg_games as games on games.slug = 'duel-masters'
+where cards.id = target.canonical_card_id
+  and cards.game_id = games.id
+  and cards.deleted_at is null
+  and cards.name = '鉄初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク';
 
 insert into public.card_search_terms as terms(
   canonical_card_id, term, normalized_term, term_kind, source, verified, priority
 )
-values (
-  43753,
+select
+  target.canonical_card_id,
   '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク',
   public.normalize_card_search('銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク'),
   'official_name',
   'official',
   true,
   0
-)
+from dm26rp3_name_correction_target as target
+where true
 on conflict (canonical_card_id, normalized_term, term_kind) do update
 set term = excluded.term,
     source = excluded.source,
@@ -46,7 +53,8 @@ where (terms.term, terms.source, terms.verified, terms.priority)
   is distinct from (excluded.term, excluded.source, excluded.verified, excluded.priority);
 
 delete from public.card_search_terms as stale_name
-where stale_name.canonical_card_id = 43753
+using dm26rp3_name_correction_target as target
+where stale_name.canonical_card_id = target.canonical_card_id
   and stale_name.term_kind = 'official_name'
   and stale_name.term = '鉄初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク'
   and stale_name.normalized_term = public.normalize_card_search(
@@ -55,7 +63,7 @@ where stale_name.canonical_card_id = 43753
   and exists (
     select 1
     from public.card_search_terms as corrected_name
-    where corrected_name.canonical_card_id = 43753
+    where corrected_name.canonical_card_id = target.canonical_card_id
       and corrected_name.term_kind = 'official_name'
       and corrected_name.normalized_term = public.normalize_card_search(
         '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク'
@@ -229,85 +237,110 @@ insert into original01_reading_source(card_name, reading, source_url) values
   ('龍装車 ギギャイア', 'りゅうそうしゃ', 'https://dmwiki.net/%E3%80%8A%E9%BE%8D%E8%A3%85%E8%BB%8A%20%E3%82%AE%E3%82%AE%E3%83%A3%E3%82%A4%E3%82%A2%E3%80%8B'),
   ('龍装車 ギギャイア', 'りゅうそうしゃ ギギャイア', 'https://dmwiki.net/%E3%80%8A%E9%BE%8D%E8%A3%85%E8%BB%8A%20%E3%82%AE%E3%82%AE%E3%83%A3%E3%82%A4%E3%82%A2%E3%80%8B');
 create temporary table original01_investigation_reading_source (
-  canonical_card_id bigint not null,
   card_name text not null,
   reading text not null,
   source_url text not null
 ) on commit drop;
-insert into original01_investigation_reading_source(canonical_card_id, card_name, reading, source_url) values
-  (155, '頂上混成 ガリュディアス・モモミーズ’22', 'ちょうじょうこんせい ガリュディアス・モモミーズトゥエンティツー', 'https://dmwiki.net/%E3%80%8A%E9%A0%82%E4%B8%8A%E6%B7%B7%E6%88%90%2B%E3%82%AC%E3%83%AA%E3%83%A5%E3%83%87%E3%82%A3%E3%82%A2%E3%82%B9%E3%83%BB%E3%83%A2%E3%83%A2%E3%83%9F%E3%83%BC%E3%82%BA%2722%E3%80%8B'),
-  (483, '王来英雄 モモキングRX', 'オーライヒーロー モモキングレックス', 'https://dmwiki.net/%E3%80%8A%E7%8E%8B%E6%9D%A5%E8%8B%B1%E9%9B%84%20%E3%83%A2%E3%83%A2%E3%82%AD%E3%83%B3%E3%82%B0RX%E3%80%8B'),
-  (804, 'BARUGA-雷座87', 'バルガ-ライザーエイトセブン', 'https://dmwiki.net/%E3%80%8ABARUGA-%E9%9B%B7%E5%BA%A787%E3%80%8B'),
-  (835, 'ブランド ＜NEXT.Star＞', 'ブランド ＜ネクスト.スター＞', 'https://dmwiki.net/%E3%80%8A%E3%83%96%E3%83%A9%E3%83%B3%E3%83%89%20%EF%BC%9CNEXT.Star%EF%BC%9E%E3%80%8B'),
-  (3128, 'クイーン&かぼちゃうちゃう', 'クイーンアンドかぼちゃうちゃう', 'https://dmwiki.net/%E3%80%8A%E3%82%AF%E3%82%A4%E3%83%BC%E3%83%B3%EF%BC%86%E3%81%8B%E3%81%BC%E3%81%A1%E3%82%83%E3%81%86%E3%81%A1%E3%82%83%E3%81%86%E3%80%8B'),
-  (5006, '霊宝 ヒャクメ-４', 'れいほう ヒャクメ-フォー', 'https://dmwiki.net/%E3%80%8A%E9%9C%8A%E5%AE%9D%2B%E3%83%92%E3%83%A3%E3%82%AF%E3%83%A1-4%E3%80%8B'),
-  (5175, 'ディスタス・ゲート', 'ディスタス・ゲート', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-T006'),
-  (6248, 'キング・マニフェスト', 'キング・マニフェスト', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-TD002'),
-  (7080, 'サッヴァークDG', 'サッヴァークディージー', 'https://dmwiki.net/%E3%80%8A%E3%82%B5%E3%83%83%E3%83%B4%E3%82%A1%E3%83%BC%E3%82%AFDG%E3%80%8B'),
-  (7137, '禁時混成王 ドキンダンテXXII', 'きんじこんせいおう ドキンダンテトゥエンティツー', 'https://dmwiki.net/%E3%80%8A%E7%A6%81%E6%99%82%E6%B7%B7%E6%88%90%E7%8E%8B%20%E3%83%89%E3%82%AD%E3%83%B3%E3%83%80%E3%83%B3%E3%83%86XXII%E3%80%8B'),
-  (7933, 'ダムダム・ジョーカーズ', 'ダムダム・ジョーカーズ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-T009'),
-  (9592, 'ニクジール・ブッシャー', 'ニクジール・ブッシャー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-TR009'),
-  (43687, 'Dr.富士山ッピング', 'ドクター.フジヤマッピング', 'https://dmwiki.net/%E3%80%8ADr.%E5%AF%8C%E5%A3%AB%E5%B1%B1%E3%83%83%E3%83%94%E3%83%B3%E3%82%B0%E3%80%8B'),
-  (43688, 'SUPREME-GUN・ザ・ジョニー', 'スプリガン・ザ・ジョニー', 'https://dmwiki.net/%E3%80%8ASUPREME-GUN%E3%83%BB%E3%82%B6%E3%83%BB%E3%82%B8%E3%83%A7%E3%83%8B%E3%83%BC%E3%80%8B'),
-  (43689, '∑龍', 'ウィンロン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-SEC001'),
-  (43696, 'ケツカッちん', 'ケツカッちん', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-041'),
-  (43698, 'コクーン・ツェッペリン', 'コクーン・ツェッペリン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-021'),
-  (43699, 'ザエッサの海影 / 六奇怪の無 ～氾濫する覇王～', 'ザエッサのムーショ／ろくきかいのむ ～はんらんするはおう～', 'https://www.m.dmwiki.net/%E3%80%8A%E3%82%B6%E3%82%A8%E3%83%83%E3%82%B5%E3%81%AE%E6%B5%B7%E5%BD%B1%EF%BC%8F%E5%85%AD%E5%A5%87%E6%80%AA%E3%81%AE%E7%84%A1%2B%E3%80%9C%E6%B0%BE%E6%BF%AB%E3%81%99%E3%82%8B%E8%A6%87%E7%8E%8B%E3%80%9C%E3%80%8B'),
-  (43701, 'スイドー・ド・デショー', 'スイドー・ド・デショー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-033'),
-  (43703, 'ツミタテンカーネン', 'ツミタテンカーネン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-065'),
-  (43707, 'にやにYAH', 'にやにヤー', 'https://dmwiki.net/%E3%80%8A%E3%81%AB%E3%82%84%E3%81%ABYAH%E3%80%8B'),
-  (43708, 'ノヴァルチャ・ハレイズ', 'ノヴァルチャ・ハレイズ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-014'),
-  (43710, 'ヒトリダチ キャンベロ', 'ヒトリダチ キャンベロ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-030'),
-  (43711, 'ヒトリダチ ケントナーク', 'ヒトリダチ ケントナーク', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-001'),
-  (43712, 'ヒトリダチ モンキッド', 'ヒトリダチ モンキッド', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-055'),
-  (43713, 'ヒミッツキッチ・グローブ', 'ヒミッツキッチ・グローブ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-052'),
-  (43714, 'ホッタレマン', 'ホッタレマン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-074'),
-  (43715, 'ミノガミ&オウ禍武斗 / T.２.D.', 'ミノガミアンドオウカブト／トラップ.ツー.ダウン.', 'https://www.m.dmwiki.net/%E3%80%8A%E3%83%9F%E3%83%8E%E3%82%AC%E3%83%9F%EF%BC%86%E3%82%AA%E3%82%A6%E7%A6%8D%E6%AD%A6%E6%96%97%EF%BC%8FT.2.D.%E3%80%8B'),
-  (43716, 'メモッタルド・デカスギオ / メモメモ・ジョーカーズ', 'メモッタルド・デカスギオ／メモメモ・ジョーカーズ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-045'),
-  (43728, '大地 コンダマ-2', 'だいち コンダマ-ツー', 'https://dmwiki.net/%E3%80%8A%E5%A4%A7%E5%9C%B0%20%E3%82%B3%E3%83%B3%E3%83%80%E3%83%9E-2%E3%80%8B'),
-  (43729, '大地 ワタン-2', 'だいち ワタン-ツー', 'https://dmwiki.net/%E3%80%8A%E5%A4%A7%E5%9C%B0%20%E3%83%AF%E3%82%BF%E3%83%B3-2%E3%80%8B'),
-  (43733, '妖精 キユリ-2', 'ようせい キユリ-ツー', 'https://dmwiki.net/%E3%80%8A%E5%A6%96%E7%B2%BE%20%E3%82%AD%E3%83%A6%E3%83%AA-2%E3%80%8B'),
-  (43740, '爆衆 ランブル-2', 'ばくしゅう ランブル-ツー', 'https://dmwiki.net/%E3%80%8A%E7%88%86%E8%A1%86%20%E3%83%A9%E3%83%B3%E3%83%96%E3%83%AB-2%E3%80%8B'),
-  (43747, '翔天 スケプ-3', 'しょうてん スケプ-スリー', 'https://dmwiki.net/%E3%80%8A%E7%BF%94%E5%A4%A9%20%E3%82%B9%E3%82%B1%E3%83%97-3%E3%80%8B'),
-  (43750, '輝晶 エヴァ-3', 'きしょう エヴァ-スリー', 'https://dmwiki.net/%E3%80%8A%E8%BC%9D%E6%99%B6%20%E3%82%A8%E3%83%B4%E3%82%A1-3%E3%80%8B'),
-  (43751, '邪鬼 コオニ-4', 'じゃき コオニ-フォー', 'https://dmwiki.net/%E3%80%8A%E9%82%AA%E9%AC%BC%20%E3%82%B3%E3%82%AA%E3%83%8B-4%E3%80%8B'),
-  (43758, '闇影 ヘモグロ-2', 'あんえい ヘモグロ-ツー', 'https://dmwiki.net/%E3%80%8A%E9%97%87%E5%BD%B1%20%E3%83%98%E3%83%A2%E3%82%B0%E3%83%AD-2%E3%80%8B'),
-  (43761, '魔具 ヴァイポイズ-4', 'まぐ ヴァイポイズ-フォー', 'https://dmwiki.net/%E3%80%8A%E9%AD%94%E5%85%B7%20%E3%83%B4%E3%82%A1%E3%82%A4%E3%83%9D%E3%82%A4%E3%82%BA-4%E3%80%8B'),
-  (43866, '“↑↑”ブランド', 'アゲアゲ ブランド', 'https://dmwiki.net/%E3%80%8A%E2%80%9C%E2%86%91%E2%86%91%E2%80%9D%E3%83%96%E3%83%A9%E3%83%B3%E3%83%89%E3%80%8B'),
-  (43867, '×マドギワ親父', 'バッテンマドギワおやじ', 'https://dmwiki.net/%E3%80%8A%C3%97%E3%83%9E%E3%83%89%E3%82%AE%E3%83%AF%E8%A6%AA%E7%88%B6%E3%80%8B'),
-  (43869, 'SMANAGER', 'スマネージャー', 'https://dmwiki.net/%E3%80%8ASMANAGER%E3%80%8B'),
-  (43870, 'The 淡口ラー漢 極', 'ザ うすくちラーメン きわみ', 'https://dmwiki.net/%E3%80%8AThe%20%E6%B7%A1%E5%8F%A3%E3%83%A9%E3%83%BC%E6%BC%A2%20%E6%A5%B5%E3%80%8B'),
-  (43872, 'キング・ザ・ベスト', 'キング・ザ・ベスト', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-018'),
-  (43873, 'ツーキンカイソッQ', 'ツーキンカイソッキュー', 'https://dmwiki.net/%E3%80%8A%E3%83%84%E3%83%BC%E3%82%AD%E3%83%B3%E3%82%AB%E3%82%A4%E3%82%BD%E3%83%83Q%E3%80%8B'),
-  (43874, 'どうだいジンセー', 'どうだいジンセー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-070'),
-  (43875, 'バイナラベーター', 'バイナラベーター', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-062'),
-  (43876, 'ビーチボーイズ・Ⅱ・メン', 'ビーチボーイズ・トゥ・メン', 'https://dmwiki.net/%E3%80%8A%E3%83%93%E3%83%BC%E3%83%81%E3%83%9C%E3%83%BC%E3%82%A4%E3%82%BA%E3%83%BBII%E3%83%BB%E3%83%A1%E3%83%B3%E3%80%8B'),
-  (43878, '爆衆 マキシ-2', 'ばくしゅう マキシ-ツー', 'https://dmwiki.net/%E3%80%8A%E7%88%86%E8%A1%86%20%E3%83%9E%E3%82%AD%E3%82%B7-2%E3%80%8B'),
-  (43882, '輝晶 シンプ-2', 'きしょう シンプ-ツー', 'https://dmwiki.net/%E3%80%8A%E8%BC%9D%E6%99%B6%20%E3%82%B7%E3%83%B3%E3%83%97-2%E3%80%8B'),
-  (43883, '輝晶 マルハヴ-2', 'きしょう マルハヴ-ツー', 'https://dmwiki.net/%E3%80%8A%E8%BC%9D%E6%99%B6%20%E3%83%9E%E3%83%AB%E3%83%8F%E3%83%B4-2%E3%80%8B'),
-  (43693, 'キング∞エンペラー', 'キングエンペラー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-S008'),
-  (43753, '銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク', 'じゅうしょさかむ ザ・ウィニー／ジョリー・ザ・スパーク', 'https://dm.takaratomy.co.jp/wp-content/card/cardimage/dm26rp3-028a.jpg');
+insert into original01_investigation_reading_source(card_name, reading, source_url) values
+  ('頂上混成 ガリュディアス・モモミーズ’22', 'ちょうじょうこんせい ガリュディアス・モモミーズトゥエンティツー', 'https://dmwiki.net/%E3%80%8A%E9%A0%82%E4%B8%8A%E6%B7%B7%E6%88%90%2B%E3%82%AC%E3%83%AA%E3%83%A5%E3%83%87%E3%82%A3%E3%82%A2%E3%82%B9%E3%83%BB%E3%83%A2%E3%83%A2%E3%83%9F%E3%83%BC%E3%82%BA%2722%E3%80%8B'),
+  ('王来英雄 モモキングRX', 'オーライヒーロー モモキングレックス', 'https://dmwiki.net/%E3%80%8A%E7%8E%8B%E6%9D%A5%E8%8B%B1%E9%9B%84%20%E3%83%A2%E3%83%A2%E3%82%AD%E3%83%B3%E3%82%B0RX%E3%80%8B'),
+  ('BARUGA-雷座87', 'バルガ-ライザーエイトセブン', 'https://dmwiki.net/%E3%80%8ABARUGA-%E9%9B%B7%E5%BA%A787%E3%80%8B'),
+  ('ブランド ＜NEXT.Star＞', 'ブランド ＜ネクスト.スター＞', 'https://dmwiki.net/%E3%80%8A%E3%83%96%E3%83%A9%E3%83%B3%E3%83%89%20%EF%BC%9CNEXT.Star%EF%BC%9E%E3%80%8B'),
+  ('クイーン&かぼちゃうちゃう', 'クイーンアンドかぼちゃうちゃう', 'https://dmwiki.net/%E3%80%8A%E3%82%AF%E3%82%A4%E3%83%BC%E3%83%B3%EF%BC%86%E3%81%8B%E3%81%BC%E3%81%A1%E3%82%83%E3%81%86%E3%81%A1%E3%82%83%E3%81%86%E3%80%8B'),
+  ('霊宝 ヒャクメ-４', 'れいほう ヒャクメ-フォー', 'https://dmwiki.net/%E3%80%8A%E9%9C%8A%E5%AE%9D%2B%E3%83%92%E3%83%A3%E3%82%AF%E3%83%A1-4%E3%80%8B'),
+  ('ディスタス・ゲート', 'ディスタス・ゲート', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-T006'),
+  ('キング・マニフェスト', 'キング・マニフェスト', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-TD002'),
+  ('サッヴァークDG', 'サッヴァークディージー', 'https://dmwiki.net/%E3%80%8A%E3%82%B5%E3%83%83%E3%83%B4%E3%82%A1%E3%83%BC%E3%82%AFDG%E3%80%8B'),
+  ('禁時混成王 ドキンダンテXXII', 'きんじこんせいおう ドキンダンテトゥエンティツー', 'https://dmwiki.net/%E3%80%8A%E7%A6%81%E6%99%82%E6%B7%B7%E6%88%90%E7%8E%8B%20%E3%83%89%E3%82%AD%E3%83%B3%E3%83%80%E3%83%B3%E3%83%86XXII%E3%80%8B'),
+  ('ダムダム・ジョーカーズ', 'ダムダム・ジョーカーズ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-T009'),
+  ('ニクジール・ブッシャー', 'ニクジール・ブッシャー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-TR009'),
+  ('Dr.富士山ッピング', 'ドクター.フジヤマッピング', 'https://dmwiki.net/%E3%80%8ADr.%E5%AF%8C%E5%A3%AB%E5%B1%B1%E3%83%83%E3%83%94%E3%83%B3%E3%82%B0%E3%80%8B'),
+  ('SUPREME-GUN・ザ・ジョニー', 'スプリガン・ザ・ジョニー', 'https://dmwiki.net/%E3%80%8ASUPREME-GUN%E3%83%BB%E3%82%B6%E3%83%BB%E3%82%B8%E3%83%A7%E3%83%8B%E3%83%BC%E3%80%8B'),
+  ('∑龍', 'ウィンロン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-SEC001'),
+  ('ケツカッちん', 'ケツカッちん', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-041'),
+  ('コクーン・ツェッペリン', 'コクーン・ツェッペリン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-021'),
+  ('ザエッサの海影 / 六奇怪の無 ～氾濫する覇王～', 'ザエッサのムーショ／ろくきかいのむ ～はんらんするはおう～', 'https://www.m.dmwiki.net/%E3%80%8A%E3%82%B6%E3%82%A8%E3%83%83%E3%82%B5%E3%81%AE%E6%B5%B7%E5%BD%B1%EF%BC%8F%E5%85%AD%E5%A5%87%E6%80%AA%E3%81%AE%E7%84%A1%2B%E3%80%9C%E6%B0%BE%E6%BF%AB%E3%81%99%E3%82%8B%E8%A6%87%E7%8E%8B%E3%80%9C%E3%80%8B'),
+  ('スイドー・ド・デショー', 'スイドー・ド・デショー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-033'),
+  ('ツミタテンカーネン', 'ツミタテンカーネン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-065'),
+  ('にやにYAH', 'にやにヤー', 'https://dmwiki.net/%E3%80%8A%E3%81%AB%E3%82%84%E3%81%ABYAH%E3%80%8B'),
+  ('ノヴァルチャ・ハレイズ', 'ノヴァルチャ・ハレイズ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-014'),
+  ('ヒトリダチ キャンベロ', 'ヒトリダチ キャンベロ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-030'),
+  ('ヒトリダチ ケントナーク', 'ヒトリダチ ケントナーク', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-001'),
+  ('ヒトリダチ モンキッド', 'ヒトリダチ モンキッド', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-055'),
+  ('ヒミッツキッチ・グローブ', 'ヒミッツキッチ・グローブ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-052'),
+  ('ホッタレマン', 'ホッタレマン', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-074'),
+  ('ミノガミ&オウ禍武斗 / T.２.D.', 'ミノガミアンドオウカブト／トラップ.ツー.ダウン.', 'https://www.m.dmwiki.net/%E3%80%8A%E3%83%9F%E3%83%8E%E3%82%AC%E3%83%9F%EF%BC%86%E3%82%AA%E3%82%A6%E7%A6%8D%E6%AD%A6%E6%96%97%EF%BC%8FT.2.D.%E3%80%8B'),
+  ('メモッタルド・デカスギオ / メモメモ・ジョーカーズ', 'メモッタルド・デカスギオ／メモメモ・ジョーカーズ', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-045'),
+  ('大地 コンダマ-2', 'だいち コンダマ-ツー', 'https://dmwiki.net/%E3%80%8A%E5%A4%A7%E5%9C%B0%20%E3%82%B3%E3%83%B3%E3%83%80%E3%83%9E-2%E3%80%8B'),
+  ('大地 ワタン-2', 'だいち ワタン-ツー', 'https://dmwiki.net/%E3%80%8A%E5%A4%A7%E5%9C%B0%20%E3%83%AF%E3%82%BF%E3%83%B3-2%E3%80%8B'),
+  ('妖精 キユリ-2', 'ようせい キユリ-ツー', 'https://dmwiki.net/%E3%80%8A%E5%A6%96%E7%B2%BE%20%E3%82%AD%E3%83%A6%E3%83%AA-2%E3%80%8B'),
+  ('爆衆 ランブル-2', 'ばくしゅう ランブル-ツー', 'https://dmwiki.net/%E3%80%8A%E7%88%86%E8%A1%86%20%E3%83%A9%E3%83%B3%E3%83%96%E3%83%AB-2%E3%80%8B'),
+  ('翔天 スケプ-3', 'しょうてん スケプ-スリー', 'https://dmwiki.net/%E3%80%8A%E7%BF%94%E5%A4%A9%20%E3%82%B9%E3%82%B1%E3%83%97-3%E3%80%8B'),
+  ('輝晶 エヴァ-3', 'きしょう エヴァ-スリー', 'https://dmwiki.net/%E3%80%8A%E8%BC%9D%E6%99%B6%20%E3%82%A8%E3%83%B4%E3%82%A1-3%E3%80%8B'),
+  ('邪鬼 コオニ-4', 'じゃき コオニ-フォー', 'https://dmwiki.net/%E3%80%8A%E9%82%AA%E9%AC%BC%20%E3%82%B3%E3%82%AA%E3%83%8B-4%E3%80%8B'),
+  ('闇影 ヘモグロ-2', 'あんえい ヘモグロ-ツー', 'https://dmwiki.net/%E3%80%8A%E9%97%87%E5%BD%B1%20%E3%83%98%E3%83%A2%E3%82%B0%E3%83%AD-2%E3%80%8B'),
+  ('魔具 ヴァイポイズ-4', 'まぐ ヴァイポイズ-フォー', 'https://dmwiki.net/%E3%80%8A%E9%AD%94%E5%85%B7%20%E3%83%B4%E3%82%A1%E3%82%A4%E3%83%9D%E3%82%A4%E3%82%BA-4%E3%80%8B'),
+  ('“↑↑”ブランド', 'アゲアゲ ブランド', 'https://dmwiki.net/%E3%80%8A%E2%80%9C%E2%86%91%E2%86%91%E2%80%9D%E3%83%96%E3%83%A9%E3%83%B3%E3%83%89%E3%80%8B'),
+  ('×マドギワ親父', 'バッテンマドギワおやじ', 'https://dmwiki.net/%E3%80%8A%C3%97%E3%83%9E%E3%83%89%E3%82%AE%E3%83%AF%E8%A6%AA%E7%88%B6%E3%80%8B'),
+  ('SMANAGER', 'スマネージャー', 'https://dmwiki.net/%E3%80%8ASMANAGER%E3%80%8B'),
+  ('The 淡口ラー漢 極', 'ザ うすくちラーメン きわみ', 'https://dmwiki.net/%E3%80%8AThe%20%E6%B7%A1%E5%8F%A3%E3%83%A9%E3%83%BC%E6%BC%A2%20%E6%A5%B5%E3%80%8B'),
+  ('キング・ザ・ベスト', 'キング・ザ・ベスト', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-018'),
+  ('ツーキンカイソッQ', 'ツーキンカイソッキュー', 'https://dmwiki.net/%E3%80%8A%E3%83%84%E3%83%BC%E3%82%AD%E3%83%B3%E3%82%AB%E3%82%A4%E3%82%BD%E3%83%83Q%E3%80%8B'),
+  ('どうだいジンセー', 'どうだいジンセー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-070'),
+  ('バイナラベーター', 'バイナラベーター', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-062'),
+  ('ビーチボーイズ・Ⅱ・メン', 'ビーチボーイズ・トゥ・メン', 'https://dmwiki.net/%E3%80%8A%E3%83%93%E3%83%BC%E3%83%81%E3%83%9C%E3%83%BC%E3%82%A4%E3%82%BA%E3%83%BBII%E3%83%BB%E3%83%A1%E3%83%B3%E3%80%8B'),
+  ('爆衆 マキシ-2', 'ばくしゅう マキシ-ツー', 'https://dmwiki.net/%E3%80%8A%E7%88%86%E8%A1%86%20%E3%83%9E%E3%82%AD%E3%82%B7-2%E3%80%8B'),
+  ('輝晶 シンプ-2', 'きしょう シンプ-ツー', 'https://dmwiki.net/%E3%80%8A%E8%BC%9D%E6%99%B6%20%E3%82%B7%E3%83%B3%E3%83%97-2%E3%80%8B'),
+  ('輝晶 マルハヴ-2', 'きしょう マルハヴ-ツー', 'https://dmwiki.net/%E3%80%8A%E8%BC%9D%E6%99%B6%20%E3%83%9E%E3%83%AB%E3%83%8F%E3%83%B4-2%E3%80%8B'),
+  ('キング∞エンペラー', 'キングエンペラー', 'https://dm.takaratomy.co.jp/card/detail/?id=dm26rp3-S008'),
+  ('銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク', 'じゅうしょさかむ ザ・ウィニー／ジョリー・ザ・スパーク', 'https://dm.takaratomy.co.jp/wp-content/card/cardimage/dm26rp3-028a.jpg');
 do $$
 begin
   if (select count(*) from original01_investigation_reading_source) <> 52
-    or (select count(distinct canonical_card_id) from original01_investigation_reading_source) <> 52
+    or (select count(distinct card_name) from original01_investigation_reading_source) <> 52
   then
     raise exception 'DM26-RP3 investigated reading source count mismatch';
   end if;
   if exists (
     select 1
-    from original01_investigation_reading_source as source
-    where not exists (
-      select 1
-      from public.canonical_cards as cards
-      join public.tcg_games as games on games.id = cards.game_id
-      where cards.id = source.canonical_card_id
-        and cards.name = source.card_name
-        and cards.deleted_at is null
-        and games.slug = 'duel-masters'
-    )
+    from (
+      select distinct card_name
+      from original01_investigation_reading_source
+    ) as source
+    left join public.tcg_games as games on games.slug = 'duel-masters'
+    left join public.canonical_cards as cards
+      on cards.game_id = games.id
+     and cards.name = source.card_name
+     and cards.deleted_at is null
+    group by source.card_name
+    having count(distinct cards.id) <> 1
   ) then
     raise exception 'DM26-RP3 investigated reading canonical mapping mismatch';
+  end if;
+  if exists (
+    select 1
+    from (
+      select card_name from original01_reading_source
+      union
+      select card_name from original01_investigation_reading_source
+    ) as source
+    left join public.tcg_games as games on games.slug = 'duel-masters'
+    left join public.canonical_cards as cards
+      on cards.game_id = games.id
+     and cards.name = source.card_name
+     and cards.deleted_at is null
+    group by source.card_name
+    having count(distinct cards.id) > 1
+  ) then
+    raise exception 'DM26-RP3 reading source canonical mapping is ambiguous';
+  end if;
+  if (
+    select count(*)
+    from original01_investigation_reading_source
+    where card_name = 'キング∞エンペラー'
+      and reading = 'キングエンペラー'
+  ) <> 1 then
+    raise exception 'DM26-RP3 user-confirmed reading source mismatch';
   end if;
 end;
 $$;
@@ -346,7 +379,7 @@ insert into public.card_search_terms(
   canonical_card_id, term, normalized_term, term_kind, source, verified, priority
 )
 select
-  source.canonical_card_id,
+  cards.id,
   source.reading,
   public.normalize_card_search(source.reading),
   'alias_reading',
@@ -354,11 +387,16 @@ select
   false,
   20
 from original01_investigation_reading_source as source
-where source.canonical_card_id = 43693
+join public.tcg_games as games on games.slug = 'duel-masters'
+join public.canonical_cards as cards
+  on cards.game_id = games.id
+ and cards.name = source.card_name
+ and cards.deleted_at is null
+where source.card_name = 'キング∞エンペラー'
   and not exists (
     select 1
     from public.card_search_terms as existing
-    where existing.canonical_card_id = source.canonical_card_id
+    where existing.canonical_card_id = cards.id
       and existing.term_kind = 'alias_reading'
       and existing.normalized_term = public.normalize_card_search(source.reading)
   )
