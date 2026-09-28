@@ -1,7 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-import { canonicalizeDuelMastersCard } from "./dm-canonical-equivalents.mjs";
+import {
+  canonicalCardNameKey,
+  normalizeDuelMastersRaceName,
+  resolveDuelMastersRulesCanonicalName,
+} from "./dm-canonical-equivalents.mjs";
 
 const INPUT_PATH = ".local/dm-card-rules.jsonl";
 const OUTPUT_PATH = ".local/dm-card-rules-update.sql";
@@ -51,7 +55,7 @@ export function normalizeRulesRecords(records) {
       name: record.name.trim(),
       official_card_id: record.official_card_id,
       official_url: record.official_url,
-      races: [...new Set(record.races.map((race) => race.trim()).filter(Boolean))].sort(),
+      races: [...new Set(record.races.map(normalizeDuelMastersRaceName).filter(Boolean))].sort(),
       card_texts: record.card_texts,
     };
   });
@@ -77,31 +81,33 @@ export function validateRulesCoverage(sourceCards, records, manifest) {
     throw new Error("Card rules backfill is incomplete; refusing to generate update SQL.");
   }
 
+  const canonicalRecords = [];
   for (const record of records) {
     const source = sourcesById.get(record.official_card_id);
     if (!source || source.official_url !== record.official_url) {
       throw new Error(`Rules record does not match a source print URL: ${record.official_card_id}`);
     }
-    const sourceName = canonicalizeDuelMastersCard(source, record.official_card_id).name;
-    const rulesName = canonicalizeDuelMastersCard(record, record.official_card_id).name;
-    if (sourceName !== rulesName) {
+    const canonicalName = resolveDuelMastersRulesCanonicalName(source, record, record.official_card_id);
+    if (!canonicalName) {
       throw new Error(`Rules record does not match the source canonical name: ${record.official_card_id}`);
     }
+    canonicalRecords.push({ ...record, name: canonicalName });
     sourcesById.delete(record.official_card_id);
   }
   if (sourcesById.size > 0) {
     throw new Error(`Card rules backfill is missing ${sourcesById.size} source prints.`);
   }
-  return records;
+  return canonicalRecords;
 }
 
 export function buildCardRulesUpdateSql(records) {
   if (records.length === 0) throw new Error("Rules update input is empty.");
   const values = records.map((record) => `(${[
     sqlText(record.name),
+    sqlText(canonicalCardNameKey(record.name)),
     sqlText(record.official_card_id),
     sqlText(record.official_url),
-    sqlTextArray(record.races),
+    sqlTextArray([...new Set(record.races.map(normalizeDuelMastersRaceName).filter(Boolean))].sort()),
     sqlTextArray(record.card_texts),
   ].join(", ")})`).join(",\n  ");
 
@@ -109,13 +115,14 @@ export function buildCardRulesUpdateSql(records) {
 
 create temporary table dm_card_rules_source (
   name text not null,
+  name_nfkc text not null,
   official_card_id text not null primary key,
   official_url text not null,
   races text[] not null,
   card_texts text[] not null
 ) on commit drop;
 
-insert into dm_card_rules_source(name, official_card_id, official_url, races, card_texts)
+insert into dm_card_rules_source(name, name_nfkc, official_card_id, official_url, races, card_texts)
 values
   ${values};
 
@@ -126,7 +133,7 @@ declare
   updated_count integer;
 begin
   select count(*) into expected_print_count from dm_card_rules_source;
-  select count(distinct name) into expected_canonical_count from dm_card_rules_source;
+  select count(distinct name_nfkc) into expected_canonical_count from dm_card_rules_source;
 
   if exists (
     select source.official_card_id
@@ -134,7 +141,7 @@ begin
     left join public.tcg_games as game on game.slug = 'duel-masters'
     left join public.canonical_cards as canonical
       on canonical.game_id = game.id
-     and canonical.name = source.name
+     and canonical.normalized_name_nfkc = source.name_nfkc
      and canonical.deleted_at is null
     left join public.card_prints as prints
       on prints.official_card_id = source.official_card_id
@@ -162,18 +169,18 @@ begin
   end if;
 
   with canonical_races as (
-    select names.name, coalesce((
+    select names.name_nfkc, coalesce((
       select array_agg(sorted_races.race)
       from (
         select distinct race_values.race collate "C" as race
         from dm_card_rules_source as race_source
         cross join lateral unnest(race_source.races) as race_values(race)
-        where race_source.name = names.name
+        where race_source.name_nfkc = names.name_nfkc
           and pg_catalog.btrim(race_values.race) <> ''
         order by race
       ) as sorted_races
     ), '{}'::text[]) as races
-    from (select distinct name from dm_card_rules_source) as names
+    from (select distinct name_nfkc from dm_card_rules_source) as names
   )
   update public.canonical_cards as canonical
   set races = source.races,
@@ -181,7 +188,7 @@ begin
   from canonical_races as source
   join public.tcg_games as game on game.slug = 'duel-masters'
   where canonical.game_id = game.id
-    and canonical.name = source.name
+    and canonical.normalized_name_nfkc = source.name_nfkc
     and canonical.deleted_at is null
     and not canonical.manually_locked;
 
@@ -196,7 +203,7 @@ begin
       updated_at = pg_catalog.now()
   from dm_card_rules_source as source
   join public.canonical_cards as canonical
-    on canonical.name = source.name
+    on canonical.normalized_name_nfkc = source.name_nfkc
    and canonical.deleted_at is null
   join public.tcg_games as game
     on game.id = canonical.game_id
@@ -228,9 +235,9 @@ async function main() {
   const records = normalizeRulesRecords(rulesContent.split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line)));
   const sourceCards = sourceContent.split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line));
   const manifest = JSON.parse(manifestContent);
-  validateRulesCoverage(sourceCards, records, manifest);
-  await writeFile(OUTPUT_PATH, buildCardRulesUpdateSql(records), "utf8");
-  console.log(JSON.stringify({ output: OUTPUT_PATH, records: records.length, canonical_cards: new Set(records.map((record) => record.name)).size }));
+  const canonicalRecords = validateRulesCoverage(sourceCards, records, manifest);
+  await writeFile(OUTPUT_PATH, buildCardRulesUpdateSql(canonicalRecords), "utf8");
+  console.log(JSON.stringify({ output: OUTPUT_PATH, records: canonicalRecords.length, canonical_cards: new Set(canonicalRecords.map((record) => canonicalCardNameKey(record.name))).size }));
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

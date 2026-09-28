@@ -96,6 +96,14 @@ test("parseCardDetail extracts existing index fields and one-face races/rules te
   );
 });
 
+test("parseCardDetail normalizes Unicode race notation without fuzzy-merging distinct names", () => {
+  const html = `<h3 class="card-name">表記正規化</h3>${cardFace({
+    race: "アーマード･ドラゴン／ヒューマノイド",
+  })}`;
+  const parsed = parseCardDetail(html, "https://dm.takaratomy.co.jp/card/detail/?id=race-normalization");
+  assert.deepEqual(parsed.races, ["アーマード・ドラゴン", "ヒューマノイド"]);
+});
+
 test("parseCardDetail keeps twin-pact rules per face and unions races without the race-less spell face", () => {
   const html = `
     <h3 class="card-name">暴発秘宝ベンゾ / 星龍の暴発</h3>

@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import { load } from "cheerio";
+import { normalizeDuelMastersRaceName } from "./dm-canonical-equivalents.mjs";
 
 const BASE_URL = "https://dm.takaratomy.co.jp";
 const CARD_SEARCH_URL = `${BASE_URL}/card/`;
@@ -66,7 +67,7 @@ function cardFaceRules($, face, officialUrl) {
 
   const races = normalizeText(raceCells.first().text())
     .split(/[\/／]/u)
-    .map((race) => race.trim())
+    .map(normalizeDuelMastersRaceName)
     .filter(Boolean);
 
   return { cardText, races };

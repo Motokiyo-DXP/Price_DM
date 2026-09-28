@@ -40,11 +40,17 @@ test("現行の正規カード・収録版・検索語へ冪等なSQLを生成�
   assert.doesNotMatch(sql, /select distinct race_values\.race\s[\s\S]{0,250}?order by race_values\.race collate "C"/);
   assert.match(sql, /card_texts = case[\s\S]*?source\.card_texts_complete/);
   assert.match(sql, /group by source\.name/);
-  assert.match(sql, /on conflict \(game_id, name\) where deleted_at is null/);
+  assert.match(sql, /on conflict \(game_id, normalized_name_nfkc\) where deleted_at is null/);
+  assert.match(sql, /canonical\.normalized_name_nfkc = normalize\(source\.name, NFKC\)/);
+  assert.match(sql, /lower\(prints\.official_card_id\) = lower\(source\.official_card_id\)/);
+  assert.match(sql, /set official_card_id = source\.official_card_id/);
   assert.match(sql, /insert into public\.card_prints/);
   assert.match(sql, /on conflict \(official_card_id\)/);
   assert.match(sql, /product_name = coalesce\(public\.card_prints\.product_name, excluded\.product_name\)/);
   assert.match(sql, /insert into public\.card_search_terms/);
+  assert.match(sql, /select distinct on \(canonical\.id, public\.normalize_card_search\(source\.name\)\)/);
+  assert.match(sql, /select distinct on \(canonical\.id, public\.normalize_card_search\(source\.generated_reading\)\)/);
+  assert.match(sql, /order by canonical\.id, public\.normalize_card_search\(source\.generated_reading\), source\.generated_reading collate "C"/);
   assert.match(sql, /'machine_reading'/);
   assert.match(sql, /'generated'/);
   assert.match(sql, /テスト''カード/);
@@ -62,6 +68,30 @@ test("同名カードへ最新の収集メタデータをマージする", () =>
   assert.deepEqual(merged[0].card_types, ["クリーチャー", "呪文"]);
 });
 
+test("NFKC同一の公式表記は1つのcanonical identityへ集約する", () => {
+  const cards = [
+    { ...CARD, name: "テスト ＜Ａ＞", races: ["種族A"], official_url: "https://dm.takaratomy.co.jp/card/detail/?id=nfkc-a" },
+    { ...CARD, name: "テスト <A>", races: ["種族B"], official_url: "https://dm.takaratomy.co.jp/card/detail/?id=nfkc-b" },
+  ];
+  const merged = mergeCanonicalRaces(cards);
+  assert.deepEqual(merged.map((card) => card.races), [["種族A", "種族B"], ["種族A", "種族B"]]);
+
+  const sql = buildCanonicalImportSql(cards);
+  const sourceValues = sql.match(/values\s+([\s\S]*?);\s*\n\s*with duel_masters/u)?.[1];
+  assert.ok(sourceValues);
+  assert.equal((sourceValues.match(/'テスト <A>'/gu) ?? []).length, 2);
+  assert.doesNotMatch(sourceValues, /テスト＜Ａ＞/u);
+  assert.match(sql, /normalized_name_nfkc\) where deleted_at is null do update/u);
+});
+
+test("NFKC表記違いのメタデータも同一カードへ適用する", () => {
+  const merged = mergeCardMetadata(
+    [{ ...CARD, name: "テスト ＜Ａ＞", card_types: [] }],
+    [{ name: "テスト <A>", card_types: ["クリーチャー"] }],
+  );
+  assert.deepEqual(merged[0].card_types, ["クリーチャー"]);
+});
+
 test("同名カードの種族を全printから空要素なしで決定的にunionする", () => {
   const merged = mergeCanonicalRaces([
     { ...CARD, name: "同名", races: ["ドラゴン", "ヒューマノイド"] },
@@ -72,6 +102,14 @@ test("同名カードの種族を全printから空要素なしで決定的にuni
     ["アーマード", "ドラゴン", "ヒューマノイド"],
   ]);
   assert.equal(merged.every((card) => card.races_complete), true);
+});
+
+test("種族はNFKC同一表記を統合し、別表記の種族を保持する", () => {
+  const merged = mergeCanonicalRaces([
+    { ...CARD, name: "表記差カード", races: ["アーマード･ドラゴン", "アーマードドラゴン"] },
+    { ...CARD, name: "表記差カード", races: ["アーマード・ドラゴン"] },
+  ]);
+  assert.deepEqual(merged[0].races, ["アーマードドラゴン", "アーマード・ドラゴン"]);
 });
 
 test("parse未完了のracesとcard_textsで既存値を上書きしないSQLを生成する", () => {
@@ -97,6 +135,25 @@ test("rules backfill records are joined by matching official print ID", () => {
   assert.deepEqual(merged[0].card_texts, [""]);
   assert.throws(() => mergePrintRules([CARD], [{ ...rule, official_card_id: "other-id" }]), /does not match its URL/);
   assert.throws(() => mergePrintRules([CARD], [{ ...rule, name: "別カード" }]), /does not match official card ID/);
+});
+
+test("rules import accepts only audited official name differences and keeps the source canonical name", () => {
+  const sourceName = "ファンタズ厶・クラッチ";
+  const rulesName = "ファンタズム・クラッチ";
+  const card = {
+    ...CARD,
+    name: sourceName,
+    official_url: "https://dm.takaratomy.co.jp/card/detail/?id=dm17-014",
+  };
+  const rule = {
+    name: rulesName,
+    official_card_id: "dm17-014",
+    official_url: card.official_url,
+    races: ["種族B"],
+    card_texts: ["能力B。"],
+  };
+  assert.equal(mergePrintRules([card], [rule])[0].name, sourceName);
+  assert.throws(() => mergePrintRules([card], [{ ...rule, name: `${rulesName}改` }]), /does not match official card ID/);
 });
 
 test("公式IDのないレコードを拒否する", () => {

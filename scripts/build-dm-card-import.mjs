@@ -1,6 +1,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { canonicalizeDuelMastersCard } from "./dm-canonical-equivalents.mjs";
+import {
+  canonicalCardNameKey,
+  canonicalizeDuelMastersCard,
+  normalizeDuelMastersRaceName,
+  resolveDuelMastersRulesCanonicalName,
+} from "./dm-canonical-equivalents.mjs";
 
 const CARD_PATH = ".local/dm-cards-full.jsonl";
 const METADATA_PATH = ".local/dm-card-metadata.jsonl";
@@ -61,7 +66,26 @@ function validateCard(card, index) {
 }
 
 function canonicalCardName(card) {
-  return canonicalizeDuelMastersCard(card, officialCardId(card)).name;
+  return canonicalCardNameKey(canonicalizeDuelMastersCard(card, officialCardId(card)).name);
+}
+
+function canonicalizeImportNames(cards) {
+  const canonicalCards = cards.map((card) => {
+    const canonical = canonicalizeDuelMastersCard(card, officialCardId(card));
+    return { ...canonical, name: canonical.name.trim() };
+  });
+  const displayNameByKey = new Map();
+  for (const card of canonicalCards) {
+    const key = canonicalCardNameKey(card.name);
+    const current = displayNameByKey.get(key);
+    if (!current || (card.name === key && current !== key) || (current !== key && card.name < current)) {
+      displayNameByKey.set(key, card.name);
+    }
+  }
+  return canonicalCards.map((card) => ({
+    ...card,
+    name: displayNameByKey.get(canonicalCardNameKey(card.name)),
+  }));
 }
 
 export function mergeCanonicalRaces(cards) {
@@ -74,7 +98,8 @@ export function mergeCanonicalRaces(cards) {
     } else {
       for (const race of card.races) {
         if (typeof race !== "string") throw new Error(`Card ${card.name} has an invalid race.`);
-        if (race.trim()) group.races.add(race.trim());
+        const normalizedRace = normalizeDuelMastersRaceName(race);
+        if (normalizedRace) group.races.add(normalizedRace);
       }
     }
     groups.set(name, group);
@@ -100,7 +125,7 @@ export function mergePrintRules(cards, rules) {
     }
     const card = cardsById.get(id);
     if (!card) throw new Error(`Rules record ${index + 1} references an unknown official card ID: ${id}`);
-    if (canonicalCardName(rule) !== canonicalCardName(card)) {
+    if (!resolveDuelMastersRulesCanonicalName(card, rule, id)) {
       throw new Error(`Rules record ${index + 1} has a name that does not match official card ID ${id}.`);
     }
     if (!Array.isArray(rule.races) || rule.races.some((race) => typeof race !== "string" || !race.trim())) {
@@ -123,10 +148,10 @@ export function mergeCardMetadata(cards, metadata) {
   const byName = new Map();
   for (const record of metadata) {
     if (typeof record?.name === "string" && record.name.trim()) {
-      byName.set(record.name.trim(), record);
+      byName.set(canonicalCardNameKey(record.name), record);
     }
   }
-  return cards.map((card) => ({ ...card, ...(byName.get(card.name?.trim()) ?? {}) }));
+  return cards.map((card) => ({ ...card, ...(byName.get(canonicalCardNameKey(card.name)) ?? {}) }));
 }
 
 async function readOptionalJsonl(path) {
@@ -191,9 +216,7 @@ export function buildCanonicalImportSql(cards) {
     if (seenIds.has(id)) throw new Error(`Duplicate official card id: ${id}`);
     seenIds.add(id);
   });
-  const values = sourceValues(mergeCanonicalRaces(
-    cards.map((card) => canonicalizeDuelMastersCard(card, officialCardId(card))),
-  ));
+  const values = sourceValues(mergeCanonicalRaces(canonicalizeImportNames(cards)));
 
   return `begin;
 
@@ -279,7 +302,7 @@ select
   pg_catalog.now()
 from canonical_source as source
 cross join duel_masters
-on conflict (game_id, name) where deleted_at is null do update
+on conflict (game_id, normalized_name_nfkc) where deleted_at is null do update
 set name_kana = excluded.name_kana,
     cost = coalesce(excluded.cost, public.canonical_cards.cost),
     civilizations = case
@@ -320,10 +343,48 @@ set races = source.races,
 from canonical_races as source
 join public.tcg_games as game on game.slug = 'duel-masters'
 where canonical.game_id = game.id
-  and canonical.name = source.name
+  and canonical.normalized_name_nfkc = normalize(source.name, NFKC)
   and canonical.deleted_at is null
   and not canonical.manually_locked
   and source.races_complete;
+
+do $$
+begin
+  if exists (
+    select 1
+    from dm_card_import_source
+    group by lower(official_card_id)
+    having count(*) > 1
+  ) then
+    raise exception 'Card import source contains case-insensitive duplicate official IDs';
+  end if;
+
+  if exists (
+    select source.official_card_id
+    from dm_card_import_source as source
+    join public.card_prints as prints
+      on lower(prints.official_card_id) = lower(source.official_card_id)
+     and prints.deleted_at is null
+    left join public.canonical_cards as canonical
+      on canonical.id = prints.canonical_card_id
+     and canonical.deleted_at is null
+    group by source.official_card_id, source.name
+    having count(prints.id) > 1
+       or bool_or(canonical.id is null)
+       or bool_or(canonical.normalized_name_nfkc is distinct from normalize(source.name, NFKC))
+       or bool_or(prints.official_card_id <> source.official_card_id and prints.manually_locked)
+  ) then
+    raise exception 'Card import source has an ambiguous, mismatched, or locked case-insensitive print target';
+  end if;
+end
+$$;
+
+update public.card_prints as prints
+set official_card_id = source.official_card_id
+from dm_card_import_source as source
+where lower(prints.official_card_id) = lower(source.official_card_id)
+  and prints.official_card_id <> source.official_card_id
+  and prints.deleted_at is null;
 
 insert into public.card_prints(
   canonical_card_id,
@@ -334,7 +395,7 @@ insert into public.card_prints(
   card_texts,
   source_checked_at
 )
-select distinct
+select distinct on (canonical.id, public.normalize_card_search(source.name))
   canonical.id,
   source.official_card_id,
   source.card_number,
@@ -347,7 +408,7 @@ join public.tcg_games as game
   on game.slug = 'duel-masters'
 join public.canonical_cards as canonical
   on canonical.game_id = game.id
- and canonical.name = source.name
+ and canonical.normalized_name_nfkc = normalize(source.name, NFKC)
  and canonical.deleted_at is null
 on conflict (official_card_id) where official_card_id is not null and deleted_at is null
 do update
@@ -390,9 +451,10 @@ join public.tcg_games as game
   on game.slug = 'duel-masters'
 join public.canonical_cards as canonical
   on canonical.game_id = game.id
- and canonical.name = source.name
+ and canonical.normalized_name_nfkc = normalize(source.name, NFKC)
  and canonical.deleted_at is null
 where public.normalize_card_search(source.name) <> ''
+order by canonical.id, public.normalize_card_search(source.name), source.name collate "C"
 on conflict (canonical_card_id, normalized_term, term_kind) do update
 set term = excluded.term,
     source = excluded.source,
@@ -409,7 +471,7 @@ insert into public.card_search_terms(
   verified,
   priority
 )
-select distinct
+select distinct on (canonical.id, public.normalize_card_search(source.generated_reading))
   canonical.id,
   source.generated_reading,
   public.normalize_card_search(source.generated_reading),
@@ -422,10 +484,11 @@ join public.tcg_games as game
   on game.slug = 'duel-masters'
 join public.canonical_cards as canonical
   on canonical.game_id = game.id
- and canonical.name = source.name
+ and canonical.normalized_name_nfkc = normalize(source.name, NFKC)
  and canonical.deleted_at is null
 where source.generated_reading is not null
   and public.normalize_card_search(source.generated_reading) <> ''
+order by canonical.id, public.normalize_card_search(source.generated_reading), source.generated_reading collate "C"
 on conflict (canonical_card_id, normalized_term, term_kind) do update
 set term = excluded.term,
     source = excluded.source,
@@ -471,7 +534,7 @@ async function main() {
     `${JSON.stringify(
       {
         card_print_count: cards.length,
-        canonical_name_count: new Set(cards.map((card) => card.name)).size,
+        canonical_name_count: new Set(cards.map(canonicalCardName)).size,
         chunk_size: chunkSize,
         complete_source: Boolean(checkpoint.complete),
         source: "duel-masters-official-card-catalog",

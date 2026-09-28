@@ -2,7 +2,7 @@ import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { canonicalizeDuelMastersCard } from "./dm-canonical-equivalents.mjs";
+import { resolveDuelMastersRulesCanonicalName } from "./dm-canonical-equivalents.mjs";
 import { isAllowedByRobots, parseCardDetail } from "./import-dm-cards-sample.mjs";
 
 const SOURCE_PATH = ".local/dm-cards-full.jsonl";
@@ -313,9 +313,9 @@ async function main() {
       if (!source || source.official_url !== record.official_url) {
         throw new Error(`Existing rules record does not match the current source print: ${record.official_card_id}`);
       }
-      const recordName = canonicalizeDuelMastersCard(record, record.official_card_id).name;
-      const sourceName = canonicalizeDuelMastersCard({ name: source.name }, source.official_card_id).name;
-      if (recordName !== sourceName) throw new Error(`Existing rules name does not match source print ${record.official_card_id}.`);
+      if (!resolveDuelMastersRulesCanonicalName(source, record, record.official_card_id)) {
+        throw new Error(`Existing rules name does not match source print ${record.official_card_id}.`);
+      }
     }
     const failureRecords = await readJsonlFile(FAILURE_PATH, { optional: true, repairTrailingPartial: true });
     const failuresById = reconcileFailureRecords(failureRecords, completedIds, sourcesById);
@@ -343,16 +343,15 @@ async function main() {
       failuresById,
       fetchRecord: async (source) => {
         const parsed = parseCardDetail(await fetchOfficialText(source.official_url), source.official_url);
-        const canonical = canonicalizeDuelMastersCard(parsed, source.official_card_id);
-        const expected = canonicalizeDuelMastersCard({ name: source.name }, source.official_card_id);
-        if (canonical.name !== expected.name) {
-          throw new Error(`Parsed name does not match the source print: ${canonical.name} / ${expected.name}`);
+        const canonicalName = resolveDuelMastersRulesCanonicalName(source, parsed, source.official_card_id);
+        if (!canonicalName) {
+          throw new Error(`Parsed name does not match the source print: ${parsed.name} / ${source.name}`);
         }
         if (!Array.isArray(parsed.races) || !Array.isArray(parsed.card_texts) || parsed.card_texts.length === 0) {
           throw new Error("Official card page did not yield complete face rules data.");
         }
         return {
-          name: canonical.name,
+          name: canonicalName,
           official_card_id: source.official_card_id,
           official_url: source.official_url,
           races: parsed.races,
