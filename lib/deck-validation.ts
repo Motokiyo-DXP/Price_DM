@@ -16,6 +16,15 @@ export type DeckInput = {
 const formats = new Set(["original", "advanced", "duel_party"]);
 const visibilities = new Set(["private", "unlisted", "public"]);
 export const MAX_MAIN_DECK_CARDS = 60;
+export const MAX_COPIES_PER_CARD = 4;
+
+export function getDeckCardAddCount(currentTotal: number, currentQuantity: number, requested: number, deckLimit = MAX_MAIN_DECK_CARDS) {
+  return Math.max(0, Math.min(
+    Math.floor(requested),
+    MAX_COPIES_PER_CARD - currentQuantity,
+    deckLimit - currentTotal,
+  ));
+}
 
 export function parseDeckInput(formData: FormData): DeckInput | null {
   const nameValue = formData.get("name");
@@ -69,7 +78,7 @@ export function parseDeckInput(formData: FormData): DeckInput | null {
       typeof quantity !== "number" ||
       !Number.isSafeInteger(quantity) ||
       quantity < 1 ||
-      quantity > 4 ||
+      quantity > MAX_COPIES_PER_CARD ||
       typeof cardName !== "string" ||
       cardName.trim().length < 1 ||
       cardName.trim().length > 200
