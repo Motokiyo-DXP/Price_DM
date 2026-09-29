@@ -16,6 +16,7 @@ export const DM_CANONICAL_EQUIVALENTS = new Map([
 // These are exact source-index/detail-page name pairs for the same official
 // print IDs. Keep the match keyed by ID and exact strings; do not fuzzy-match.
 export const DM_CARD_RULES_NAME_EQUIVALENTS = new Map([
+  ["dm26rp3-028", { sourceName: "銃初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク", rulesName: "鉄初逆夢 ザ・ウィニー / ジョリー・ザ・スパーク" }],
   ["dm17-014", { sourceName: "ファンタズ厶・クラッチ", rulesName: "ファンタズム・クラッチ" }],
   ["dm22ex1-048", { sourceName: "俺神豚 ブリタニア /「カツキング、俺とお前の勝負だ！」", rulesName: "俺神豚 ブリタニア / 「カツキング、俺とお前の勝負だ！」" }],
   ["dm28-008", { sourceName: "竜装ムシャ・レジェンド", rulesName: "竜装 ムシャ・レジェンド" }],

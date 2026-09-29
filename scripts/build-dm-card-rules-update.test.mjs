@@ -76,7 +76,7 @@ test("NFKC-only rules name variants resolve to the source canonical identity", (
 });
 
 test("only the exact official-ID/name pairs on the audited allowlist resolve non-NFKC differences", () => {
-  assert.equal(DM_CARD_RULES_NAME_EQUIVALENTS.size, 12);
+  assert.equal(DM_CARD_RULES_NAME_EQUIVALENTS.size, 13);
   for (const [id, pair] of DM_CARD_RULES_NAME_EQUIVALENTS) {
     assert.equal(resolveDuelMastersRulesCanonicalName({ name: pair.sourceName }, { name: pair.rulesName }, id), pair.sourceName);
     assert.equal(resolveDuelMastersRulesCanonicalName({ name: `${pair.sourceName}x` }, { name: pair.rulesName }, id), null);
