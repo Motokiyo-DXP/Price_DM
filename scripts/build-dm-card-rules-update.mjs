@@ -144,7 +144,7 @@ begin
      and canonical.normalized_name_nfkc = source.name_nfkc
      and canonical.deleted_at is null
     left join public.card_prints as prints
-      on prints.official_card_id = source.official_card_id
+      on lower(prints.official_card_id) = lower(source.official_card_id)
      and prints.deleted_at is null
     group by source.official_card_id
     having count(distinct canonical.id) <> 1
@@ -208,7 +208,7 @@ begin
   join public.tcg_games as game
     on game.id = canonical.game_id
    and game.slug = 'duel-masters'
-  where prints.official_card_id = source.official_card_id
+  where lower(prints.official_card_id) = lower(source.official_card_id)
     and prints.canonical_card_id = canonical.id
     and prints.deleted_at is null
     and not prints.manually_locked

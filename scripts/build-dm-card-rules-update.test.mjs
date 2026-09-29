@@ -32,7 +32,7 @@ test("rules update validates print identities and builds one transaction with co
   assert.match(sql, /update public\.canonical_cards[\s\S]*set races = source\.races/);
   assert.match(sql, /update public\.card_prints[\s\S]*set card_texts = source\.card_texts/);
   assert.match(sql, /count\(distinct canonical\.id\) <> 1/);
-  assert.match(sql, /prints\.official_card_id = source\.official_card_id/);
+  assert.equal((sql.match(/lower\(prints\.official_card_id\) = lower\(source\.official_card_id\)/g) ?? []).length, 2);
   assert.match(sql, /canonical\.normalized_name_nfkc = source\.name_nfkc/);
   assert.match(sql, /manually locked/);
   assert.match(sql, /updated_count <> expected_canonical_count/);
