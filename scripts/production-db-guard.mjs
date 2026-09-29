@@ -6,11 +6,11 @@ const EXPECTED_REMOTE = "https://github.com/Motokiyo-DXP/Price_DM.git";
 
 export function parseProductionDbArguments(argv) {
   const modes = argv.filter((argument) => argument === "--dry-run" || argument === "--push");
-  const unknown = argv.filter((argument) => !["--dry-run", "--push", "--confirm-production"].includes(argument));
+  const unknown = argv.filter((argument) => !["--dry-run", "--push", "--confirm-production", "--include-all"].includes(argument));
   if (modes.length !== 1 || unknown.length > 0 || !argv.includes("--confirm-production")) {
     throw new Error("Use exactly one of --dry-run or --push together with --confirm-production.");
   }
-  return { mode: modes[0] };
+  return { mode: modes[0], ...(argv.includes("--include-all") ? { includeAll: true } : {}) };
 }
 
 export function normalizeRemoteUrl(url) {
@@ -57,6 +57,7 @@ function main() {
 
   const args = ["--yes", "supabase@latest", "db", "push", "--linked"];
   if (options.mode === "--dry-run") args.push("--dry-run");
+  if (options.includeAll) args.push("--include-all");
   const executable = process.platform === "win32" ? "npx.cmd" : "npx";
   const result = spawnSync(executable, args, {
     cwd: repoRoot,

@@ -10,10 +10,23 @@ const validGit = {
   remoteUrl: "https://github.com/Motokiyo-DXP/Price_DM.git",
 };
 
-test("requires an explicit mode and confirmation", () => {
+test("guard accepts include-all only when explicitly requested", () => {
+  assert.deepEqual(parseProductionDbArguments(["--dry-run", "--include-all", "--confirm-production"]), {
+    mode: "--dry-run",
+    includeAll: true,
+  });
+  assert.deepEqual(parseProductionDbArguments(["--push", "--include-all", "--confirm-production"]), {
+    mode: "--push",
+    includeAll: true,
+  });
+  assert.deepEqual(parseProductionDbArguments(["--dry-run", "--confirm-production"]), { mode: "--dry-run" });
+});
+
+test("requires one explicit mode and production confirmation, and rejects unknown arguments", () => {
   assert.throws(() => parseProductionDbArguments(["--push"]), /confirm-production/);
   assert.throws(() => parseProductionDbArguments(["--push", "--dry-run", "--confirm-production"]), /exactly one/);
-  assert.deepEqual(parseProductionDbArguments(["--dry-run", "--confirm-production"]), { mode: "--dry-run" });
+  assert.throws(() => parseProductionDbArguments(["--dry-run", "--include-all"]), /confirm-production/);
+  assert.throws(() => parseProductionDbArguments(["--dry-run", "--confirm-production", "--include-alll"]), /exactly one/);
 });
 
 test("accepts only an explicit release session on clean main at price-dm/main", () => {
