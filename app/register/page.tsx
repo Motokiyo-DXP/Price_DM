@@ -533,14 +533,14 @@ export default function RegisterPage() {
     setSelectedPrintId("");
     setPreviewPrints([]);
     setSelectedCard(card);
-    setCardQuery(card.name);
+    cardSearchInput.commitSelection(card.name);
     setSuggestionsOpen(false);
   }
 
   function chooseShop(shop: RegistrationShopOption) {
     resetShopSearchResults();
     setSelectedShop(shop);
-    setShopQuery(shop.name);
+    shopSearchInput.commitSelection(shop.name);
     setShopSuggestionsOpen(false);
     setActiveShopOptionIndex(-1);
   }
@@ -953,8 +953,10 @@ export default function RegisterPage() {
                 : undefined
             }
             placeholder="カード名・読み・別名・収録番号で検索"
+            ref={cardSearchInput.inputRef}
+            onInput={cardSearchInput.onInput}
             value={cardQuery}
-            onFocus={() => setSuggestionsOpen(true)}
+            onFocus={() => { cardSearchInput.onFocus(); setSuggestionsOpen(true); }}
             onKeyDown={handleCardKeyDown}
             onCompositionStart={(event) => {
               cardSearchInput.onCompositionStart(event);
@@ -962,17 +964,17 @@ export default function RegisterPage() {
               setSearchingCards(false);
             }}
             onCompositionEnd={(event) => {
-              cardSearchInput.onCompositionEnd(event);
+              if (!cardSearchInput.onCompositionEnd(event)) return;
               cardSearchInputStartedAt.current = performance.now();
               performance.clearMeasures("register-card-search-input-to-render");
               setSelectedCard(null);
               setSuggestionsOpen(true);
             }}
             onChange={(event) => {
+              if (!cardSearchInput.onChange(event)) return;
               cardSearchAbortController.current?.abort();
               cardSearchInputStartedAt.current = performance.now();
               performance.clearMeasures("register-card-search-input-to-render");
-              cardSearchInput.onChange(event);
               setSelectedCard(null);
               setSuggestionsOpen(true);
             }}
@@ -994,7 +996,9 @@ export default function RegisterPage() {
                     role="option"
                     aria-selected={index === activeOptionIndex}
                     onMouseEnter={() => setActiveOptionIndex(index)}
-                    onMouseDown={(event) => {
+                    onClick={(event) => { if (event.detail === 0) chooseCard(card); }}
+                    onPointerDown={(event) => {
+                      if (event.button !== 0) return;
                       event.preventDefault();
                       chooseCard(card);
                     }}
@@ -1038,12 +1042,14 @@ export default function RegisterPage() {
             }
             placeholder="店舗名を入力して候補から選択"
             autoComplete="off"
+            ref={shopSearchInput.inputRef}
+            onInput={shopSearchInput.onInput}
             value={shopQuery}
-            onFocus={() => setShopSuggestionsOpen(true)}
+            onFocus={() => { shopSearchInput.onFocus(); setShopSuggestionsOpen(true); }}
             onKeyDown={handleShopKeyDown}
             onCompositionStart={shopSearchInput.onCompositionStart}
             onCompositionEnd={(event) => {
-              shopSearchInput.onCompositionEnd(event);
+              if (!shopSearchInput.onCompositionEnd(event)) return;
               setShopQueryCompositionRevision((current) => current + 1);
               if (normalizeShopSearch(event.currentTarget.value) !== normalizedShopQuery) {
                 resetShopSearchResults();
@@ -1052,7 +1058,7 @@ export default function RegisterPage() {
               }
             }}
             onChange={(event) => {
-              shopSearchInput.onChange(event);
+              if (!shopSearchInput.onChange(event)) return;
               resetShopSearchResults();
               setSelectedShop(null);
               setShopSuggestionsOpen(true);
@@ -1067,7 +1073,8 @@ export default function RegisterPage() {
                   aria-pressed={selectedShop?.id === shop.id}
                   className="recent-registration-shop"
                   key={shop.id}
-                  onClick={() => chooseShop(shop)}
+                  onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); chooseShop(shop); }}
+                  onClick={(event) => { if (event.detail === 0) chooseShop(shop); }}
                   type="button"
                 >
                   <img alt="" aria-hidden="true" src="/icons/store.svg" />
@@ -1094,7 +1101,9 @@ export default function RegisterPage() {
                     role="option"
                     aria-selected={index === activeShopOptionIndex}
                     onMouseEnter={() => setActiveShopOptionIndex(index)}
-                    onMouseDown={(event) => {
+                    onClick={(event) => { if (event.detail === 0) chooseShop(shop); }}
+                    onPointerDown={(event) => {
+                      if (event.button !== 0) return;
                       event.preventDefault();
                       chooseShop(shop);
                     }}
