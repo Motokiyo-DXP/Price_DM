@@ -1947,6 +1947,8 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
   .deck-filter-type-race .deck-filter-field{grid-template-columns:76px minmax(0,1fr)}
   .deck-filter-type-race .deck-filter-field>strong{font-size:14px;white-space:normal}
   .deck-filter-desktop-expanded{display:none!important}
+  .deck-filter-popover>.deck-filter-no-cost{order:1}
+  .deck-filter-popover>.deck-filter-clear{order:2}
   .deck-filter-field{align-items:center}
   .deck-filter-field>strong{padding-top:0}
   .deck-maker-desktop-side{gap:0}

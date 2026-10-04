@@ -1284,6 +1284,10 @@ export type Database = {
           p_min_cost?: number | null
           p_max_cost?: number | null
           p_no_cost?: boolean
+          p_min_power?: number | null
+          p_max_power?: number | null
+          p_race_tokens?: string[]
+          p_card_text_query?: string | null
           p_image?: string
         }
         Returns: {

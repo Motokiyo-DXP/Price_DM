@@ -174,6 +174,10 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     p_card_types: cardTypeFilter ? [cardTypeFilter] : [],
     p_min_cost: minimumCost === "" ? null : Number(minimumCost),
     p_max_cost: maximumCost === "" ? null : Number(maximumCost),
+    p_min_power: minimumPower.trim() === "" ? null : Number(minimumPower),
+    p_max_power: maximumPower.trim() === "" ? null : Number(maximumPower),
+    p_race_tokens: selectedRaceTokens,
+    p_card_text_query: cardTextQuery.trim() || null,
     p_no_cost: includeNoCost,
     p_image: imageFilter,
   });
@@ -243,6 +247,10 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       p_color: colorFilter, p_card_types: cardTypeFilter ? [cardTypeFilter] : [],
       p_min_cost: minimumCost === "" ? null : Number(minimumCost),
       p_max_cost: maximumCost === "" ? null : Number(maximumCost),
+      p_min_power: minimumPower.trim() === "" ? null : Number(minimumPower),
+      p_max_power: maximumPower.trim() === "" ? null : Number(maximumPower),
+      p_race_tokens: selectedRaceTokens,
+      p_card_text_query: cardTextQuery.trim() || null,
       p_no_cost: includeNoCost, p_image: imageFilter,
     };
     const searchKey = JSON.stringify({ ...searchArgs, p_offset: null });
@@ -299,7 +307,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     if (!append || page.length > 0) setSearchStatus(page.length > 0 ? "success" : append ? "success" : "empty");
     setSearchError(null);
     searchInFlightRef.current = false;
-  }, [searchQuery, fallbackCosts, searchSort, searchSortDirection, productFilter, searchCardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, includeNoCost, imageFilter]);
+  }, [searchQuery, fallbackCosts, searchSort, searchSortDirection, productFilter, searchCardNumberFilter, civilizationFilter, civilizationMode, colorFilter, cardTypeFilter, minimumCost, maximumCost, minimumPower, maximumPower, selectedRaceTokens, cardTextQuery, includeNoCost, imageFilter]);
 
   useEffect(() => {
     const requestId = ++searchRequestRef.current;
@@ -662,7 +670,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           <div className="deck-filter-field deck-filter-color-filter"><strong>色数</strong><fieldset aria-label="色数" className="deck-filter-color-options">{[["all", "すべて"], ["single", "単色のみ"], ["multi", "多色のみ"]].map(([value, label]) => <label key={value}><input checked={colorFilter === value} name="color-filter" onChange={() => setColorFilter(value as typeof colorFilter)} type="radio" />{label}</label>)}</fieldset></div>
           <div className="deck-filter-field"><strong>コスト</strong><div className="deck-cost-range"><select aria-label="最小コスト" onChange={(event) => setMinimumCost(event.target.value)} value={minimumCost}><option value="">最小 未指定</option>{costOptions.map((cost) => <option key={cost} value={cost}>{cost}</option>)}</select><span>～</span><select aria-label="最大コスト" onChange={(event) => setMaximumCost(event.target.value)} value={maximumCost}><option value="">最大 未指定</option>{costOptions.map((cost) => <option key={cost} value={cost}>{cost}</option>)}</select></div></div>
           <label className="deck-filter-no-cost"><input checked={includeNoCost} onChange={(event) => setIncludeNoCost(event.target.checked)} type="checkbox" />コストなしを含める</label>
-          <div className="deck-filter-field deck-filter-desktop-expanded"><strong>パワー</strong><div className="deck-cost-range"><input aria-label="最小パワー" inputMode="numeric" onChange={(event) => setMinimumPower(event.target.value)} placeholder="最小 未指定" value={minimumPower} /><span>～</span><input aria-label="最大パワー" inputMode="numeric" onChange={(event) => setMaximumPower(event.target.value)} placeholder="最大 未指定" value={maximumPower} /></div></div>
+          <div className="deck-filter-field"><strong>パワー</strong><div className="deck-cost-range"><input aria-label="最小パワー" inputMode="numeric" onChange={(event) => setMinimumPower(event.target.value)} placeholder="最小 未指定" value={minimumPower} /><span>～</span><input aria-label="最大パワー" inputMode="numeric" onChange={(event) => setMaximumPower(event.target.value)} placeholder="最大 未指定" value={maximumPower} /></div></div>
           <div className="deck-filter-type-race">
             <div className="deck-filter-field"><strong>カードタイプ</strong><div className="deck-card-type-picker"><button aria-expanded={cardTypeListOpen} onClick={() => setCardTypeListOpen((open) => !open)} type="button">{cardTypeFilter || "指定なし"} <span aria-hidden="true" className="ui-icon ui-icon-dropdown" /></button>{cardTypeListOpen ? <div className="deck-card-type-options"><button onClick={() => { setCardTypeFilter(""); setCardTypeListOpen(false); }} type="button">指定なし</button>{cardTypeOptions.map((value) => <button aria-selected={cardTypeFilter === value} key={value} onClick={() => { setCardTypeFilter(value); setCardTypeListOpen(false); }} type="button">{value}</button>)}</div> : null}</div></div>
             <div className="deck-filter-field"><strong>種族</strong><button aria-expanded={racePickerOpen} className="deck-race-picker-trigger" onClick={() => { setRaceDraftTokens(selectedRaceTokens); setRaceSearch(""); setRacePickerOpen(true); }} type="button">{selectedRaceTokens.length ? selectedRaceTokens.join("・") : "種族を選択"}</button></div>
