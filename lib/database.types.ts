@@ -132,6 +132,8 @@ export type Database = {
           share_token: string | null
           folder_id: string | null
           icon_canonical_card_id: number | null
+          editor_sort_key: "saved" | "cost" | "added" | "name" | "quantity"
+          editor_sort_direction: "asc" | "desc"
           user_sort_order: number
           id: string
           owner_id: string
@@ -146,6 +148,8 @@ export type Database = {
           share_token?: string | null
           folder_id?: string | null
           icon_canonical_card_id?: number | null
+          editor_sort_key?: "saved" | "cost" | "added" | "name" | "quantity"
+          editor_sort_direction?: "asc" | "desc"
           user_sort_order?: number
           id?: string
           owner_id: string
@@ -160,6 +164,8 @@ export type Database = {
           share_token?: string | null
           folder_id?: string | null
           icon_canonical_card_id?: number | null
+          editor_sort_key?: "saved" | "cost" | "added" | "name" | "quantity"
+          editor_sort_direction?: "asc" | "desc"
           user_sort_order?: number
           id?: string
           owner_id?: string

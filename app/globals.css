@@ -1931,13 +1931,13 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
   .deck-preview-mobile-sort-button{align-items:center;background:#374158;border:1px solid #627091;border-radius:7px;color:#f5f6fa;cursor:pointer;display:inline-flex;font:700 11px inherit;gap:4px;justify-content:center;margin-left:auto;min-height:36px;padding:7px 9px;white-space:nowrap}
   .deck-preview-mobile-sort-button span{font-size:16px;line-height:1}
   .deck-result-strip{align-items:stretch;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
-  .deck-result-card{flex:0 0 78px;grid-template-rows:auto minmax(2.4em,auto);height:auto;max-height:none;min-width:0}
+  .deck-result-card{flex:0 0 78px;grid-template-rows:auto auto;height:auto;max-height:none;min-width:0}
   .deck-result-card-media{aspect-ratio:5/7;min-width:0;position:relative;width:100%}
   .deck-result-card-art{background:#292c38;border:1px solid #627091;border-radius:5px;box-sizing:border-box;cursor:pointer;display:block;height:100%;inset:0;min-height:0;overflow:hidden;padding:3px;position:absolute;width:100%}
   .deck-result-card-art .card-artwork,.deck-result-card-art .card-artwork-placeholder{aspect-ratio:5/7;border-radius:3px;height:100%;width:100%}
   .deck-result-card-art>.deck-result-card-quantity{align-items:center;background:#495473;border:2px solid #ecc100;border-radius:50%;color:#f5f6fa;display:flex;font-size:12px;height:22px;justify-content:center;position:absolute;right:5px;top:5px;width:22px}
   .deck-result-card-actions{display:none}
-  .deck-result-card-name{align-self:start;color:#f5f6fa;display:-webkit-box;font-size:10px;line-height:1.25;min-height:2.5em;min-width:0;overflow:hidden;padding:3px 1px;text-align:center;text-overflow:ellipsis;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  .deck-result-card-name{align-self:start;color:#f5f6fa;display:block;font-size:10px;line-height:1.25;min-height:1.25em;min-width:0;overflow:hidden;padding:3px 1px;text-align:center;text-overflow:ellipsis;white-space:nowrap}
   .deck-search-civilizations.deck-civilization-buttons{display:none;flex:0 0 auto;gap:4px;grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;width:100%}
   .deck-search-civilizations.deck-civilization-buttons button{align-items:center;box-sizing:border-box;display:flex;height:40px;justify-content:center;line-height:1;min-height:40px;min-width:0;padding:0;text-align:center;width:100%}
   .deck-search-actions .deck-search-sort-select{display:none!important}
