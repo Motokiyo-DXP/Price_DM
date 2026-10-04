@@ -9,7 +9,7 @@ import { getCardImageUrl } from "@/lib/card-image";
 import { pickCardPrintRepresentativesByCanonicalCardId, sortCardPrintsOldestFirst } from "@/lib/card-print-order";
 import { mapDeckSearchResults, type DeckSearchCard } from "@/lib/deck-search-mapping";
 import { invalidateDeckPreviewCache } from "@/lib/deck-preview-cache";
-import { sortDeckCards, type DeckSortKey, type SortDirection } from "@/lib/deck-sorting";
+import { getInitialEditorSort, restoreEditorCards, type EditorSortKey, sortDeckCards, type DeckSortKey, type SortDirection } from "@/lib/deck-sorting";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { CARD_SEARCH_DEBOUNCE_MS } from "@/lib/search-timing";
 import { DeckAnalysis } from "@/components/deck-analysis";
@@ -24,7 +24,7 @@ type SelectedCard = { canonicalCardId: number; cardPrintId: number | null; name:
 type DeckTab = "main" | "gr" | "special";
 type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
 type SearchStatus = "idle" | "searching" | "success" | "empty" | "error";
-export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; cards: SelectedCard[] };
+export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; editorSortKey?: EditorSortKey; editorSortDirection?: SortDirection; cards: SelectedCard[] };
 const SEARCH_PAGE_SIZE = 24;
 const RACE_PRESETS = [
   "エンジェル・コマンド",
@@ -70,7 +70,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const cardSearchInput = useImeRealtimeInput();
   const query = cardSearchInput.value;
   const [results, setResults] = useState<SearchCard[]>([]);
-  const [cards, setCards] = useState<SelectedCard[]>(initialDeck?.cards ?? []);
+  const initialSort = getInitialEditorSort(initialDeck);
+  const [cards, setCards] = useState<SelectedCard[]>(() => restoreEditorCards(initialDeck?.cards ?? [], initialSort.key, initialSort.direction));
   const [format, setFormat] = useState<DeckEditorInitialData["format"]>(initialDeck?.format ?? "original");
   const [hasMoreResults, setHasMoreResults] = useState(true);
   const [searchStatus, setSearchStatus] = useState<SearchStatus>("idle");
@@ -116,8 +117,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [searchSortDirection, setSearchSortDirection] = useState<SortDirection>("asc");
   // A new deck has no persisted order yet, so keep the historical cost-ascending default.
   // Existing decks continue to render their saved sort_order unchanged.
-  const [deckSort, setDeckSort] = useState<DeckSortKey | null>(initialDeck ? null : "cost");
-  const [deckSortDirection, setDeckSortDirection] = useState<SortDirection>("asc");
+  const [deckSort, setDeckSort] = useState<DeckSortKey | null>(initialSort.key === "saved" ? null : initialSort.key);
+  const [deckSortDirection, setDeckSortDirection] = useState<SortDirection>(initialSort.direction);
   const [deckPanePercent, setDeckPanePercent] = useState(36);
   const [analysisPanePercent, setAnalysisPanePercent] = useState(40);
   const [searchOverlap, setSearchOverlap] = useState(0);
@@ -639,7 +640,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
                   <button aria-label={`${card.name}を1枚増やす`} disabled={!resultsAreCurrent || cannotAdd} onClick={() => addCard(card)} type="button">＋</button>
                 </div>
               </div>
-              <span className="deck-result-card-name">{card.name}</span>
+              <span className="deck-result-card-name" title={card.name}>{card.name}</span>
             </article>;
           })}
         </div>
@@ -721,6 +722,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </section>
       </div> : null}
 
+      <input name="editorSortKey" type="hidden" value={deckSort ?? "saved"} />
+      <input name="editorSortDirection" type="hidden" value={deckSortDirection} />
       <input name="cards" type="hidden" value={JSON.stringify(orderedCards)} />
       {state.status === "error" ? <p className="notice error deck-maker-error" role="alert">{state.message}</p> : null}
     </form>

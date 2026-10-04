@@ -47,6 +47,8 @@ export async function createDeckAction(
       format: input.format,
       visibility: input.visibility,
       description: input.description,
+      editor_sort_key: input.editorSortKey,
+      editor_sort_direction: input.editorSortDirection,
     })
     .select("id")
     .single();
@@ -96,7 +98,7 @@ export async function updateDeckAction(
     if (error || requestedPrints.some((card) => !prints?.some((print) => print.id === card.cardPrintId && print.canonical_card_id === card.canonicalCardId))) return { status: "error", message: "選択したイラストを確認できませんでした。" };
   }
   const keptIds = new Set(input.cards.map((card) => card.canonicalCardId));
-  const { error: deckError } = await auth.supabase.from("decks").update({ name: input.name, format: input.format, visibility: input.visibility, description: input.description, icon_canonical_card_id: ownedDeck.icon_canonical_card_id && keptIds.has(ownedDeck.icon_canonical_card_id) ? ownedDeck.icon_canonical_card_id : null, updated_at: new Date().toISOString() }).eq("id", deckId).eq("owner_id", auth.userId);
+  const { error: deckError } = await auth.supabase.from("decks").update({ name: input.name, format: input.format, visibility: input.visibility, description: input.description, editor_sort_key: input.editorSortKey, editor_sort_direction: input.editorSortDirection, icon_canonical_card_id: ownedDeck.icon_canonical_card_id && keptIds.has(ownedDeck.icon_canonical_card_id) ? ownedDeck.icon_canonical_card_id : null, updated_at: new Date().toISOString() }).eq("id", deckId).eq("owner_id", auth.userId);
   if (deckError) return { status: "error", message: "デッキ情報を更新できませんでした。" };
   const { error: deleteError } = await auth.supabase.from("deck_cards").delete().eq("deck_id", deckId);
   if (deleteError) return { status: "error", message: "カード内容を更新できませんでした。" };

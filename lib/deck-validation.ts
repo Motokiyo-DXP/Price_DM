@@ -1,3 +1,4 @@
+import { parseEditorSort, type EditorSortKey, type SortDirection } from "./deck-sorting.ts";
 export type DeckCardInput = {
   canonicalCardId: number;
   cardPrintId: number | null;
@@ -11,6 +12,8 @@ export type DeckInput = {
   visibility: "private" | "unlisted" | "public";
   description: string;
   cards: DeckCardInput[];
+  editorSortKey: EditorSortKey;
+  editorSortDirection: SortDirection;
 };
 
 const formats = new Set(["original", "advanced", "duel_party"]);
@@ -27,6 +30,8 @@ export function getDeckCardAddCount(currentTotal: number, currentQuantity: numbe
 }
 
 export function parseDeckInput(formData: FormData): DeckInput | null {
+  const editorSort = parseEditorSort(formData.get("editorSortKey") ?? "saved", formData.get("editorSortDirection") ?? "asc");
+  if (!editorSort) return null;
   const nameValue = formData.get("name");
   const formatValue = formData.get("format");
   const visibilityValue = formData.get("visibility");
@@ -95,5 +100,7 @@ export function parseDeckInput(formData: FormData): DeckInput | null {
     visibility: visibilityValue as DeckInput["visibility"],
     description,
     cards,
+    editorSortKey: editorSort.key,
+    editorSortDirection: editorSort.direction,
   };
 }

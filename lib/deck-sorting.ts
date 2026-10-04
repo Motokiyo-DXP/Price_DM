@@ -44,3 +44,15 @@ export function sortSearchCards<T extends SearchSortable>(cards: readonly T[], k
   });
   return indexed.map(({ card }) => card);
 }
+
+export type EditorSortKey = DeckSortKey | "saved";
+export function parseEditorSort(key: unknown, direction: unknown) {
+  if (!["saved", "cost", "added", "name", "quantity"].includes(key as string) || !["asc", "desc"].includes(direction as string)) return null;
+  return { key: key as EditorSortKey, direction: direction as SortDirection };
+}
+export function getInitialEditorSort(deck?: { editorSortKey?: unknown; editorSortDirection?: unknown }) {
+  return deck ? parseEditorSort(deck.editorSortKey, deck.editorSortDirection) ?? { key: "saved" as const, direction: "asc" as const } : { key: "cost" as const, direction: "asc" as const };
+}
+export function restoreEditorCards<T>(cards: readonly T[], key: EditorSortKey, direction: SortDirection): T[] {
+  return key === "added" && direction === "desc" ? [...cards].reverse() : [...cards];
+}
