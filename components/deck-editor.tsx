@@ -127,6 +127,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const desktopSideRef = useRef<HTMLElement>(null);
   const analysisSplitterRef = useRef<HTMLDivElement>(null);
   const resultStripRef = useRef<HTMLDivElement>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+  const filterPopoverRef = useRef<HTMLElement>(null);
   const paneResizeRef = useRef<{ axis: "deck" | "analysis"; pointerId: number; startCoordinate: number; startPercent: number; startBoundaryCenter: number; availableSize: number } | null>(null);
   const resultCountRef = useRef(0);
   const searchRequestRef = useRef(0);
@@ -178,6 +180,22 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const resultsAreCurrent = resultsSearchKey === currentSearchKey;
 
   useEffect(() => { resultCountRef.current = results.length; }, [results]);
+
+  useEffect(() => {
+    if (!filterOpen || !searchBarRef.current || !layoutRef.current) return;
+    const updateFilterPosition = () => {
+      filterPopoverRef.current?.style.setProperty("--deck-search-top", `${searchBarRef.current!.getBoundingClientRect().top}px`);
+    };
+    updateFilterPosition();
+    const observer = new ResizeObserver(updateFilterPosition);
+    observer.observe(layoutRef.current);
+    observer.observe(searchBarRef.current);
+    window.addEventListener("resize", updateFilterPosition);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateFilterPosition);
+    };
+  }, [filterOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -625,7 +643,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
             </article>;
           })}
         </div>
-        <div className="deck-search-bar"><div className="deck-search-input-row"><span aria-hidden="true">⌕</span>
+        <div className="deck-search-bar" ref={searchBarRef}><div className="deck-search-input-row"><span aria-hidden="true">⌕</span>
           <input aria-label="カード名" placeholder="カード名で検索" value={query} onChange={cardSearchInput.onChange} onCompositionStart={cardSearchInput.onCompositionStart} onCompositionEnd={cardSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, cardSearchInput.isComposing())) event.preventDefault(); }} />
         </div><div className="deck-search-controls-row">
           <div aria-label="文明で絞り込む" className="deck-search-civilizations deck-civilization-buttons">{[["", "すべて", "all"], ["fire", "火", "fire"], ["water", "水", "water"], ["nature", "自", "nature"], ["light", "光", "light"], ["darkness", "闇", "darkness"], ["zero", "無", "zero"]].map(([value, label, kind]) => <button aria-pressed={value ? civilizationFilter.includes(value) : civilizationFilter.length === 0} className={`deck-civilization-button ${kind}`} key={value || "all"} onClick={() => setCivilizationFilter((current) => value ? current.includes(value) ? current.filter((item) => item !== value) : [...current, value] : [])} type="button">{label}</button>)}</div>
@@ -635,7 +653,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </div>
         </div>
         {filterOpen && typeof document !== "undefined" ? createPortal(<>
-        <section aria-label="カードの絞り込み" aria-modal="false" className="deck-filter-popover" role="dialog">
+        <section aria-label="カードの絞り込み" aria-modal="false" className="deck-filter-popover" ref={filterPopoverRef} role="dialog">
           <div className="deck-popover-heading"><strong>絞り込み</strong><button aria-label="絞り込みを閉じる" onClick={() => setFilterOpen(false)} type="button">×</button></div>
           {filterOptionsError ? <p role="alert">絞り込み候補を読み込めませんでした。</p> : null}
           <div className="deck-filter-field"><strong>文明</strong><div className="deck-filter-buttons deck-civilization-buttons">{[["fire", "火"], ["water", "水"], ["nature", "自"], ["light", "光"], ["darkness", "闇"], ["zero", "無"]].map(([value, label]) => <button aria-pressed={civilizationFilter.includes(value)} className={`deck-filter-civilization deck-civilization-button ${value}`} key={value} onClick={() => setCivilizationFilter((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])} type="button">{label}</button>)}</div></div>
@@ -646,9 +664,9 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
           <div className="deck-filter-field deck-filter-desktop-expanded"><strong>パワー</strong><div className="deck-cost-range"><input aria-label="最小パワー" inputMode="numeric" onChange={(event) => setMinimumPower(event.target.value)} placeholder="最小 未指定" value={minimumPower} /><span>～</span><input aria-label="最大パワー" inputMode="numeric" onChange={(event) => setMaximumPower(event.target.value)} placeholder="最大 未指定" value={maximumPower} /></div></div>
           <div className="deck-filter-type-race">
             <div className="deck-filter-field"><strong>カードタイプ</strong><div className="deck-card-type-picker"><button aria-expanded={cardTypeListOpen} onClick={() => setCardTypeListOpen((open) => !open)} type="button">{cardTypeFilter || "指定なし"} <span aria-hidden="true" className="ui-icon ui-icon-dropdown" /></button>{cardTypeListOpen ? <div className="deck-card-type-options"><button onClick={() => { setCardTypeFilter(""); setCardTypeListOpen(false); }} type="button">指定なし</button>{cardTypeOptions.map((value) => <button aria-selected={cardTypeFilter === value} key={value} onClick={() => { setCardTypeFilter(value); setCardTypeListOpen(false); }} type="button">{value}</button>)}</div> : null}</div></div>
-            <div className="deck-filter-field deck-filter-desktop-expanded"><strong>種族</strong><button aria-expanded={racePickerOpen} className="deck-race-picker-trigger" onClick={() => { setRaceDraftTokens(selectedRaceTokens); setRaceSearch(""); setRacePickerOpen(true); }} type="button">{selectedRaceTokens.length ? selectedRaceTokens.join("・") : "種族を選択"}</button></div>
+            <div className="deck-filter-field"><strong>種族</strong><button aria-expanded={racePickerOpen} className="deck-race-picker-trigger" onClick={() => { setRaceDraftTokens(selectedRaceTokens); setRaceSearch(""); setRacePickerOpen(true); }} type="button">{selectedRaceTokens.length ? selectedRaceTokens.join("・") : "種族を選択"}</button></div>
           </div>
-          <label className="deck-filter-text-field deck-filter-desktop-expanded">テキスト<input aria-label="カードテキスト" placeholder="テキストを入力" value={cardTextQuery} onChange={(event) => setCardTextQuery(event.target.value)} /></label>
+          <label className="deck-filter-text-field">テキスト<input aria-label="カードテキスト" placeholder="テキストを入力" value={cardTextQuery} onChange={(event) => setCardTextQuery(event.target.value)} /></label>
           <div className="deck-filter-field"><strong>収録商品</strong><div className="deck-product-picker"><div className="deck-product-input"><input aria-label="収録商品を検索" placeholder={productFilter || "商品名・商品コードで検索"} value={productQuery} onFocus={() => setProductListOpen(true)} onChange={(event) => { productSearchInput.onChange(event); setProductListOpen(true); }} onCompositionStart={productSearchInput.onCompositionStart} onCompositionEnd={productSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, productSearchInput.isComposing())) event.preventDefault(); }} /><button aria-label="収録商品をすべてに戻す" onClick={() => { setProductFilter(""); productSearchInput.setValue(""); setProductListOpen(false); }} type="button">{productFilter ? "×" : "すべて"}</button></div>{productListOpen ? <div className="deck-product-options"><button onClick={() => { setProductFilter(""); productSearchInput.setValue(""); setProductListOpen(false); }} type="button">すべて</button>{matchingProducts.map((name) => <button aria-selected={productFilter === name} key={name} onClick={() => { setProductFilter(name); productSearchInput.setValue(""); setProductListOpen(false); }} type="button">{name}{productCodeByName[name]?.length ? <small>{productCodeByName[name].join(" / ")}</small> : null}</button>)}{matchingProducts.length === 0 ? <p>該当する収録商品がありません</p> : null}</div> : null}</div></div>
           <label>カード番号<input placeholder="例：DM24-RP1" value={cardNumberFilter} onChange={cardNumberSearchInput.onChange} onCompositionStart={cardNumberSearchInput.onCompositionStart} onCompositionEnd={cardNumberSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, cardNumberSearchInput.isComposing())) event.preventDefault(); }} /></label>
           <button className="deck-filter-clear" onClick={() => { setProductFilter(""); productSearchInput.setValue(""); setProductListOpen(false); cardNumberSearchInput.setValue(""); setCivilizationFilter([]); setCivilizationMode("cup"); setColorFilter("all"); setCardTypeFilter(""); setCardTypeListOpen(false); setMinimumCost(""); setMaximumCost(""); setMinimumPower(""); setMaximumPower(""); setSelectedRaceTokens([]); setRaceDraftTokens([]); setRacePickerOpen(false); setRaceSearch(""); setCardTextQuery(""); setIncludeNoCost(false); }} type="button">全条件クリア</button>

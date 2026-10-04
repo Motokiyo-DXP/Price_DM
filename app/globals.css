@@ -1947,12 +1947,20 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
   .deck-filter-type-race .deck-filter-field{grid-template-columns:76px minmax(0,1fr)}
   .deck-filter-type-race .deck-filter-field>strong{font-size:14px;white-space:normal}
   .deck-filter-desktop-expanded{display:none!important}
+  .deck-filter-field{align-items:center}
+  .deck-filter-field>strong{padding-top:0}
+  .deck-maker-desktop-side{gap:0}
+  .deck-search-shelf{margin-top:0}
+  .deck-maker-deck-panel{container-type:inline-size;flex:0 1 auto}
+  .deck-maker-canvas{block-size:calc((100cqw - 12px - 7 * clamp(2px,.7vw,3px)) * 7 / 8 + 4 * clamp(2px,.7vw,3px) + 12px);container-type:size;flex:0 1 auto}
+  .deck-maker-canvas>.deck-maker-grid{--deck-preview-card-width:max(0px,min(calc((100cqw - 7 * var(--deck-preview-gap))/8),calc((100cqh - 4 * var(--deck-preview-gap))/7)));flex:none;grid-template-columns:repeat(8,var(--deck-preview-card-width))}
+  .deck-filter-popover{bottom:calc(100dvh - var(--deck-search-top,50dvh));max-height:min(72dvh,calc(var(--deck-search-top,50dvh) - max(16px,env(safe-area-inset-top))))}
   .deck-card-variants-row{align-items:stretch;display:flex;gap:6px;min-width:0;overflow:hidden}
   .deck-card-variants-row>.deck-card-variants{flex:1 1 0;min-width:0}
   .deck-card-modal-close-variants{align-items:center;align-self:stretch;display:flex;flex:0 0 66px;justify-content:center;min-height:96px;min-width:66px;padding:6px;position:static}
   .deck-card-modal-controls>.deck-card-modal-close{display:none}
   .deck-card-modal-controls>.deck-card-modal-unify{display:none}
-  .deck-card-modal-controls>.deck-card-modal-add-four{align-items:center;background:#fff;border:0;border-radius:5px;color:#1261d7;cursor:pointer;display:flex;font:800 10px system-ui,-apple-system,"Noto Sans JP",sans-serif;gap:3px;justify-content:center;left:8px;min-height:48px;min-width:82px;padding:5px 4px;position:absolute}
+  .deck-card-modal-controls>.deck-card-modal-add-four{align-items:center;background:#fff;border:0;border-radius:5px;color:#1261d7;cursor:pointer;display:flex;font:800 10px system-ui,-apple-system,"Noto Sans JP",sans-serif;gap:3px;justify-content:center;left:auto;right:0;min-height:48px;width:66px;padding:5px 4px;position:absolute}
   .deck-card-modal-controls>.deck-card-modal-add-four span{font-size:16px;line-height:1}
   .deck-card-modal-controls>.deck-card-modal-add-four:disabled{cursor:not-allowed;opacity:.4}
 }
