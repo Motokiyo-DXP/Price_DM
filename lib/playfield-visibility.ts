@@ -23,6 +23,7 @@ export function isCardFaceVisible({
   if (zone === "deck" || zone === "deckInspection") return deckDrawer && owner === view;
   if (revealHiddenCards) return true;
   return face === "face_up"
+    || (zone === "hand" && face === "face_down" && owner !== view)
     || (face === "owner_only" && owner === view)
     || (inspected && inspectionViewer === view);
 }
