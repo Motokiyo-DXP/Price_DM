@@ -1218,10 +1218,6 @@ export default function RegisterPage() {
           </label>
         </div>
 
-        <label className="registration-observed-on" htmlFor="observedOn">
-          調査日
-          <input id="observedOn" name="observedOn" type="date" defaultValue={observedOn} required />
-        </label>
           </div>
         </section>
 
@@ -1276,6 +1272,10 @@ export default function RegisterPage() {
               <select id="stockStatus" name="stockStatus" value={stockStatus} onChange={(event) => setStockStatus(event.target.value as StockStatus)}>
                 {stockStatuses.map(([value, label]) => <option key={value} value={value}>{value === "unknown" ? "指定しない" : label}</option>)}
               </select>
+            </label>
+            <label htmlFor="observedOn">
+              調査日
+              <input id="observedOn" name="observedOn" type="date" defaultValue={observedOn} required />
             </label>
             <label htmlFor="contributorName">
               登録者名
