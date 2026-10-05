@@ -421,7 +421,7 @@ export function moveCardsBetweenZones(
     const unbundleInDeck = to === "deck" && Boolean(card.stackId);
     return {
       ...card,
-      face: unbundleInHand || unbundleInDeck ? "face_up" as CardFace : defaults.face,
+      face: unbundleInDeck ? "face_up" as CardFace : defaults.face,
       tapped: to === "mana" && isMulticolorCard(card),
       shieldMarker: defaults.shieldMarker ? { ...defaults.shieldMarker, order: orders[owner] + index } : null,
       markers: addSummoningSickness && to === "battle" && from !== "battle"

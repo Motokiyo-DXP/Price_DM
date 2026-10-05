@@ -13,6 +13,13 @@ export type PlayZone =
 
 export type CardFace = "face_up" | "face_down" | "owner_only";
 
+export const nonStackableZones: PlayZone[] = ["mana", "graveyard", "hyperspatial", "gr", "abyss", "hand"];
+export const delayedStackPreviewZones: PlayZone[] = ["battle", "shield", "reveal"];
+
+export function flippedCardFace(zone: PlayZone, face: CardFace): CardFace {
+  return face === "face_down" ? (zone === "hand" ? "owner_only" : "face_up") : "face_down";
+}
+
 export type ShieldPlacementMarker = {
   turn: number;
   order: number;

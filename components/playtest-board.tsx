@@ -16,6 +16,9 @@ import {
 import { createPortal } from "react-dom";
 import {
   classifyPointerGesture,
+  flippedCardFace,
+  nonStackableZones,
+  delayedStackPreviewZones,
   getMoveRule,
   isWithinHorizontalScrollAngle,
   resolveCenteredHandCardId,
@@ -122,8 +125,6 @@ const visibleZones: PlayZone[] = ["battle", "mana", "shield", "graveyard", "hand
 const moveDestinationZones: PlayZone[] = ["battle", "shield", "deck", "deckInspection", "graveyard", "hyperspatial", "gr", "abyss", "mana", "reveal", "hand"];
 const auxiliaryZones: PlayZone[] = ["reveal", "graveyard"];
 const externalZones: PlayZone[] = ["hyperspatial", "gr", "abyss"];
-const nonStackableZones: PlayZone[] = ["mana", "graveyard", "hyperspatial", "gr", "abyss"];
-const delayedStackPreviewZones: PlayZone[] = ["battle", "shield", "reveal", "hand"];
 const cardSwipeScrollableZones: PlayZone[] = ["battle", "mana", "shield", "hand", "reveal", "graveyard", "hyperspatial", "gr", "abyss", "deck", "deckInspection"];
 const zoneInertiaFrames = new WeakMap<HTMLElement, number>();
 const zoneInertiaScrollSnap = new WeakMap<HTMLElement, string>();
@@ -2219,7 +2220,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   }
 
   function flipCards(owner: PlayerId, zone: PlayZone, ids: ReadonlySet<string>) {
-    commit((current) => ({ ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: current.players[owner][zone].map((card) => ids.has(card.instanceId) ? { ...card, face: card.face === "face_down" ? "face_up" : "face_down" } : card) } } }));
+    commit((current) => ({ ...current, players: { ...current.players, [owner]: { ...current.players[owner], [zone]: current.players[owner][zone].map((card) => ids.has(card.instanceId) ? { ...card, face: flippedCardFace(zone, card.face) } : card) } } }));
   }
 
   function markingMenuAction(action: MarkingMenuAction) {
