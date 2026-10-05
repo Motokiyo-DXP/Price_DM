@@ -74,7 +74,7 @@ export function validatePriceRecordBody(
   if (salePrice === undefined || buyPrice === undefined) {
     return { ok: false, error: "invalid_price" };
   }
-  if (salePrice === null && buyPrice === null) {
+  if (salePrice === null && buyPrice === null && stockStatus !== "out_of_stock") {
     return { ok: false, error: "price_required" };
   }
   if (
