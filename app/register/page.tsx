@@ -148,6 +148,7 @@ export default function RegisterPage() {
   const [registrationAccess, setRegistrationAccess] = useState<RegistrationAccess>("checking");
   const [salePriceInput, setSalePriceInput] = useState("");
   const [buyPriceInput, setBuyPriceInput] = useState("");
+  const [stockStatus, setStockStatus] = useState<StockStatus>("unknown");
   const salePriceIsComposing = useRef(false);
   const buyPriceIsComposing = useRef(false);
   const shopSearchRequestSequence = useRef(0);
@@ -730,7 +731,7 @@ export default function RegisterPage() {
       return;
     }
     if (!selectedShop) chooseShop(shopForSubmission);
-    if (!salePrice && !buyPrice) {
+    if (!salePrice && !buyPrice && stockStatus !== "out_of_stock") {
       setFeedback({
         kind: "error",
         text: "販売価格または買取価格のどちらかを入力してください。",
@@ -760,7 +761,7 @@ export default function RegisterPage() {
           observedOn: String(formData.get("observedOn") ?? ""),
           salePrice: salePrice ? Number(salePrice) : null,
           shopId: shopForSubmission.id,
-          stockStatus: String(formData.get("stockStatus") ?? "unknown"),
+          stockStatus,
         }),
       });
     } catch {
@@ -824,6 +825,7 @@ export default function RegisterPage() {
     if (recentShops) setRecentRegistrationShops(recentShops);
     setSalePriceInput("");
     setBuyPriceInput("");
+    setStockStatus("unknown");
     setFeedback({
       kind: "success",
       text: `価格情報を登録しました。店舗「${shopForSubmission.name}」は次の登録にも引き継がれます。`,
@@ -1141,37 +1143,48 @@ export default function RegisterPage() {
         </div>
 
         <div className="two">
-          <label className="sale-price-label" htmlFor="salePrice">
-            販売価格
-            <input
-              id="salePrice"
-              name="salePrice"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              pattern="[0-9]*"
-              maxLength={9}
-              value={salePriceInput}
-              onCompositionStart={() => {
-                salePriceIsComposing.current = true;
-              }}
-              onCompositionEnd={(event) => {
-                salePriceIsComposing.current = false;
-                setSalePriceInput(normalizePriceInput(event.currentTarget.value));
-              }}
-              onKeyDown={(event) => {
-                if (isImeCompositionEnter(event, salePriceIsComposing.current)) event.preventDefault();
-              }}
-              onChange={(event) => {
-                setSalePriceInput(
-                  salePriceIsComposing.current
-                    ? event.target.value
-                    : normalizePriceInput(event.target.value),
-                );
-              }}
-              placeholder="半角・全角どちらでも入力できます"
-            />
-          </label>
+          <div>
+            <label className="sale-price-label" htmlFor="salePrice">
+              販売価格
+              <input
+                id="salePrice"
+                name="salePrice"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                pattern="[0-9]*"
+                maxLength={9}
+                value={salePriceInput}
+                onCompositionStart={() => {
+                  salePriceIsComposing.current = true;
+                }}
+                onCompositionEnd={(event) => {
+                  salePriceIsComposing.current = false;
+                  setSalePriceInput(normalizePriceInput(event.currentTarget.value));
+                }}
+                onKeyDown={(event) => {
+                  if (isImeCompositionEnter(event, salePriceIsComposing.current)) event.preventDefault();
+                }}
+                onChange={(event) => {
+                  setSalePriceInput(
+                    salePriceIsComposing.current
+                      ? event.target.value
+                      : normalizePriceInput(event.target.value),
+                  );
+                }}
+                placeholder="半角・全角どちらでも入力できます"
+              />
+            </label>
+            <label className="filter-check" htmlFor="outOfStock">
+              <input
+                id="outOfStock"
+                type="checkbox"
+                checked={stockStatus === "out_of_stock"}
+                onChange={(event) => setStockStatus(event.target.checked ? "out_of_stock" : "unknown")}
+              />
+              売り切れ
+            </label>
+          </div>
           <label className="buy-price-label" htmlFor="buyPrice">
             買取価格
             <input
@@ -1260,7 +1273,7 @@ export default function RegisterPage() {
             </label>
             <label htmlFor="stockStatus">
               在庫状況
-              <select id="stockStatus" name="stockStatus" defaultValue="unknown">
+              <select id="stockStatus" name="stockStatus" value={stockStatus} onChange={(event) => setStockStatus(event.target.value as StockStatus)}>
                 {stockStatuses.map(([value, label]) => <option key={value} value={value}>{value === "unknown" ? "指定しない" : label}</option>)}
               </select>
             </label>
