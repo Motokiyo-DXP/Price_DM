@@ -1341,6 +1341,7 @@ body:has(.register-page) main{max-width:720px;padding:16px 12px 90px}
 .register-page input,.register-page select,.register-page textarea{background:#292c38;border-color:#727c98;border-radius:8px;color:#f5f6fa;min-height:44px}
 .register-page input:focus,.register-page select:focus,.register-page textarea:focus{border-color:#ecc100;box-shadow:0 0 0 3px #ecc10033}
 .register-page .registration-basic-content .two{gap:10px}
+.register-page .sale-price-label{margin-bottom:4px}
 .register-page .registration-observed-on{margin-top:0}
 .register-page .registration-details-section,.register-page .compact-candidate-panel{background:#292c38;border:1px solid #727c98;border-radius:8px;margin:0}
 .register-page .registration-details-section>summary,.register-page .compact-candidate-panel>summary{background:#495473;border:0;border-radius:7px;color:#f5f6fa;font-size:15px;font-weight:800;line-height:1.4;min-height:48px;padding:12px 14px}
