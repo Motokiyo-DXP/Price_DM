@@ -24,7 +24,7 @@ export function getContextualActions(context: ActionContext): MarkingMenuItem[] 
   const multi = context.isMultiSelectMode || context.isMultiple || (context.selectedCount ?? 0) > 1;
   if (context.zone === "deck" && !context.deckCard) return slots([...(context.playerSide === "opponent" ? [] : [[1,"view_deck"] as [MarkingMenuSlot, ContextualAction]]),[2,"shuffle"],[3,"move","カード移動"],[4,"yobinion"],[6,"other"]]);
   if (multi) return slots([[1,"deselect"],[2,"shuffle"],[3,"move","一括移動"],[4,"bundle"],[5,"flip","一括反転"],[6,"other"]]);
-  if (context.isStack) return slots([[1,"multi_select"],[2,"shuffle_stack"],[3,"move","束を移動"],[4,"open_stack"],[5,"flip_stack"],[6,"other"]]);
+  if (context.isStack) return slots([[1,"multi_select"],[2,context.zone === "battle" && context.tapped ? "target" : "shuffle_stack"],[3,"move","束を移動"],[4,"open_stack"],[5,"flip_stack"],[6,"other"]]);
   if (context.zone === "battle") return slots([[1,"multi_select"],[2,"target"],[3,"move"],[4,"mark"],[5,"flip"],[6,"other"]]);
   if (context.zone === "shield") return slots([[1,"multi_select"],[2,"inspect"],[3,"move"],[4,"mark","シールド・フォース"],[5,"flip"],[6,"other"]]);
   if (context.zone === "hand") return slots([[1,"multi_select"],[2,"publish"],[3,"move"],[5,"flip"],[6,"other"]]);
