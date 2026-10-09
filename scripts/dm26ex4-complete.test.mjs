@@ -35,6 +35,7 @@ test('image identity and public proof are required before any image DB assignmen
  assert.throws(()=>validateComplete(bad),/image identity/u);
  assert.throws(()=>buildCompleteSql(manifest,[{key:c.image.key,status:404}]),/verification/u);
  const proof={key:c.image.key,status:200,sha256:c.image.sha256,decoded:true,url:`https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/${c.image.key}.webp`};
+ assert.throws(()=>buildCompleteSql(manifest,[proof,proof]),/Duplicate/u);
  const sql=buildCompleteSql(manifest,[proof]);assert.match(sql,/Existing image changed/u);assert.match(sql,/p.image_key is null/u);
 });
 test('provisional enrichment uses source ownership and protects official/manual fields',()=>{

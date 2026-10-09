@@ -1,4 +1,5 @@
-import mappings from './dm26ex4-canonical-mappings.json' with {type:'json'};
+import {readFileSync} from 'node:fs';
+const mappings=JSON.parse(readFileSync(new URL('./dm26ex4-canonical-mappings.json',import.meta.url),'utf8'));
 export {mappings};
 export function canonicalMapping(card){
  const mapping=mappings.find(m=>m.number==='DM26EX4 '+card.card_number);

@@ -20,7 +20,9 @@ export function validateComplete(raw,proofs=[]){
     !/^[a-f0-9]{64}$/u.test(i.sha256)||!/^official\/dm26ex4-preview-[0-9-]+-[a-f0-9]{16}$/u.test(i.key)||keys.has(i.key))throw Error('Unverified or duplicate image identity');
   keys.add(i.key);
  }
+ const proofKeys=new Set();
  for(const p of proofs){
+  if(proofKeys.has(p.key))throw Error('Duplicate public image verification');proofKeys.add(p.key);
   const image=raw.cards.find(c=>c.image?.key===p.key)?.image;
   if(!image||p.status!==200||p.sha256!==image.sha256||p.decoded!==true||
     p.url!==`https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/${p.key}.webp`)throw Error('Invalid public image verification');

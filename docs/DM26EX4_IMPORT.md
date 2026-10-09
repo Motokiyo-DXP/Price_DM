@@ -53,6 +53,11 @@ ZIPからの修正: schema修飾されたPostgreSQL `normalize` の第2引数を
 
 ## 公式データ公開後
 
+2026-10-10の詳細情報補完後は、以下の旧手順ではなく
+`DM26EX4_COMPLETION_RELEASE.md` の `build-dm26ex4-official-update.mjs` による
+項目別の出典所有・取得状態を確認した更新を使う。既存の暫定収録版を
+汎用の上書きimportへ渡さない。既存IDと手動編集を保護し、未取得項目を消去しない。
+
 既存クローラの正式カードJSONLを用い、正式importの**前**に次を生成する。
 
 ```powershell
