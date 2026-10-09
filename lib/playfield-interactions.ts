@@ -13,7 +13,9 @@ export type PlayZone =
 
 export type CardFace = "face_up" | "face_down" | "owner_only";
 
-export const nonStackableZones: PlayZone[] = ["mana", "graveyard", "hyperspatial", "gr", "abyss", "hand"];
+export const CONTINUOUS_TAP_MS = 320;
+export const unbundledZones: PlayZone[] = ["hand", "graveyard", "deck"];
+export const nonStackableZones: PlayZone[] = ["mana", "graveyard", "hyperspatial", "gr", "abyss", "hand", "deck"];
 export const delayedStackPreviewZones: PlayZone[] = ["battle", "shield", "reveal"];
 
 export function flippedCardFace(zone: PlayZone, face: CardFace): CardFace {
