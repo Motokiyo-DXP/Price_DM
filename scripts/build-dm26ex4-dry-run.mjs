@@ -37,7 +37,7 @@ export function buildDryRunSql(raw) {
     'canonical_reuse',(select count(*) from existing_cards where deleted_at is null),
     'print_add',(select count(*) from s where not exists(select 1 from existing_prints p where p.card_number=s.number)),
     'print_duplicate',(select count(*) from s where exists(select 1 from existing_prints p where p.card_number=s.number)),
-    'updates',0,'official_products',1,'official_prints',0,'unverified_prints',${cards.length},'deferred',${raw.deferred_review?.length ?? 0},
+    'updates',0,'official_products',1,'official_prints',0,'unverified_prints',${cards.length},'deferred',${raw.deferred?.length ?? raw.deferred_review?.length ?? 0},
     'search_term_add',(select count(*) from (select distinct normalize(t.name,NFKC),public.normalize_card_search(t.term),t.kind from terms t
       where not exists(select 1 from existing_cards c join public.card_search_terms old on old.canonical_card_id=c.id
         where c.normalized_name_nfkc=normalize(t.name,NFKC) and old.normalized_term=public.normalize_card_search(t.term) and old.term_kind=t.kind)) added),

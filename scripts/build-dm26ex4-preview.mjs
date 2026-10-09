@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import {canonicalMapping,canonicalName} from './dm26ex4-canonical-mappings.mjs';
 
 const SET = 'DM26-EX4';
 const PRODUCT_URL = 'https://dm.takaratomy.co.jp/product/dm26ex4/';
@@ -16,15 +17,15 @@ export function validatePreview(raw) {
   const seen = new Set();
   const cards = raw.cards.map((card) => {
     const {card_number: number, name} = card;
-    if (typeof number !== 'string' || !/^(?:\d+\/99|超G\d+\/超G12|超\d+\/超50|㊙\d+\/㊙25)$/u.test(number) ||
+    if (typeof number !== 'string' || !/^(?:\d+[ab]?\/99|超G\d+\/超G12|超\d+\/超50|㊙\d+[ab]?\/㊙25)$/u.test(number) ||
       typeof name !== 'string' || !name.trim() || card.source !== 'dmwiki' || card.verified !== false || card.source_url !== DM_WIKI_URL) {
       throw new Error(`Invalid or unverified-source card row: ${number ?? '?'}`);
     }
     if (seen.has(number)) throw new Error(`Duplicate printed number ${number}`);
     seen.add(number);
-    const bounds = number.match(/^(?:超G|超|㊙)?(\d+)\/(?:超G|超|㊙)?(\d+)$/u);
+    const bounds = number.match(/^(?:超G|超|㊙)?(\d+)[ab]?\/(?:超G|超|㊙)?(\d+)$/u);
     if (!bounds || Number(bounds[1]) < 1 || Number(bounds[1]) > Number(bounds[2])) throw new Error(`Invalid printed number ${number}`);
-    return { number, name: name.trim(), dbNumber: `DM26EX4 ${number}` };
+    return { number, name: canonicalName(card).trim(), sourceName:name.trim(), mapping:canonicalMapping(card), dbNumber: `DM26EX4 ${number}` };
   });
   const fragments = raw.reading_fragments ?? [];
   for (const f of fragments) {
@@ -52,6 +53,7 @@ insert into dm26ex4_preview(card_number,name) values
 ${cardValues};
 
 do $$ begin
+  ${cards.filter(c=>c.mapping).map(c=>`if not exists(select 1 from public.canonical_cards where id=${c.mapping.canonical_id} and name=${q(c.mapping.canonical_name)} and game_id=(select id from public.tcg_games where slug='duel-masters') and deleted_at is null) or not exists(select 1 from public.card_prints where canonical_card_id=${c.mapping.canonical_id} and official_card_id=${q(c.mapping.official_card_id)} and official_url=${q(c.mapping.official_url)} and deleted_at is null) then raise exception 'Audited canonical mapping changed; manual review required'; end if;`).join('\n  ')}
   if not exists(select 1 from public.tcg_games where slug='duel-masters') then
     raise exception 'Duel Masters game not found';
   end if;

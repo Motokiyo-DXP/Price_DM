@@ -1,0 +1,99 @@
+[
+  {
+    "number": "DM26EX4 超16/超50",
+    "source_name": "龍月 ドラグ・スザーク／龍・獄・殺",
+    "canonical_id": 5196,
+    "canonical_name": "龍月 ドラグ・スザーク / 龍・獄・殺",
+    "official_card_id": "dmbd22-014",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd22-014",
+    "official_card_number": "DMBD22 14/25",
+    "faces": [
+      "龍月 ドラグ・スザーク",
+      "龍・獄・殺"
+    ],
+    "confirmed": true
+  },
+  {
+    "number": "DM26EX4 超17/超50",
+    "source_name": "バーンメア・ザ・シルバー／オラオラ・スラッシュ",
+    "canonical_id": 7504,
+    "canonical_name": "バーンメア・ザ・シルバー / オラオラ・スラッシュ",
+    "official_card_id": "dmrp20-a12",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp20-a12",
+    "official_card_number": "DMRP20 12A/20",
+    "faces": [
+      "バーンメア・ザ・シルバー",
+      "オラオラ・スラッシュ"
+    ],
+    "confirmed": true
+  },
+  {
+    "number": "DM26EX4 超29/超50",
+    "source_name": "音奏 ハイオリーダ／音奏曲第3番「幻惑」",
+    "canonical_id": 10742,
+    "canonical_name": "音奏 ハイオリーダ / 音奏曲第3番「幻惑」",
+    "official_card_id": "dmex05-021",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex05-021",
+    "official_card_number": "DMEX05 21/87",
+    "faces": [
+      "音奏 ハイオリーダ",
+      "音奏曲第3番「幻惑」"
+    ],
+    "confirmed": true
+  },
+  {
+    "number": "DM26EX4 超30/超50",
+    "source_name": "スゴ腕プロジューサー／りんご娘はさんにんっ娘",
+    "canonical_id": 7795,
+    "canonical_name": "スゴ腕プロジューサー / りんご娘はさんにんっ娘",
+    "official_card_id": "dmex17-047",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex17-047",
+    "official_card_number": "DMEX17 47/138",
+    "faces": [
+      "スゴ腕プロジューサー",
+      "りんご娘はさんにんっ娘"
+    ],
+    "confirmed": true
+  },
+  {
+    "number": "DM26EX4 超35/超50",
+    "source_name": "欲望の邪道 ニガ＝アブシューム／支配の邪道 獄鬼夜城",
+    "canonical_id": 1120,
+    "canonical_name": "欲望の邪道 ニガ=アブシューム / 支配の邪道 獄鬼夜城",
+    "official_card_id": "dm25ex2-045",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-045",
+    "official_card_number": "DM25EX2 45/105",
+    "faces": [
+      "欲望の邪道 ニガ=アブシューム",
+      "支配の邪道 獄鬼夜城"
+    ],
+    "confirmed": true
+  },
+  {
+    "number": "DM26EX4 超36/超50",
+    "source_name": "炎龍覇 グレンアイラ／「助けて！モルト!!」",
+    "canonical_id": 1164,
+    "canonical_name": "炎龍覇 グレンアイラ / 「助けて！モルト!!」",
+    "official_card_id": "dm25bd3-016",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25bd3-016",
+    "official_card_number": "DM25BD3 16/20",
+    "faces": [
+      "炎龍覇 グレンアイラ",
+      "「助けて！モルト!!」"
+    ],
+    "confirmed": true
+  },
+  {
+    "number": "DM26EX4 超5/超50",
+    "source_name": "ジョギラゴン＆ジョニー 〜Jの旅路〜",
+    "canonical_id": 535,
+    "canonical_name": "ジョギラゴン＆ジョニー ～Jの旅路～",
+    "official_card_id": "dm26sd1-n001",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-n001",
+    "official_card_number": "DM26SD1 1/12",
+    "faces": [
+      "ジョギラゴン＆ジョニー ～Jの旅路～"
+    ],
+    "confirmed": true
+  }
+]
