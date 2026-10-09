@@ -1,0 +1,414 @@
+{
+  "set_code": "DM26-EX4",
+  "product": {
+    "product_code": "DM26-EX4",
+    "product_name": "DM26-EX4 デュエル・マスターズTCG 切札不滅!! デュエキング FOREVER 2026",
+    "release_date": "2026-10-17",
+    "official_url": "https://dm.takaratomy.co.jp/product/dm26ex4/",
+    "source": "official"
+  },
+  "cards": [
+    {
+      "card_number": "1/99",
+      "name": "切札連結 「修羅」「黄金」「覇」",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "3/99",
+      "name": "切札接続 ドールバロム",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "4/99",
+      "name": "切札接続 マンジー・ザ・ジョリー",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "5/99",
+      "name": "切札混成 レッヴォゾーン",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "6/99",
+      "name": "切札電融 モル世界ドラゴEXT",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "7/99",
+      "name": "切札電融 “銃銃銃”ジョランド",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "8/99",
+      "name": "火神 アポフィス",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "9/99",
+      "name": "土神 クサビラガミ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "12/99",
+      "name": "切札連結 バロXGXディアス",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "13/99",
+      "name": "鮫鰐竜 ACE-Agony／覚醒の杯",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "14/99",
+      "name": "切札混成 ドギラダンテ刈",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "15/99",
+      "name": "DREAMの逆転撃",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "17/99",
+      "name": "切札電融 モモムゲン",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "18/99",
+      "name": "NIGHTMAREの逆転撃",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "19/99",
+      "name": "切札連融王 Dol-Fal-20th",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "23/99",
+      "name": "大偽我罪 ド・ラグオンザーク",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "24/99",
+      "name": "切札混成 インビンシブル・ドラゴン",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "25/99",
+      "name": "切札混成 ブルージャイアント・フルバーンアウト",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "26/99",
+      "name": "トッジョ・アポロ・ヒツハコ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "28/99",
+      "name": "切札接続 MAXAM ザ・オウガ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "29/99",
+      "name": "切札縫合 メイドヴァロム",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "30/99",
+      "name": "切札電融 ボンシャラー・KIRIX",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "31/99",
+      "name": "切札混成 ゴッド・タイム",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "33/99",
+      "name": "切札連結 バロムレイズ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "35/99",
+      "name": "切札接続 スーパー・ロマキルカスク",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "36/99",
+      "name": "切札縫合 零災",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "37/99",
+      "name": "切札電融 デス・フェルザーク",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "38/99",
+      "name": "切札縫合 ジャシン＝ジャシン",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "40/99",
+      "name": "キング・ガ・チャレンジ3",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "43/99",
+      "name": "ペダンティック・ガード",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "46/99",
+      "name": "幽忍 ハンゾウ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "49/99",
+      "name": "堕ちし龍魂珠",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "52/99",
+      "name": "クサビエノキノヌシ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "57/99",
+      "name": "アカシック・ゼノン Mk.7／「攻めるか守るか…悩ましいわね」",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "58/99",
+      "name": "アカシック・ゼノン Mk.7／「Q.白金の縛り？A.怪しい」",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "59/99",
+      "name": "アカシック・ゼノン Mk.7／「勇気と愛があれば私たちは変わらない！」",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "65/99",
+      "name": "罪侵入",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "67/99",
+      "name": "龍覇 スコッチ・レゼルヴァ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "70/99",
+      "name": "クサビナメコノヌシ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "72/99",
+      "name": "「愛と」「勇気で」「「勝負を決める！」」",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "77/99",
+      "name": "覇王の特務大使 ナツキ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "90/99",
+      "name": "死罪 デ墓スマーチ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "93/99",
+      "name": "テンビ・ラ・ヒツソリ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "94/99",
+      "name": "Disモエル",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "98/99",
+      "name": "ボルシャック・ヴァリヴァリウス",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "99/99",
+      "name": "ビワ入道",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "超G9/超G12",
+      "name": "王導聖霊 アルファディオス",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "超27/超50",
+      "name": "PP-「P」",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    }
+  ],
+  "reading_fragments": [
+    {
+      "card_name": "切札連結 バロムレイズ",
+      "reading": "きりふだれんけつ",
+      "source": "dmwiki",
+      "source_url": "https://dmwiki.net/《切札連結 バロムレイズ》",
+      "verified": false
+    }
+  ],
+  "deferred_review": [
+    {
+      "reason": "Secret printing uses variation-selector glyph in wiki and requires official-card-number matching before inserting",
+      "card_number": "㊙1/㊙25",
+      "name": "切札連結 バロムレイズ",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "reason": "Secret printing uses variation-selector glyph in wiki and requires official-card-number matching before inserting",
+      "card_number": "㊙2/㊙25",
+      "name": "切札混成 インビンシブル・ドラゴン",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "reason": "Secret printing uses variation-selector glyph in wiki and requires official-card-number matching before inserting",
+      "card_number": "㊙13/㊙25",
+      "name": "切札電融 モル世界ドラゴEXT",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "reason": "Secret printing uses variation-selector glyph in wiki and requires official-card-number matching before inserting",
+      "card_number": "㊙14/㊙25",
+      "name": "切札混成 レッヴォゾーン",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "reason": "Secret printing uses variation-selector glyph in wiki and requires official-card-number matching before inserting",
+      "card_number": "㊙15/㊙25",
+      "name": "切札混成 ドギラダンテ刈",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "reason": "Secret printing uses variation-selector glyph in wiki and requires official-card-number matching before inserting",
+      "card_number": "㊙16/㊙25",
+      "name": "切札接続 マンジー・ザ・ジョリー",
+      "source": "dmwiki",
+      "source_url": "https://m.dmwiki.net/DM26-EX4",
+      "verified": false
+    },
+    {
+      "card_number": "16a/99 + 16b/99",
+      "name": "切札連結 ガイアーセイ・カイザー / 切札電融 リュウセール・カイザー",
+      "reason": "Two-sided print; face representation awaits official card details",
+      "source": "dmwiki",
+      "verified": false
+    }
+  ]
+}
