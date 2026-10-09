@@ -1,4 +1,4 @@
-import { moveDefaults, type CardFace, type PlayZone, type ShieldPlacementMarker } from "./playfield-interactions.ts";
+import { nonStackableZones, unbundledZones, moveDefaults, type CardFace, type PlayZone, type ShieldPlacementMarker } from "./playfield-interactions.ts";
 
 export type PlayerId = "p1" | "p2";
 export type DeckCard = { canonicalCardId: number; name: string; quantity: number; sortOrder: number; imageUrl: string | null; cost?: number | null; civilizations?: string[]; cardTypes?: string[] };
@@ -27,10 +27,76 @@ export function findAttachedSpreadStackId(cards: CardInstance[], verticalStackId
   return cards.find((card) => card.attachedToStackId === verticalStackId && card.stackLayout === "spread" && card.stackId)?.stackId ?? null;
 }
 
+export function orderCardsForStack(source: CardInstance[], ids: ReadonlySet<string>): CardInstance[] {
+  const moving = source.filter((card) => ids.has(card.instanceId));
+  const seen = new Set<string>();
+  // Zone order is top-to-bottom; stackOrder and rendering are bottom-to-top.
+  const topDown = moving.flatMap((card) => {
+    if (!card.stackId) return [card];
+    if (seen.has(card.stackId)) return [];
+    seen.add(card.stackId);
+    return moving.filter((member) => member.stackId === card.stackId).sort((a, b) => (b.stackOrder ?? 0) - (a.stackOrder ?? 0));
+  });
+  return topDown.reverse();
+}
+
+export function stackCardsOnTarget(current: BoardState, pending: { owner: PlayerId; from: PlayZone; cardId: string; targetZone: PlayZone; targetCardId: string; individual?: boolean }, face: CardFace, placement: "top" | "bottom", layout: "diagonal" | "spread" = "diagonal", selectedIds?: ReadonlySet<string>): BoardState {
+  if (nonStackableZones.includes(pending.targetZone)) return current;
+  const source = current.players[pending.owner][pending.from];
+  const moving = source.find((card) => card.instanceId === pending.cardId);
+  const targetCards = current.players[pending.owner][pending.targetZone];
+  const target = targetCards.find((card) => card.instanceId === pending.targetCardId);
+  if (!moving || !target) return current;
+  const movingIds = selectedIds?.has(moving.instanceId) ? new Set(source.filter((card) => selectedIds.has(card.instanceId)).map((card) => card.instanceId)) : pending.individual ? new Set([moving.instanceId]) : resolveDraggedCardIds(source, moving.instanceId);
+  if (movingIds.has(target.instanceId)) return current;
+  const movingCards = orderCardsForStack(source, movingIds);
+  if (layout === "diagonal") {
+    const stacked = stackOnHorizontalRoot(
+      [...targetCards.filter((card) => !movingIds.has(card.instanceId)), ...movingCards], target, movingIds, face, placement,
+    );
+    if (stacked) {
+      const player = current.players[pending.owner];
+      const movedStack = pending.from === pending.targetZone ? stacked : stacked.map((card) => movingIds.has(card.instanceId) ? { ...card, markers: [] } : card);
+      return { ...current, players: { ...current.players, [pending.owner]: pending.from === pending.targetZone
+        ? { ...player, [pending.targetZone]: stacked }
+        : { ...player, [pending.from]: source.filter((card) => !movingIds.has(card.instanceId)), [pending.targetZone]: movedStack } } };
+    }
+  }
+  const targetIsVertical = Boolean(target.stackId && target.stackLayout !== "spread");
+  const attachTo = layout === "spread" && targetIsVertical ? target.stackId : target.attachedToStackId;
+  const attachedSpreadId = layout === "spread" && targetIsVertical ? findAttachedSpreadStackId(targetCards, target.stackId!) : null;
+  const stackId = layout === "spread" && targetIsVertical
+    ? attachedSpreadId ?? `spread-${target.stackId}`
+    : target.stackId ?? `stack-${target.instanceId}`;
+  const existing = targetCards.filter((card) => (layout === "spread" && targetIsVertical
+    ? card.attachedToStackId === target.stackId && card.stackLayout === "spread"
+    : card.stackId === stackId || card.instanceId === target.instanceId) && !movingIds.has(card.instanceId)).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
+  const combined = placement === "top" ? [...existing, ...movingCards] : [...movingCards, ...existing];
+  const stackMembers = new Map(combined.map((card, index) => [card.instanceId, { ...card, face: movingIds.has(card.instanceId) ? face : card.face, markers: (layout === "diagonal" && index !== combined.length - 1) || (pending.from !== pending.targetZone && movingIds.has(card.instanceId)) ? [] : card.markers, stackId, stackOrder: index, stackLayout: layout, stackPlacement: placement, attachedToStackId: attachTo ?? null }]));
+  const memberIds = new Set(combined.map((card) => card.instanceId));
+  let inserted = false;
+  const rebuiltTarget = targetCards.flatMap((card) => {
+    if (layout === "spread" && targetIsVertical && !attachedSpreadId && movingIds.has(card.instanceId)) return [];
+    if (!memberIds.has(card.instanceId)) return [card];
+    if (inserted) return [];
+    inserted = true;
+    return combined.map((member) => stackMembers.get(member.instanceId)!);
+  });
+  if (layout === "spread" && targetIsVertical && !attachedSpreadId) rebuiltTarget.push(...combined.map((member) => stackMembers.get(member.instanceId)!));
+  const player = current.players[pending.owner];
+  const remainingSource = source.filter((card) => !movingIds.has(card.instanceId));
+  return { ...current, players: { ...current.players, [pending.owner]: pending.from === pending.targetZone
+    ? { ...player, [pending.targetZone]: rebuiltTarget }
+    : { ...player, [pending.from]: remainingSource.map((card) =>
+      card.stackId === moving.stackId && remainingSource.filter((member) => member.stackId === moving.stackId).length === 1 && !hasConnectedStack(remainingSource, card)
+        ? { ...card, stackId: null, stackOrder: null, stackLayout: null, stackPlacement: null }
+        : card), [pending.targetZone]: rebuiltTarget } } };
+}
+
 export function stackOnHorizontalRoot(cards: CardInstance[], target: CardInstance, movingIds: ReadonlySet<string>, face: CardFace, placement: "top" | "bottom"): CardInstance[] | null {
   if (!target.stackId || target.stackLayout !== "spread" || target.attachedToStackId || !cards.some((card) => card.stackId === target.stackId && card.instanceId !== target.instanceId && !movingIds.has(card.instanceId))) return null;
   const verticalId = `vertical-${target.stackId}`;
-  const moving = cards.filter((card) => movingIds.has(card.instanceId)).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
+  const moving = cards.filter((card) => movingIds.has(card.instanceId));
   const vertical = placement === "top" ? [target, ...moving] : [...moving, target];
   const members = new Map(vertical.map((card, index) => [card.instanceId, { ...card, face: movingIds.has(card.instanceId) ? face : card.face, markers: index === vertical.length - 1 ? card.markers : [], stackId: verticalId, stackOrder: index, stackLayout: "diagonal" as const, stackPlacement: placement, attachedToStackId: null }]));
   return cards.map((card) => members.get(card.instanceId) ?? (card.stackId === target.stackId ? { ...card, attachedToStackId: verticalId } : card));
@@ -254,7 +320,12 @@ export function shuffleSelectedCards(current: BoardState, ids: ReadonlySet<strin
   const players = Object.fromEntries(Object.entries(current.players).map(([playerId, player]) => [playerId, Object.fromEntries(Object.entries(player).map(([zone, cards]) => {
     const selected = cards.filter((card) => ids.has(card.instanceId));
     if (selected.length < 2) return [zone, cards];
-    const shuffled = shuffleCards(selected, random).map((card, index) => ({ ...card, face: "face_down" as CardFace, stackId, stackOrder: index }));
+    const unbundle = unbundledZones.includes(zone as PlayZone);
+    const shuffled = shuffleCards(selected, random).map((card, index) => ({
+      ...card, face: "face_down" as CardFace,
+      stackId: unbundle ? null : stackId, stackOrder: unbundle ? null : index,
+      ...(unbundle ? { stackLayout: null, stackPlacement: null, attachedToStackId: null } : {}),
+    }));
     let index = 0;
     return [zone, cards.map((card) => ids.has(card.instanceId) ? shuffled[index++] : card)];
   }))])) as BoardState["players"];
@@ -267,7 +338,7 @@ export function bundleSelectedCards(current: BoardState, ids: ReadonlySet<string
   let changed = false;
   const players = Object.fromEntries(Object.entries(current.players).map(([playerId, player]) => [playerId, Object.fromEntries(Object.entries(player).map(([zone, cards]) => {
     const selected = cards.filter((card) => ids.has(card.instanceId));
-    if (selected.length < 2) return [zone, cards];
+    if (selected.length < 2 || unbundledZones.includes(zone as PlayZone)) return [zone, cards];
     changed = true;
     let stackOrder = 0;
     return [zone, cards.map((card) => ids.has(card.instanceId)
@@ -417,20 +488,19 @@ export function moveCardsBetweenZones(
     : current.shieldPlacementOrder;
   const moved = moving.map((card, index) => {
     const defaults = moveDefaults(from, to, { turn: current.turn, shieldPlacementOrder: orders[owner] });
-    const unbundleInHand = to === "hand" && Boolean(card.stackId);
-    const unbundleInDeck = to === "deck" && Boolean(card.stackId);
+    const unbundleAtDestination = unbundledZones.includes(to);
     return {
       ...card,
-      face: unbundleInDeck ? "face_up" as CardFace : defaults.face,
+      face: defaults.face,
       tapped: to === "mana" && isMulticolorCard(card),
       shieldMarker: defaults.shieldMarker ? { ...defaults.shieldMarker, order: orders[owner] + index } : null,
       markers: addSummoningSickness && to === "battle" && from !== "battle"
         ? ["summoning_sickness" as CardMarker]
         : [],
-      stackId: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackId : null,
-      stackOrder: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackOrder : null,
-      stackLayout: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackLayout : null,
-      stackPlacement: preservesCompleteStack && !unbundleInHand && !unbundleInDeck ? card.stackPlacement : null,
+      stackId: preservesCompleteStack && !unbundleAtDestination ? card.stackId : null,
+      stackOrder: preservesCompleteStack && !unbundleAtDestination ? card.stackOrder : null,
+      stackLayout: preservesCompleteStack && !unbundleAtDestination ? card.stackLayout : null,
+      stackPlacement: preservesCompleteStack && !unbundleAtDestination ? card.stackPlacement : null,
       attachedToStackId: null,
     };
   });

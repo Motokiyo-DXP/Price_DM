@@ -18,6 +18,7 @@ import {
   classifyPointerGesture,
   flippedCardFace,
   nonStackableZones,
+  CONTINUOUS_TAP_MS,
   delayedStackPreviewZones,
   getMoveRule,
   isWithinHorizontalScrollAngle,
@@ -59,7 +60,7 @@ import {
   shuffleCards,
   shuffleSelectedCards,
   shuffleStackCards,
-  stackOnHorizontalRoot,
+  stackCardsOnTarget,
   untapZoneCards,
   unbundleStack,
   type BoardState,
@@ -114,6 +115,7 @@ type DeckViewConfirmState = {
 
 const playerIds: PlayerId[] = ["p1", "p2"];
 type LongPressMeterState = { point: { x: number; y: number }; startedAt: number; totalDurationMs: number };
+const StackTripleTapContext = createContext<(owner: PlayerId, zone: PlayZone, stackId: string) => void>(() => {});
 const LongPressDurationContext = createContext<number>(LONG_PRESS_DEFAULT_MS);
 const visibleMarkerGroups = [
   [["meta_warning", "メタ注意"], ["removal_resistance", "除去耐性"], ["just_diver", "ジャストダイバー"], ["cannot_be_chosen", "選ばれない"], ["cannot_be_attacked", "アタックされない"], ["cannot_be_blocked", "ブロックされない"], ["hyper_mode", "ハイパーモード"], ["speed_attacker", "スピードアタッカー"], ["mach_fighter", "マッハファイター"], ["blocker", "ブロッカー"], ["slayer", "スレイヤー"], ["power_up", "パワーアップ"]],
@@ -498,7 +500,8 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
   const pointerListenerCleanup = useRef<(() => void) | null>(null);
   const collapsedHandGesture = useRef(false);
   const collapsedHandHoldReady = useRef(false);
-  const lastTapAt = useRef(0);
+  const tapCount = useRef(0);
+  const onTripleTap = useContext(StackTripleTapContext);
   const visible = zone === "reveal" && privateReveal
     ? owner === view || revealPublic
     : isCardFaceVisible({ face: card.face, inspected, inspectionViewer, owner, revealHiddenCards, deckDrawer: revealDeckToOwner, view, zone });
@@ -562,6 +565,8 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
   }
 
   function pointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (tapTimer.current !== null) window.clearTimeout(tapTimer.current);
+    tapTimer.current = null;
     clearDropGuide();
     pointerTarget.current = event.currentTarget;
     attachPointerListeners(event.pointerId);
@@ -596,6 +601,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
     longPressTimer.current = window.setTimeout(() => {
       if (!start.current || !currentPoint.current) return;
       setHoldProgress(null);
+      tapCount.current = 0;
       if (collapsedHandGesture.current) {
         collapsedHandHoldReady.current = true;
         onCollapsedHandHold?.();
@@ -648,6 +654,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       return;
     }
     if (Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > 8) {
+      tapCount.current = 0;
       dragActivated.current = true;
       setHoldProgress(null);
       const sourceElement = [...(zoneScrollContainer.current?.querySelectorAll<HTMLElement>("[data-card-id]") ?? [])]
@@ -773,6 +780,7 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       return;
     }
     if (zoneScrollGesture.current) {
+      tapCount.current = 0;
       dragActivated.current = false;
       const inertiaContainer = zoneScrollContainer.current;
       if (inertiaContainer && zone === "hand") {
@@ -881,21 +889,29 @@ function CardView({ card, owner, view, zone, onMove, onTap, onDoubleTap, onDetai
       updateSpecialPreview(null);
       return;
     }
-    if (gesture === "long_press") return;
+    if (gesture !== "tap") { tapCount.current = 0; return; }
     if (gesture === "tap") {
       if (tapTimer.current !== null) window.clearTimeout(tapTimer.current);
-      const now = performance.now();
-      if (now - lastTapAt.current <= 260) {
-        lastTapAt.current = 0;
-        onDoubleTap(owner, zone, card, individualFromStack);
+      const count = ++tapCount.current;
+      if (count === 3 && card.stackId && !individualFromStack) {
+        tapCount.current = 0;
+        tapTimer.current = null;
+        onTripleTap(owner, zone, card.stackId);
         return;
       }
-      lastTapAt.current = now;
-      tapTimer.current = window.setTimeout(() => onTap(owner, zone, card.instanceId), 260);
+      tapTimer.current = window.setTimeout(() => {
+        tapCount.current = 0;
+        tapTimer.current = null;
+        if (count >= 2) onDoubleTap(owner, zone, card, individualFromStack);
+        else onTap(owner, zone, card.instanceId);
+      }, CONTINUOUS_TAP_MS);
     }
   }
 
   function pointerCancel(event: PointerEvent) {
+    tapCount.current = 0;
+    if (tapTimer.current !== null) window.clearTimeout(tapTimer.current);
+    tapTimer.current = null;
     const target = pointerTarget.current;
     detachPointerListeners();
     if (target?.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
@@ -1081,6 +1097,8 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
 
 type DeckViewerProps = {
   cards: CardInstance[];
+  openedStackId?: string;
+  onCloseStack: () => void;
   mode: "deck" | "cost";
   onClose: () => void;
   onDoubleTap: (card: CardInstance) => void;
@@ -1099,7 +1117,7 @@ type DeckViewerProps = {
   view: PlayerId;
 };
 
-function DeckViewer({ cards, mode, onClose, onDoubleTap, onMove, onReorder, onReturn, onSelect, onClearSelection, onSelectRemaining, onDeselectGroup, onShuffle, onToggleMode, owner, selectedIds, showFaces, view }: DeckViewerProps) {
+function DeckViewer({ cards, openedStackId, onCloseStack, mode, onClose, onDoubleTap, onMove, onReorder, onReturn, onSelect, onClearSelection, onSelectRemaining, onDeselectGroup, onShuffle, onToggleMode, owner, selectedIds, showFaces, view }: DeckViewerProps) {
   const selectedOrder = new Map(selectedIds.map((id, index) => [id, index + 1]));
   const selected = new Set(selectedIds);
   const renderedStacks = new Set<string>();
@@ -1128,6 +1146,7 @@ function DeckViewer({ cards, mode, onClose, onDoubleTap, onMove, onReorder, onRe
     onDeckReorder: mode === "deck" ? onReorder : undefined,
   });
   const deckCards = cards.flatMap((card) => {
+    if (openedStackId && card.stackId === openedStackId) return [<CardView {...cardProps(card)} individualFromStack key={card.instanceId} />];
     if (card.stackId) {
       if (renderedStacks.has(card.stackId)) return [];
       renderedStacks.add(card.stackId);
@@ -1209,7 +1228,7 @@ function DeckViewer({ cards, mode, onClose, onDoubleTap, onMove, onReorder, onRe
         return <div className="deck-view-card-group" key={group[0].instanceId}><CardView {...cardProps(available, group)} /><b className="deck-group-count">×{group.length}</b>{orders.length ? <span aria-label={`選択順 ${orders.join("、")}`} className="deck-group-orders">{orders.map((order) => <i key={order}>{order}</i>)}</span> : null}<button aria-label={`${group[0].name}の直近の選択を解除`} className="deck-group-remove" disabled={!orders.length} onClick={() => onDeselectGroup(group)} type="button">−</button></div>;
       })}
     </div>
-    <aside className="deck-view-actions"><button aria-label="選択カードを束にしてシャッフル" className="deck-view-shuffle" disabled={selectedIds.length < 2} onClick={onShuffle} type="button"><span aria-hidden="true" className="deck-view-shuffle-icon">⤨</span><span>シャッフル</span></button><div aria-label="並び替え" className="deck-view-mode-toggle"><strong>並び替え</strong><div><button aria-pressed={mode === "deck"} onClick={() => onToggleMode("deck")} type="button">山札順</button><button aria-pressed={mode === "cost"} onClick={() => onToggleMode("cost")} type="button">コスト</button></div></div></aside>
+    <aside className="deck-view-actions">{openedStackId ? <button onClick={onCloseStack} type="button">束を閉じる</button> : null}<button aria-label="選択カードを束にしてシャッフル" className="deck-view-shuffle" disabled={selectedIds.length < 2} onClick={onShuffle} type="button"><span aria-hidden="true" className="deck-view-shuffle-icon">⤨</span><span>シャッフル</span></button><div aria-label="並び替え" className="deck-view-mode-toggle"><strong>並び替え</strong><div><button aria-pressed={mode === "deck"} onClick={() => onToggleMode("deck")} type="button">山札順</button><button aria-pressed={mode === "cost"} onClick={() => onToggleMode("cost")} type="button">コスト</button></div></div></aside>
     <div aria-label="選択カードを山札へ戻す" className="deck-view-placement-actions"><button disabled={selectedIds.length === 0} onClick={() => onReturn("top")} type="button">↑ 山札の上</button><button disabled={selectedIds.length === 0} onClick={() => onReturn("bottom")} type="button">↓ 山札の下</button></div>
   </section>;
 }
@@ -2065,57 +2084,11 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
     const pending = explicit ?? pendingStackMove;
     if (!pending) return;
     commit((current) => {
-      const source = current.players[pending.owner][pending.from];
-      const moving = source.find((card) => card.instanceId === pending.cardId);
-      const targetCards = current.players[pending.owner][pending.targetZone];
-      const target = targetCards.find((card) => card.instanceId === pending.targetCardId);
-      if (!moving || !target) return current;
-      const movingIds = pending.individual ? new Set([moving.instanceId]) : resolveDraggedCardIds(source, moving.instanceId);
-      if (movingIds.has(target.instanceId)) return current;
-      const movingCards = source.filter((card) => movingIds.has(card.instanceId)).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
-      if (layout === "diagonal") {
-        const stacked = stackOnHorizontalRoot(
-          [...targetCards.filter((card) => !movingIds.has(card.instanceId)), ...movingCards], target, movingIds, face, placement,
-        );
-        if (stacked) {
-          const player = current.players[pending.owner];
-          const movedStack = pending.from === pending.targetZone ? stacked : stacked.map((card) => movingIds.has(card.instanceId) ? { ...card, markers: [] } : card);
-          return { ...current, players: { ...current.players, [pending.owner]: pending.from === pending.targetZone
-            ? { ...player, [pending.targetZone]: stacked }
-            : { ...player, [pending.from]: source.filter((card) => !movingIds.has(card.instanceId)), [pending.targetZone]: movedStack } } };
-        }
-      }
-      const targetIsVertical = Boolean(target.stackId && target.stackLayout !== "spread");
-      const attachTo = layout === "spread" && targetIsVertical ? target.stackId : target.attachedToStackId;
-      const attachedSpreadId = layout === "spread" && targetIsVertical ? findAttachedSpreadStackId(targetCards, target.stackId!) : null;
-      const stackId = layout === "spread" && targetIsVertical
-        ? attachedSpreadId ?? `spread-${target.stackId}`
-        : target.stackId ?? `stack-${target.instanceId}`;
-      const existing = targetCards.filter((card) => (layout === "spread" && targetIsVertical
-        ? card.attachedToStackId === target.stackId && card.stackLayout === "spread"
-        : card.stackId === stackId || card.instanceId === target.instanceId) && !movingIds.has(card.instanceId)).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
-      const combined = placement === "top" ? [...existing, ...movingCards] : [...movingCards, ...existing];
-      const stackMembers = new Map(combined.map((card, index) => [card.instanceId, { ...card, face: card.instanceId === moving.instanceId ? face : card.face, markers: (layout === "diagonal" && index !== combined.length - 1) || (pending.from !== pending.targetZone && movingIds.has(card.instanceId)) ? [] : card.markers, stackId, stackOrder: index, stackLayout: layout, stackPlacement: placement, attachedToStackId: attachTo ?? null }]));
-      const memberIds = new Set(combined.map((card) => card.instanceId));
-      let inserted = false;
-      const rebuiltTarget = targetCards.flatMap((card) => {
-        if (layout === "spread" && targetIsVertical && !attachedSpreadId && movingIds.has(card.instanceId)) return [];
-        if (!memberIds.has(card.instanceId)) return [card];
-        if (inserted) return [];
-        inserted = true;
-        return combined.map((member) => stackMembers.get(member.instanceId)!);
-      });
-      if (layout === "spread" && targetIsVertical && !attachedSpreadId) rebuiltTarget.push(...combined.map((member) => stackMembers.get(member.instanceId)!));
-      const player = current.players[pending.owner];
-      const remainingSource = source.filter((card) => !movingIds.has(card.instanceId));
-      return { ...current, players: { ...current.players, [pending.owner]: pending.from === pending.targetZone
-        ? { ...player, [pending.targetZone]: rebuiltTarget }
-        : { ...player, [pending.from]: remainingSource.map((card) =>
-          card.stackId === moving.stackId && remainingSource.filter((member) => member.stackId === moving.stackId).length === 1 && !hasConnectedStack(remainingSource, card)
-            ? { ...card, stackId: null, stackOrder: null, stackLayout: null, stackPlacement: null }
-            : card), [pending.targetZone]: rebuiltTarget } } };
+      return stackCardsOnTarget(current, pending, face, placement, layout, pending.from === "deckInspection" ? new Set(deckViewerSelection) : selectedCards);
     });
     setPendingStackMove(null);
+    setSelectedCards(new Set());
+    setSelectionMode(false);
   }
 
   function closeDestinationStack() {
@@ -2560,7 +2533,12 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       returnDeckViewerSelection(choice === "deck_bottom" ? "bottom" : "top", ids);
       return;
     }
-    commit((current) => moveCardsBetweenZones(current, owner, "deckInspection", to, new Set(ids), "bottom", Boolean(localPlayer)));
+    if (targetCardId && !nonStackableZones.includes(to)) {
+      const pending = { owner, from: "deckInspection" as const, cardId, targetZone: to, targetCardId };
+      commitStackMove(choice?.includes("face_down") ? "face_down" : "face_up", choice?.endsWith("bottom") || choice === "face_up_spread" ? "bottom" : "top", pending, choice === "face_up_spread" ? "spread" : "diagonal");
+    } else {
+      commit((current) => moveCardsBetweenZones(current, owner, "deckInspection", to, new Set(ids), "bottom", Boolean(localPlayer)));
+    }
     setDeckViewerSelection([]);
   }
 
@@ -2671,7 +2649,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   const detailMarkers = detailCard?.markers ?? [];
   const orderedDetailMarkers: CardMarker[] = [...visibleMarkerGroups.flat().map(([marker]) => marker), "shield_force"];
   const deckViewerNode = deckViewerOpen && deckInspection
-    ? <DeckViewer cards={board.players[deckInspection.owner].deckInspection} mode={deckInspection.mode} onClose={closeDeckViewer} onClearSelection={() => setDeckViewerSelection([])} onDeselectGroup={deselectDeckViewerGroup} onDoubleTap={handleDeckViewerDoubleTap} onMove={moveDeckViewerCard} onReorder={reorderDeckViewerCard} onReturn={returnDeckViewerSelection} onSelect={selectDeckViewerCards} onSelectRemaining={selectAllDeckViewerCards} onShuffle={shuffleDeckViewerSelection} onToggleMode={(mode) => setDeckInspection((current) => current ? { ...current, mode } : current)} owner={deckInspection.owner} selectedIds={deckViewerSelection} showFaces={deckInspection.showFaces} view={visibilityPlayer} />
+    ? <DeckViewer openedStackId={openedStack?.owner === deckInspection.owner && openedStack.zone === "deckInspection" ? openedStack.stackId : undefined} onCloseStack={() => setOpenedStack(null)} cards={board.players[deckInspection.owner].deckInspection} mode={deckInspection.mode} onClose={closeDeckViewer} onClearSelection={() => setDeckViewerSelection([])} onDeselectGroup={deselectDeckViewerGroup} onDoubleTap={handleDeckViewerDoubleTap} onMove={moveDeckViewerCard} onReorder={reorderDeckViewerCard} onReturn={returnDeckViewerSelection} onSelect={selectDeckViewerCards} onSelectRemaining={selectAllDeckViewerCards} onShuffle={shuffleDeckViewerSelection} onToggleMode={(mode) => setDeckInspection((current) => current ? { ...current, mode } : current)} owner={deckInspection.owner} selectedIds={deckViewerSelection} showFaces={deckInspection.showFaces} view={visibilityPlayer} />
     : null;
 
   if (!externalState && (cards.reduce((sum, card) => sum + card.quantity, 0) < 10 || (opponentCards?.reduce((sum, card) => sum + card.quantity, 0) ?? 10) < 10)) {
@@ -2679,6 +2657,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
   }
 
   return (
+    <StackTripleTapContext.Provider value={(owner, zone, stackId) => { setDetail(null); setOpenedStack({ owner, zone, stackId }); }}>
     <LongPressDurationContext.Provider value={longPressMs}>
     <div className={`playtest-board rough-battle-board ${opponentCollapsed ? "opponent-collapsed" : ""} ${opponentButtonsCollapsed ? "opponent-buttons-collapsed" : ""} ${!opponentCollapsed && activeAuxiliaryZones[displayPlayers[0]] === "hand" ? "opponent-hand-open" : ""} ${yobinionSourceMode ? "source-selection-mode" : ""}`} onClick={(event) => { if (selectionMode && !(event.target as HTMLElement).closest(".play-card,button,.marking-menu,.play-modal")) exitMultiSelect(); }} onContextMenu={(event) => event.preventDefault()} onPointerCancelCapture={() => { if (interactionCardId.current) onCardInteractionChange?.({ active: false, cardId: interactionCardId.current }); interactionCardId.current = null; interactionScrolled.current = false; }} onPointerDownCapture={(event) => { interactionScrolled.current = false; const cardId = (event.target as HTMLElement).closest<HTMLElement>("[data-card-id]")?.dataset.cardId; if (!cardId) return; interactionCardId.current = cardId; onCardInteractionChange?.({ active: true, cardId }); }} onPointerUpCapture={(event) => { if (interactionCardId.current) onCardInteractionChange?.({ active: false, cardId: interactionCardId.current }); interactionCardId.current = null; if (!interactionScrolled.current && !(event.target as HTMLElement).closest(".play-notification,.opponent-operation-notice")) dismissInteractionNotifications(); interactionScrolled.current = false; }} onScrollCapture={() => { interactionScrolled.current = true; }}>
       <PageScrollRail />
@@ -2752,6 +2731,7 @@ export function PlaytestBoard({ cards, opponentCards, deckName, deckFormat = "or
       {inspectionConfirm ? <div className="play-modal-backdrop" role="presentation" onClick={() => setInspectionConfirm(null)}><section aria-modal="true" className="play-modal" onClick={(event) => event.stopPropagation()} role="dialog"><h2>本当に行いますか？</h2><p>非公開カードを確認すると相手へ通知されます。</p><button className="button" onClick={() => { const pending = inspectionConfirm; if (onInspectionRequest) onInspectionRequest(pending); else commit((current) => { const recipient: PlayerId = controlledPlayer === "p1" ? "p2" : "p1"; return { ...current, inspection: { ...pending, viewer: controlledPlayer }, notifications: [...(current.notifications ?? []), { id: `${Date.now()}-inspection-${recipient}`, recipient, message: "相手が非公開カードを確認しました", createdAt: Date.now() }] }; }); setInspectionConfirm(null); }} type="button">YES</button><button className="secondary-button" onClick={() => setInspectionConfirm(null)} type="button">NO</button></section></div> : null}
     </div>
     </LongPressDurationContext.Provider>
+    </StackTripleTapContext.Provider>
   );
 }
 
