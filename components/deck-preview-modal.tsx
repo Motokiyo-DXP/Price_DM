@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CardArtwork } from "@/components/card-artwork";
-import { resolveCardArtworkUrl } from "@/lib/card-image";
+import { ExpandedCardArtwork } from "@/components/expanded-card-artwork";
 import { setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
 
 function zoneName(zone: string) {
@@ -41,6 +41,6 @@ export function DeckPreviewModal({ deckId, deckName, scope, onClose }: { deckId:
         </> : null}
       </section>
     </div>
-    {expandedImage ? <div aria-label="カード画像を閉じる" className="public-deck-image-backdrop" onClick={() => setExpandedImage(null)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Escape" || event.key === "Enter") setExpandedImage(null); }}><img alt="" draggable={false} src={resolveCardArtworkUrl(expandedImage)} /></div> : null}
+    {expandedImage ? <div aria-label="カード画像を閉じる" className="public-deck-image-backdrop" onClick={() => setExpandedImage(null)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Escape" || event.key === "Enter") setExpandedImage(null); }}><ExpandedCardArtwork imageUrl={expandedImage} /></div> : null}
   </>;
 }
