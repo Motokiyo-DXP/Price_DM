@@ -1,0 +1,4 @@
+.artwork {
+  flex: none;
+  width: min(500px, calc((100dvh - 24px) * 5 / 7), calc(100vw - 24px));
+}

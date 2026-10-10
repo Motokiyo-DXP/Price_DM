@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { importPublicDeckAction, importSharedDeckAction } from "@/app/decks/actions";
 import { CardArtwork } from "@/components/card-artwork";
-import { resolveCardArtworkUrl } from "@/lib/card-image";
+import { ExpandedCardArtwork } from "@/components/expanded-card-artwork";
 import { getDeckPreview, hasDeckPreview, setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
 import { formatJapaneseDate } from "@/lib/japanese-date";
 import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
@@ -155,7 +155,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
           </> : null}
         </section>
       </div> : null}
-      {expandedImage ? <div aria-label="カード画像を閉じる" className="public-deck-image-backdrop" onClick={() => setExpandedImage(null)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Escape" || event.key === "Enter") setExpandedImage(null); }}><img alt="" draggable={false} src={resolveCardArtworkUrl(expandedImage)} /></div> : null}
+      {expandedImage ? <div aria-label="カード画像を閉じる" className="public-deck-image-backdrop" onClick={() => setExpandedImage(null)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Escape" || event.key === "Enter") setExpandedImage(null); }}><ExpandedCardArtwork imageUrl={expandedImage} /></div> : null}
     </div>
   );
 }
