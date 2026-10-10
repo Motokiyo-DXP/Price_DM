@@ -26,38 +26,6 @@ type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
 type SearchStatus = "idle" | "searching" | "success" | "empty" | "error";
 export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; editorSortKey?: EditorSortKey; editorSortDirection?: SortDirection; cards: SelectedCard[] };
 const SEARCH_PAGE_SIZE = 24;
-const RACE_PRESETS = [
-  "エンジェル・コマンド",
-  "エンジェル・コマンド・ドラゴン",
-  "アポロニア・ドラゴン",
-  "アーマード・ドラゴン",
-  "アース・ドラゴン",
-  "アーマード・ドラゴン・ワード",
-  "エンジェル・ドラゴン",
-  "デーモン・コマンド",
-  "デーモン・コマンド・ドラゴン",
-  "キング・コマンド・ドラゴン",
-  "サイバー・コマンド",
-  "サイバー・ウイルス",
-  "リキッド・ピープル",
-  "リキッド・ピープル閃",
-  "ビーストフォーク",
-  "ビーストフォーク號",
-  "アーマロイド",
-  "ヒューマノイド",
-  "アウトレイジ",
-  "アウトレイジMAX",
-  "フレイム・コマンド",
-  "ガイア・コマンド",
-  "ジャイアント",
-  "メカ・デル・ソル",
-  "スノーフェアリー",
-  "ゴッド",
-  "ゼニス",
-  "ドラゴン・ゾンビ",
-  "コマンド・ドラゴン",
-  "ジョーカーズ",
-] as const;
 const QUICK_RACE_TOKENS = ["コマンド", "ドラゴン"] as const;
 
 function getRaceTokens(value: string) {
@@ -97,6 +65,8 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   const [allCosts, setAllCosts] = useState<number[]>([]);
   const [filterOptionsError, setFilterOptionsError] = useState(false);
   const [productListOpen, setProductListOpen] = useState(false);
+  const [productDraft, setProductDraft] = useState("");
+  const [allRaces, setAllRaces] = useState<string[]>([]);
   const [civilizationFilter, setCivilizationFilter] = useState<string[]>([]);
   const [civilizationMode, setCivilizationMode] = useState<"cup" | "cap">("cup");
   const [colorFilter, setColorFilter] = useState<"all" | "single" | "multi">("all");
@@ -219,6 +189,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       }
       setAllProductNames(names.sort((a, b) => a.localeCompare(b, "ja")));
       setProductCodeByName(codes);
+      setAllRaces(Array.isArray(data.races) ? data.races.filter((item): item is string => typeof item === "string").sort((a, b) => a.localeCompare(b, "ja")) : []);
       setAllCardTypes(Array.isArray(data.cardTypes) ? data.cardTypes.filter((item): item is string => typeof item === "string") : []);
       setAllCosts(Array.isArray(data.costs) ? data.costs.filter((item): item is number => typeof item === "number").sort((a, b) => a - b) : []);
       setFilterOptionsError(false);
@@ -676,17 +647,28 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
             <div className="deck-filter-field"><strong>種族</strong><button aria-expanded={racePickerOpen} className="deck-race-picker-trigger" onClick={() => { setRaceDraftTokens(selectedRaceTokens); setRaceSearch(""); setRacePickerOpen(true); }} type="button">{selectedRaceTokens.length ? selectedRaceTokens.join("・") : "種族を選択"}</button></div>
           </div>
           <label className="deck-filter-text-field">テキスト<input aria-label="カードテキスト" placeholder="テキストを入力" value={cardTextQuery} onChange={(event) => setCardTextQuery(event.target.value)} /></label>
-          <div className="deck-filter-field"><strong>収録商品</strong><div className="deck-product-picker"><div className="deck-product-input"><input aria-label="収録商品を検索" placeholder={productFilter || "商品名・商品コードで検索"} ref={productSearchInput.inputRef} onInput={productSearchInput.onInput} value={productQuery} onFocus={() => { productSearchInput.onFocus(); setProductListOpen(true); }} onChange={(event) => { if (!productSearchInput.onChange(event)) return; setProductListOpen(true); }} onCompositionStart={productSearchInput.onCompositionStart} onCompositionEnd={productSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, productSearchInput.isComposing())) event.preventDefault(); }} /><button aria-label="収録商品をすべてに戻す" onClick={() => { setProductFilter(""); productSearchInput.commitSelection(""); setProductListOpen(false); }} type="button">{productFilter ? "×" : "すべて"}</button></div>{productListOpen ? <div className="deck-product-options"><button onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); setProductFilter(""); productSearchInput.commitSelection(""); setProductListOpen(false); }} onClick={(event) => { if (event.detail !== 0) return; setProductFilter(""); productSearchInput.commitSelection(""); setProductListOpen(false); }} type="button">すべて</button>{matchingProducts.map((name) => <button aria-selected={productFilter === name} key={name} onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); setProductFilter(name); productSearchInput.commitSelection(""); setProductListOpen(false); }} onClick={(event) => { if (event.detail !== 0) return; setProductFilter(name); productSearchInput.commitSelection(""); setProductListOpen(false); }} type="button">{name}{productCodeByName[name]?.length ? <small>{productCodeByName[name].join(" / ")}</small> : null}</button>)}{matchingProducts.length === 0 ? <p>該当する収録商品がありません</p> : null}</div> : null}</div></div>
+          <div className="deck-filter-field"><strong>収録商品</strong><button aria-expanded={productListOpen} className="deck-race-picker-trigger" onClick={() => { setProductDraft(productFilter); productSearchInput.commitSelection(""); setProductListOpen(true); }} type="button">{productFilter || "すべて"}</button></div>
           <label>カード番号<input placeholder="例：DM24-RP1" value={cardNumberFilter} onChange={cardNumberSearchInput.onChange} onCompositionStart={cardNumberSearchInput.onCompositionStart} onCompositionEnd={cardNumberSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, cardNumberSearchInput.isComposing())) event.preventDefault(); }} /></label>
           <button className="deck-filter-clear" onClick={() => { setProductFilter(""); productSearchInput.commitSelection(""); setProductListOpen(false); cardNumberSearchInput.setValue(""); setCivilizationFilter([]); setCivilizationMode("cup"); setColorFilter("all"); setCardTypeFilter(""); setCardTypeListOpen(false); setMinimumCost(""); setMaximumCost(""); setMinimumPower(""); setMaximumPower(""); setSelectedRaceTokens([]); setRaceDraftTokens([]); setRacePickerOpen(false); setRaceSearch(""); setCardTextQuery(""); setIncludeNoCost(false); }} type="button">全条件クリア</button>
         </section>
+        {productListOpen ? <div className="deck-race-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setProductListOpen(false); }} role="presentation">
+          <section aria-label="収録商品の選択" aria-modal="true" className="deck-race-picker-modal deck-product-picker-modal" role="dialog">
+            <div className="deck-race-picker-heading"><strong>収録商品の選択</strong><button aria-label="商品選択を閉じる" onClick={() => setProductListOpen(false)} type="button">×</button></div>
+            <input aria-label="収録商品を検索" placeholder="商品名・商品コードで検索" ref={productSearchInput.inputRef} onFocus={productSearchInput.onFocus} onInput={productSearchInput.onInput} value={productQuery} onChange={productSearchInput.onChange} onCompositionStart={productSearchInput.onCompositionStart} onCompositionEnd={productSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, productSearchInput.isComposing())) event.preventDefault(); }} />
+            <div aria-label="収録商品一覧" className="deck-race-preset-list">
+              {["", ...matchingProducts].map((name) => <button aria-pressed={productDraft === name} className="deck-race-preset" key={name} onPointerDown={(event) => { if (event.button !== 0) return; if (event.pointerType === "touch") { if (productSearchInput.isComposing()) { event.preventDefault(); productSearchInput.commitSelection(productQuery); } return; } event.preventDefault(); setProductDraft(name); productSearchInput.commitSelection(productQuery); }} onClick={() => { setProductDraft(name); productSearchInput.commitSelection(productQuery); }} type="button"><span aria-hidden="true" className="deck-race-preset-check">{productDraft === name ? "✓" : ""}</span><span>{name || "すべて"}{productCodeByName[name]?.length ? <small className="deck-product-code">{productCodeByName[name].join(" / ")}</small> : null}</span></button>)}
+              {matchingProducts.length === 0 ? <p>該当する収録商品がありません</p> : null}
+            </div>
+            <div className="deck-race-picker-actions"><button onClick={() => setProductListOpen(false)} type="button">キャンセル</button><button onClick={() => { setProductFilter(productDraft); productSearchInput.commitSelection(""); setProductListOpen(false); }} type="button">決定</button></div>
+          </section>
+        </div> : null}
         {racePickerOpen ? <div className="deck-race-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setRacePickerOpen(false); }} role="presentation">
           <section aria-label="種族の選択" aria-modal="true" className="deck-race-picker-modal" role="dialog">
             <div className="deck-race-picker-heading"><strong>種族の選択</strong><button aria-label="種族選択を閉じる" onClick={() => setRacePickerOpen(false)} type="button">×</button></div>
             <input aria-label="種族を検索" onChange={(event) => setRaceSearch(event.target.value)} placeholder="種族を検索" value={raceSearch} />
             <div aria-label="よく使う種族語" className="deck-race-quick-buttons">{QUICK_RACE_TOKENS.map((token) => <button aria-pressed={raceDraftTokens.includes(token)} key={token} onClick={() => setRaceDraftTokens((current) => current.includes(token) ? current.filter((item) => item !== token) : [...current, token])} type="button">{token}</button>)}</div>
             <p className="deck-race-picker-hint">選択した語をすべて含む種族が対象になります。現在の検索語: {raceDraftTokens.length ? raceDraftTokens.join("・") : "なし"}</p>
-            <div aria-label="種族プリセット" className="deck-race-preset-list">{RACE_PRESETS.filter((race) => getRaceTokens(raceSearch).every((term) => race.toLocaleLowerCase().includes(term.toLocaleLowerCase()))).map((race) => {
+            <div aria-label="種族一覧" className="deck-race-preset-list">{allRaces.filter((race) => getRaceTokens(raceSearch).every((term) => race.toLocaleLowerCase().includes(term.toLocaleLowerCase()))).map((race) => {
               const tokens = getRaceTokens(race);
               const selected = tokens.every((token) => raceDraftTokens.includes(token));
               return <button aria-pressed={selected} className="deck-race-preset" key={race} onClick={() => setRaceDraftTokens((current) => selected ? current.filter((token) => !tokens.includes(token)) : Array.from(new Set([...current, ...tokens])))} type="button"><span aria-hidden="true" className="deck-race-preset-check">{selected ? "✓" : ""}</span>{race}</button>;
@@ -704,7 +686,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </aside>
       </div>
 
-      {selectedCard ? <div className="deck-card-modal-backdrop" onClick={closeCard} role="presentation">
+      {selectedCard && typeof document !== "undefined" ? createPortal(<div className="deck-card-modal-backdrop" onClick={closeCard} role="presentation">
         <section aria-label={`${selectedCard.name}のカード詳細`} aria-modal="true" className="deck-card-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-card-modal-main">
             <CardArtwork className="deck-card-modal-art" eager imageUrl={selectedImageUrl} name={selectedCard.name} sizes="(max-width: 600px) 88vw, 430px" />
@@ -728,7 +710,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
             <button className="deck-card-modal-close" onClick={closeCard} type="button"><span aria-hidden="true">×</span>閉じる</button>
           </div>
         </section>
-      </div> : null}
+      </div>, document.body) : null}
 
       <input name="editorSortKey" type="hidden" value={deckSort ?? "saved"} />
       <input name="editorSortDirection" type="hidden" value={deckSortDirection} />

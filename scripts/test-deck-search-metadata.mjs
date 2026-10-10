@@ -75,6 +75,36 @@ try {
     ["p_race_tokens=>array['コマンド'],p_card_text_query=>'革命 チェンジ',p_min_power=>6000,p_limit=>1,p_offset=>1",''],
   ];
   for (const [args, expected] of checks) assert.equal(ids(args), expected, args);
+  sql("alter table canonical_cards add column cost_is_infinite boolean not null default false; alter table canonical_cards add column power_text text; alter table card_products add column product_code text;");
+  sql(read('supabase/migrations/20260914111514_deck_card_filters.sql').split('create function private.search_deck_cards_filtered_impl')[0]);
+  const oldRangeResults = cases.map(ids);
+  sql(read('supabase/migrations/20261010011417_deck_filter_races_and_infinite_ranges.sql'));
+  assert.deepEqual(cases.map(ids), oldRangeResults, 'finite cards retain existing search results');
+  for (const [args, expected] of checks) assert.equal(ids(args), expected, args);
+  sql(`insert into canonical_cards(id,game_id,name,cost,cost_is_infinite,power_value,power_text,civilizations,card_types,races) values
+    (5,1,'無限',null,true,null,'∞','{fire}','{クリーチャー}','{ロスト・クルセイダー,ロスト・クルセイダー・ドラゴン,ロスト・クルセイダー・ワード}');
+    update card_products set product_code='DM-A' where id=1;`);
+  const infiniteChecks = [
+    ["p_min_cost=>99", '5'], ["p_max_cost=>99", '1,2,3'],
+    ["p_min_cost=>99,p_max_cost=>100,p_no_cost=>true", '4'],
+    ["p_min_cost=>99,p_no_cost=>true", '4,5'], ["p_max_cost=>0,p_no_cost=>true", '4'],
+    ["p_min_power=>99999", '5'], ["p_max_power=>99999", '1,2,3'],
+    ["p_min_power=>99999,p_max_power=>100000", ''],
+    ["p_race_tokens=>array['ロスト','クルセイダー'],p_min_cost=>99,p_min_power=>99999,p_civilizations=>array['fire']", '5'],
+  ];
+  for (const [args, expected] of infiniteChecks) assert.equal(ids(args), expected, args);
+  assert.ok(ids().split(',').includes('5'), 'no bounds include infinity');
+  sql(`insert into tcg_games values(2,'other-game');
+    insert into canonical_cards(id,game_id,name,races,deleted_at) values
+      (6,2,'別ゲーム','{別ゲーム種族}',null), (7,1,'削除済','{削除種族}',now());`);
+  assert.equal(sql(`select (deck_filter_options()->'races') = (
+    select jsonb_agg(race order by race) from (select distinct unnest(c.races) race from canonical_cards c
+    join tcg_games g on g.id=c.game_id where g.slug='duel-masters' and c.deleted_at is null) r
+  );`).trim(), 't', 'all active duel-masters races, no extras');
+  sql("update canonical_cards set races=array_append(races,'追加された新種族') where id=5;");
+  assert.equal(sql("select (deck_filter_options()->'races') ? '追加された新種族';").trim(), 't');
+  sql("delete from canonical_cards where id>=5;");
+  console.log(`PASS: ${infiniteChecks.length} infinity/no-cost combinations and dynamic race completeness`);
   assert.equal(sql("select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='search_deck_cards_filtered';").trim(),'1');
   assert.equal(sql("select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname='search_deck_cards_filtered_fast_impl' and p.pronargs=19;").trim(),'1');
   sql("grant usage on schema private to authenticated;");
@@ -94,7 +124,7 @@ try {
   if (serve) {
     sql(`grant usage on schema public, private to authenticated;
       grant select on all tables in schema public to authenticated;
-      create function public.deck_filter_options() returns json language sql as $$ select '{"products":[],"cardTypes":["クリーチャー","呪文"],"costs":[3,5,8]}'::json $$;`);
+      update canonical_cards set races=array_append(races,'ロスト・クルセイダー') where id=1;`);
     docker(['run', '-d', '--name', restContainer, '--network', container, '-p', '127.0.0.1:55441:3000', '-e', 'PGRST_DB_URI=postgres://postgres@db:5432/postgres', '-e', 'PGRST_DB_ANON_ROLE=authenticated', 'public.ecr.aws/supabase/postgrest:v16.4']);
     // Local fixture gateway only. There are no real accounts or credentials.
     const server = createServer((req, res) => {
