@@ -546,7 +546,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
 
       <section className="deck-maker-settings" hidden={!settingsOpen}>
         <label>フォーマット<select name="format" onChange={(event) => setFormat(event.target.value as DeckEditorInitialData["format"])} value={format}><option value="original">オリジナル</option><option value="advanced">アドバンス</option><option value="duel_party">デュエパーティ</option></select></label>
-        <label>公開範囲<select name="visibility" defaultValue={initialDeck?.visibility ?? "private"}><option value="private">非公開</option><option value="unlisted">URL限定</option><option value="public">公開</option></select></label>
+        <label>公開範囲<select name="visibility" defaultValue={initialDeck?.visibility ?? "public"}><option value="private">非公開</option><option value="unlisted">URL限定</option><option value="public">公開</option></select></label>
         <label className="deck-description-field">説明<textarea defaultValue={initialDeck?.description} maxLength={1000} name="description" placeholder="デッキのメモ（任意）" rows={2} /></label>
       </section>
 
