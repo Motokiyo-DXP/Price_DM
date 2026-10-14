@@ -1,0 +1,38 @@
+[
+  {
+    "id": 21228,
+    "name": "邪新年 ～ENTER THE DRAGON～",
+    "cost": 5,
+    "civilizations": [],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy22-0101",
+    "official_status": 200,
+    "official_civil": "",
+    "official_types": [
+      "ドラゴニック・フィールド"
+    ]
+  },
+  {
+    "id": 21775,
+    "name": "DECKY THE HALL",
+    "cost": 12,
+    "civilizations": [],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy16-1225",
+    "official_status": 200,
+    "official_civil": "",
+    "official_types": [
+      "呪文"
+    ]
+  },
+  {
+    "id": 22102,
+    "name": "Katta's Crew is Coming to Town",
+    "cost": 3,
+    "civilizations": [],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy12-1225",
+    "official_status": 200,
+    "official_civil": "",
+    "official_types": [
+      "呪文"
+    ]
+  }
+]

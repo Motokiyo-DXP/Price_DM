@@ -2,9 +2,12 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {buildPreviewSql,validatePreview} from './build-dm26ex4-preview.mjs';
 import {canonicalName} from './dm26ex4-canonical-mappings.mjs';
+import {summarizeMetadataAvailability} from './dm26ex4-research.mjs';
 
 const q=value=>`'${String(value).replaceAll("'","''")}'`;
-const array=value=>`array[${value.map(q).join(',')}]::text[]`;
+// JSON escapes embedded newlines so a Windows/Git CRLF conversion cannot alter
+// stored card text while leaving its JSON source ownership unchanged.
+const array=value=>`array(select jsonb_array_elements_text(${json(value)}))::text[]`;
 const json=value=>`${q(JSON.stringify(value))}::jsonb`;
 export function validateComplete(raw,proofs=[]){
  validatePreview(raw);
@@ -82,8 +85,16 @@ on conflict(canonical_card_id,normalized_term,term_kind) do nothing;\n`;
  return sql+'commit;\n';
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
- const [manifest,output,proofFile]=process.argv.slice(2);
- if(!manifest||!output)throw Error('Usage: build-dm26ex4-complete.mjs manifest.json output.sql [public-image-proof.json]');
+ const args=process.argv.slice(2),allowIncomplete=args.includes('--allow-incomplete');
+ if(args.some(a=>a.startsWith('--')&&a!=='--allow-incomplete'))throw Error('Unknown option');
+ const [manifest,output,proofFile]=args.filter(a=>a!=='--allow-incomplete');
+ if(!manifest||!output)throw Error('Usage: build-dm26ex4-complete.mjs manifest.json output.sql [public-image-proof.json] [--allow-incomplete]');
  const raw=JSON.parse(await readFile(manifest,'utf8')),proofs=proofFile?JSON.parse(await readFile(proofFile,'utf8')):[];
- await writeFile(output,buildCompleteSql(raw,proofs));console.log(`Prepared ${raw.cards.length} prints and ${proofs.length} verified image updates; SQL not applied.`);
+ await writeFile(output,buildCompleteSql(raw,proofs));
+ const availability=summarizeMetadataAvailability(raw);
+ await writeFile(output+'.availability.json',JSON.stringify(availability,null,2));
+ console.log(JSON.stringify({prepared_prints:raw.cards.length,verified_images:proofs.length,metadata_status:availability.status,detail_unavailable:availability.detail_unavailable,basic_field_unavailable:availability.basic_field_unavailable,image_unavailable:availability.image_unavailable,sql_applied:false}));
+ // A provisional SQL draft may still be reviewed, but automation must not treat
+ // failed detail retrieval as a completed import without an explicit exception.
+ if(availability.status==='incomplete'&&!allowIncomplete)process.exitCode=2;
 }

@@ -1,0 +1,42 @@
+{
+  "environment": "isolated local Postgres + GoTrue + PostgREST + actual Next.js routes",
+  "url": "http://localhost:3000/decks/052b79ca-109e-4083-8eec-f45eb9045a0b/edit",
+  "deck_id": "052b79ca-109e-4083-8eec-f45eb9045a0b",
+  "canonical_ids": [
+    43946,
+    43965,
+    43957
+  ],
+  "costs": [
+    2,
+    3,
+    6
+  ],
+  "ascending": [
+    43946,
+    43965,
+    43957
+  ],
+  "descending": [
+    43957,
+    43965,
+    43946
+  ],
+  "filter_match_ids": [
+    43965
+  ],
+  "saved": true,
+  "reloaded": true,
+  "saved_descending_restored": true,
+  "card_detail_image": true,
+  "production_verified": false,
+  "numeric_power_and_ability_filter": {
+    "query": "切札混成 5000BT",
+    "min_power": 17000,
+    "max_power": 17000,
+    "text": "ブロッカー",
+    "matched_ids": [
+      44006
+    ]
+  }
+}

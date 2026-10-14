@@ -48,7 +48,9 @@ export function parseWikiDetail(html,expectedName,sourceUrl){
   const text=plain($,tr);if(!text)continue;
   const header=text.match(/^(.*?)　([^　]*)　([^　]*?)(?:文明)?[　 ]*[（(]([^）)]*)[）)]$/u);
   if(header){
-   const civText=header[3].replace(/文明$/u,''),civs=civText.split(/[／/]/u).map(s=>CIVILIZATIONS.get(s));
+   // Wiki annotates Jokers after the civilization, e.g. 無色[ジョーカーズ].
+   // This is a card designation, not part of the civilization name.
+   const civText=header[3].replace(/\[ジョーカーズ\]$/u,'').replace(/文明$/u,''),civs=civText.split(/[／/]/u).map(s=>CIVILIZATIONS.get(s));
    const costText=header[4].normalize('NFKC');
    const cost=/^\d+$/u.test(costText)&&Number(costText)<=99?observed(Number(costText)):costText==='∞'?observed(null):/^[-ー－]$/u.test(costText)?absent():unavailable();
    face={name:header[1],reading:unavailable(),cost,cost_text:costText,cost_is_infinite:costText==='∞',civilizations:civs.every(Boolean)?observed(civs):unavailable(),rarity:header[2]?observed(header[2]):unavailable(),card_types:unavailable(),races:unavailable(),power:unavailable(),power_value:null,card_texts:[],text_status:'unavailable'};
@@ -87,4 +89,12 @@ export function projectMetadata(record){
    civilizations:union('civilizations'),card_types:union('card_types'),races:union('races'),
    power_text:first.power.status==='observed'?first.power.value:null,power_value:first.power_value,
    card_texts:faces.every(f=>f.text_status==='observed')?faces.map(f=>f.card_texts.join('\n')):null};
+}
+
+// Import identity success does not mean the card details were retrieved.
+// Keep number/name-only records retryable and report field availability separately.
+export function summarizeMetadataAvailability(raw){
+ const deferred=raw.cards.filter(c=>!c.detail?.matched||!c.detail.faces?.length).map(c=>({name:c.name,card_number:c.card_number,reason:c.detail?.reason??'detail_unavailable'}));
+ const incomplete=raw.cards.filter(c=>c.detail?.faces?.some(f=>['cost','civilizations','card_types'].some(k=>f[k]?.status==='unavailable'))).map(c=>({name:c.name,card_number:c.card_number,reason:'basic_field_unavailable'}));
+ return {status:deferred.length||incomplete.length?'incomplete':'available',detail_unavailable:deferred.length,basic_field_unavailable:incomplete.length,image_unavailable:raw.cards.filter(c=>!c.image).length,retry:[...deferred,...incomplete]};
 }

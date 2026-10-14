@@ -1,0 +1,1544 @@
+[
+  {
+    "id": 45,
+    "name": "DARK MEMORY CONTAINER",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-055",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 55/80",
+      "card_texts": [
+        "ブロッカー（このクリーチャーをタップして、相手クリーチャーの攻撃先をこのクリーチャーに変更してもよい）\nこのクリーチャーが出た時、カードを２枚引く。\nカードが自分のシールドゾーンに置かれた時、このクリーチャーを自分の墓地から出してもよい。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "water",
+        "darkness"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "DARK MEMORY CONTAINER",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-055",
+      "power_text": "5500",
+      "power_value": 5500,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "???",
+        "スチーム・ナイト"
+      ]
+    }
+  },
+  {
+    "id": 87,
+    "name": "蒼き団長 ドギラゴン剣",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-c004",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM26SD1 4/14",
+      "card_texts": [
+        "革命チェンジ：火または自然の、コスト５以上のドラゴン（自分の指定のクリーチャーが攻撃する時、そのクリーチャーと手札にあるこのクリーチャーを入れ替えてもよい）\nT・ブレイカー（このクリーチャーはシールドを３つブレイクする）\n自分の多色クリーチャーすべてに「スピードアタッカー」を与える。（「スピードアタッカー」を持つクリーチャーは召喚酔いしない）\nファイナル革命：このクリーチャーが「革命チェンジ」によって出た時、そのターンに他の「ファイナル革命」を使っていなければ、コストの合計が６以下になるように、進化ではない多色クリーチャーを好きな数、自分の、手札またはマナゾーンから出す。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "fire",
+        "nature"
+      ],
+      "cost": 8,
+      "cost_is_infinite": false,
+      "name": "蒼き団長 ドギラゴン剣",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-c004",
+      "power_text": "13000",
+      "power_value": 13000,
+      "product_name": "DM26-SD1 ドキドキつよいデッキ 25の王道",
+      "races": [
+        "メガ・コマンド・ドラゴン",
+        "革命軍",
+        "ハムカツ団"
+      ]
+    }
+  },
+  {
+    "id": 187,
+    "name": "一音の妖精",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-001",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 1/80",
+      "card_texts": [
+        "{GS} G・ストライク\nNEO進化：光、水、または自然のクリーチャー１体の上に置いてもよい。（カードが下にあれば、これをNEO進化クリーチャーとして扱う）\n相手は各ターン１枚までしか呪文を唱えられない。\nこれが進化クリーチャーなら、相手は各ターン１体までしかクリーチャーを出せない。"
+      ],
+      "card_types": [
+        "NEOクリーチャー"
+      ],
+      "civilizations": [
+        "light"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "一音の妖精",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-001",
+      "power_text": "2500",
+      "power_value": 2500,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "ジャイアント・スノーフェアリー"
+      ]
+    }
+  },
+  {
+    "id": 222,
+    "name": "王道ダチ モンキッド",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-029",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX2 29/105",
+      "card_texts": [
+        "{GS} G・ストライク\n相手のターン中、相手のマナゾーンにあるカードの枚数よりコストが大きい相手のクリーチャーが出た時、そのクリーチャーを持ち主のマナゾーンに置く。\nこのクリーチャーがシールドをブレイクした時、ジョーカーズ・メクレイド５する。（ジョーカーズ・メクレイド５：自分の山札の上から３枚を見る。その中から、コスト５以下のジョーカーズ・カードを１枚、コストを支払わずに実行してもよい。残りを好きな順序で山札の下に置く）"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "王道ダチ モンキッド",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-029",
+      "power_text": "3000",
+      "power_value": 3000,
+      "product_name": "DM25-EX2 王道vs邪道 デュエキングWDreaM 2025",
+      "races": [
+        "ジョーカーズ",
+        "チーム切札"
+      ]
+    }
+  },
+  {
+    "id": 223,
+    "name": "～地獄帰りの騎士～",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-028",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 28/80",
+      "card_texts": [
+        "NEO進化：光、水、または闇のクリーチャー１体の上に置いてもよい。\nこのクリーチャーが出た時、カードを３枚引いてもよい。そうしたら、自分の手札を２枚捨て、自分の山札の上から１枚をシールド化する。"
+      ],
+      "card_types": [
+        "NEOクリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "water",
+        "darkness"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "～地獄帰りの騎士～",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-028",
+      "power_text": "3000",
+      "power_value": 3000,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "アーク・セラフィム",
+        "スチーム・ナイト"
+      ]
+    }
+  },
+  {
+    "id": 264,
+    "name": "アルカディアス・モモキング",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-SP2",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 SP2/SP6",
+      "card_texts": [
+        "スター進化：レクスターズ、光、または火の、クリーチャー１体の上に置く。\nT・ブレイカー\n自分の他のレクスターズすべてのパワーを+2000する。\n相手は、光ではない呪文を唱えられない。\n各ターン、はじめて出る相手のクリーチャーは、タップして出る。"
+      ],
+      "card_types": [
+        "スター進化クリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "fire"
+      ],
+      "cost": 6,
+      "cost_is_infinite": false,
+      "name": "アルカディアス・モモキング",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-SP2",
+      "power_text": "12500",
+      "power_value": 12500,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "ジョーカーズ・ドラゴン",
+        "エンジェル・コマンド",
+        "レクスターズ"
+      ]
+    }
+  },
+  {
+    "id": 398,
+    "name": "終止の時計 ザ・ミュート",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-TD20",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 TD20/TD23",
+      "card_texts": [
+        "{STP} S・トリガー・プラス\n{x+}このクリーチャーが出た時、このターン、相手はクリーチャーで攻撃できない。\nこのクリーチャーが出た時、カードを２枚引いてもよい。そうしたら、自分の手札を１枚捨てる。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "終止の時計 ザ・ミュート",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-TD20",
+      "power_text": "3000",
+      "power_value": 3000,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "マジック・アウトレイジMAX"
+      ]
+    }
+  },
+  {
+    "id": 467,
+    "name": "魔誕の封殺ディアス Z",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp3S11",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 S11/S11",
+      "card_texts": [
+        "D・D・D [dfn04]\nG-NEO進化：闇、火、または自然のクリーチャー１体の上に置いてもよい。\nマッハファイター\nW・ブレイカー\nこのクリーチャーの攻撃の終わりに、コスト５以下のクリーチャーを１体、自分の墓地またはマナゾーンから出す。このターン、そのクリーチャーに「スピードアタッカー」を与える。"
+      ],
+      "card_types": [
+        "G-NEOクリーチャー"
+      ],
+      "civilizations": [
+        "darkness",
+        "fire",
+        "nature"
+      ],
+      "cost": 6,
+      "cost_is_infinite": false,
+      "name": "魔誕の封殺ディアス Z",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp3S11",
+      "power_text": "10000",
+      "power_value": 10000,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "デーモン・コマンド"
+      ]
+    }
+  },
+  {
+    "id": 535,
+    "name": "ジョギラゴン＆ジョニー ～Jの旅路～",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-n001",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM26SD1 1/12",
+      "card_texts": [
+        "革命チェンジ：コスト５以上のジョーカーズ（自分の指定のクリーチャーが攻撃する時、そのクリーチャーと手札にあるこのクリーチャーを入れ替えてもよい）\nW・ブレイカー（このクリーチャーはシールドを２つブレイクする）\nこのクリーチャーが出た時、カードを１枚引き、自分の手札を１枚捨てる。こうして捨てたカードがジョーカーズ・クリーチャーなら、そのカードの「このクリーチャーが出た時」で始まる能力を１つ使ってもよい。\n相手は、自身のターンに１回までしか呪文を唱えられない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "zero"
+      ],
+      "cost": 8,
+      "cost_is_infinite": false,
+      "name": "ジョギラゴン＆ジョニー ～Jの旅路～",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-n001",
+      "power_text": "10000",
+      "power_value": 10000,
+      "product_name": "DM26-SD1 ドキドキつよいデッキ 25の王道",
+      "races": [
+        "ジョーカーズ・ドラゴン"
+      ]
+    }
+  },
+  {
+    "id": 745,
+    "name": "終末縫合王 ザ=キラー・キーナリー",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-a002F",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM26SD1 2F/16",
+      "card_texts": [
+        "EXライフ（このクリーチャーを出す時、自分の山札の上から１枚をシールド化する。このクリーチャーが離れる時、かわりにそのシールドを墓地に置く）\nT・ブレイカー（このクリーチャーはシールドを３つブレイクする）\nこのクリーチャーが出た時、相手のクリーチャーを１体選ぶ。その選んだクリーチャーを持ち主の手札に戻してもよい。その後、その選んだクリーチャー以下のコストのクリーチャーを１体、自分の墓地から出す。\n相手のクリーチャーが出て、その能力がトリガーする時、かわりにその能力はトリガーしない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water",
+        "darkness",
+        "nature"
+      ],
+      "cost": 10,
+      "cost_is_infinite": false,
+      "name": "終末縫合王 ザ=キラー・キーナリー",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-a002F",
+      "power_text": "15000",
+      "power_value": 15000,
+      "product_name": "DM26-SD1 ドキドキつよいデッキ 25の王道",
+      "races": [
+        "ディスペクター",
+        "ジュラシック・コマンド・ドラゴン",
+        "ドラゴン・ゾンビ"
+      ]
+    }
+  },
+  {
+    "id": 823,
+    "name": "メラベンチャー・ザ・ジョニー",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-008",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX2 8/105",
+      "card_texts": [
+        "{GS} G・ストライク\n進化：ジョーカーズ・クリーチャー１体の上に置く。\nW・ブレイカー\nこのクリーチャーが出た時、ジョーカーズ・クリーチャーを２体まで自分の手札から出し、それらに「スピードアタッカー」を与える。このターンの終わりに、それらを好きな順序で山札の下に置き、こうして下に置いたクリーチャー１体につき、カードを１枚引く。\nこのクリーチャーが攻撃する時、自分の、ジョーカーズとマナゾーンにあるジョーカーズ・カードが合計７つ以上なら、相手の「ブロッカー」を持つクリーチャーをすべて破壊する。"
+      ],
+      "card_types": [
+        "進化クリーチャー"
+      ],
+      "civilizations": [
+        "fire"
+      ],
+      "cost": 7,
+      "cost_is_infinite": false,
+      "name": "メラベンチャー・ザ・ジョニー",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-008",
+      "power_text": "10000",
+      "power_value": 10000,
+      "product_name": "DM25-EX2 王道vs邪道 デュエキングWDreaM 2025",
+      "races": [
+        "ジョーカーズ"
+      ]
+    }
+  },
+  {
+    "id": 846,
+    "name": "昇カオスマントラ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp1S01",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 S1/S11",
+      "card_texts": [
+        "エスケープ（このクリーチャーが破壊される時、墓地に置くかわりに自分のシールドを１つ手札に加えてもよい。ただし、その「S・トリガー」は使えない）\n超魂X（これがクリーチャーの下にあれば、そのクリーチャーにも以下の能力を与える）\nこのクリーチャーが攻撃する時、このクリーチャー以下のコストのクリーチャーを１体、自分の手札から出してもよい。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "昇カオスマントラ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp1S01",
+      "power_text": "2500",
+      "power_value": 2500,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "メカ・デル・ステラ",
+        "シノビ",
+        "フュージョナー"
+      ]
+    }
+  },
+  {
+    "id": 908,
+    "name": "王導聖霊 アルファディオス",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp2DM1",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 DM1/DM1",
+      "card_texts": [
+        "自分のマナゾーンにエンジェル・コマンド・カードが３枚以上あれば、このクリーチャーを[lwn05]支払って召喚してもよい。\nNEO進化：光、水、または自然のクリーチャー１体の上に置いてもよい。\n超魂レイド\nT・ブレイカー\n相手は光ではない呪文を唱えられない。\nこのクリーチャーが攻撃する時、このクリーチャーに含まれるカード１枚につき、カードを１枚引いてもよい。その後、エンジェル・コマンドを１つ、自分の手札から出してもよい。"
+      ],
+      "card_types": [
+        "NEOドリーム・クリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "water",
+        "nature"
+      ],
+      "cost": 7,
+      "cost_is_infinite": false,
+      "name": "王導聖霊 アルファディオス",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp2DM1",
+      "power_text": "12500",
+      "power_value": 12500,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "エンジェル・コマンド"
+      ]
+    }
+  },
+  {
+    "id": 929,
+    "name": "PP-「P」",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp3006",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX3 6/77",
+      "card_texts": [
+        "相手のマナゾーンにあるカードの枚数よりコストが大きい相手のクリーチャーが出る時、相手はかわりにそのクリーチャーをマナゾーンに置く。\n超魂X（これがクリーチャーの下にあれば、そのクリーチャーにも以下の能力を与える）\n相手のターンの終わりに、相手のタップしているクリーチャーがなければ、自分の山札の上から２枚をマナゾーンに置いてもよい。そうしたら、カードを１枚、自分のマナゾーンから手札に戻す。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "PP-「P」",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-rp3006",
+      "power_text": "3000",
+      "power_value": 3000,
+      "product_name": "DM25-EX3 邪神爆発デュエナマイトパック「王道W」",
+      "races": [
+        "エイリアン",
+        "ハンター",
+        "テクノ・サムライ"
+      ]
+    }
+  },
+  {
+    "id": 967,
+    "name": "天革の騎令嬢 ミラクルステラ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26rp2-SP001",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM26RP2 SP1/SP5",
+      "card_texts": [
+        "{GS} G・ストライク\nブロッカー\nジャストダイバー\nW・ブレイカー\n相手がカードを実行した時、自分はカードを１枚引いてもよい。このターン、相手のクリーチャーは攻撃できない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 6,
+      "cost_is_infinite": false,
+      "name": "天革の騎令嬢 ミラクルステラ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26rp2-SP001",
+      "power_text": "8000",
+      "power_value": 8000,
+      "product_name": "DM26-RP2 逆札篇 第2弾 燃えろ禁断！逆転のドギラゴン革命!!",
+      "races": [
+        "エンジェル・コマンド・ドラゴン",
+        "革命軍",
+        "ドレミ団"
+      ]
+    }
+  },
+  {
+    "id": 1120,
+    "name": "欲望の邪道 ニガ=アブシューム / 支配の邪道 獄鬼夜城",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-045",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX2 45/105",
+      "card_texts": [
+        "クリーチャーがシールドをブレイクした時、そのクリーチャーを破壊する。\n自分のクリーチャーが破壊される時、かわりにこのフィールドを《支配の邪道 獄鬼夜城》側にしてもよい。",
+        "自分のターンのはじめに、自分のシールドを１つ墓地に置いてもよい。そうしたら、カードを１枚引き、このターン、次に召喚する自分のクリーチャーのコストを２少なくする。ただし、コストは０以下にはならない。\n自分のシールドが離れた時、このフィールドを《欲望の邪道 ニガ=アブシューム》側にしてもよい。"
+      ],
+      "card_types": [
+        "WDフィールド"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "欲望の邪道 ニガ=アブシューム / 支配の邪道 獄鬼夜城",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-045",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM25-EX2 王道vs邪道 デュエキングWDreaM 2025",
+      "races": []
+    }
+  },
+  {
+    "id": 1122,
+    "name": "瞬閃と疾駆と双撃の決断",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-i004",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM26SD1 4/13",
+      "card_texts": [
+        "次の中から２回選ぶ。同じものを選んでもよい。\n▶コスト３以下のクリーチャーを１体、自分の手札から出す。\n▶このターン、自分のクリーチャー１体に「スピードアタッカー」を与える。（「スピードアタッカー」を持つクリーチャーは召喚酔いしない）\n▶自分のクリーチャーを１体選ぶ。このターン、そのクリーチャーの最初の攻撃の終わりに、そのクリーチャーをアンタップする。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "fire"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "瞬閃と疾駆と双撃の決断",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26sd1-i004",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM26-SD1 ドキドキつよいデッキ 25の王道",
+      "races": []
+    }
+  },
+  {
+    "id": 1164,
+    "name": "炎龍覇 グレンアイラ / 「助けて！モルト!!」",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25bd3-016",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25BD3 16/20",
+      "card_texts": [
+        "S・トリガー\nこのクリーチャーが出た時、相手のクリーチャーを１体選んでもよい。その選んだクリーチャーとこのクリーチャーをバトルさせる。\n各ターン、このクリーチャーがはじめてバトルに勝った時、火のコスト４以下のドラグハート・ウエポンを１つ、自分の超次元ゾーンから出し、このクリーチャーに装備する。",
+        "ドラグナー・クリーチャーを１体、自分の手札から出す。"
+      ],
+      "card_types": [
+        "クリーチャー",
+        "呪文"
+      ],
+      "civilizations": [
+        "fire"
+      ],
+      "cost": 6,
+      "cost_is_infinite": false,
+      "name": "炎龍覇 グレンアイラ / 「助けて！モルト!!」",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25bd3-016",
+      "power_text": "5000",
+      "power_value": 5000,
+      "product_name": "DM25-BD3 ドリーム英雄譚デッキ グレンモルトの書",
+      "races": [
+        "ガイアール・コマンド・ドラゴン",
+        "ヒューマノイド爆",
+        "ドラグナー"
+      ]
+    }
+  },
+  {
+    "id": 1172,
+    "name": "♪立ち上がる 悪魔に天使 堕ちるかな",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26rp2-SP003",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM26RP2 SP3/SP5",
+      "card_texts": [
+        "S・トリガー\nカードを１枚引き、数字を１つ選ぶ。次の自分のターンのはじめまで、その数字と同じコストの相手のエレメントの能力を無視し、相手はその数字と同じコストの呪文を唱えられない。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 4,
+      "cost_is_infinite": false,
+      "name": "♪立ち上がる 悪魔に天使 堕ちるかな",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26rp2-SP003",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM26-RP2 逆札篇 第2弾 燃えろ禁断！逆転のドギラゴン革命!!",
+      "races": [
+        "マジック・ソング"
+      ]
+    }
+  },
+  {
+    "id": 1280,
+    "name": "鬼寄せの術",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-060",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX2 60/105",
+      "card_texts": [
+        "自分のシールドを１つ手札に加える。ただし、その「S・トリガー」は使えない。\nこのターン、次に召喚する自分の闇または火のクリーチャーのコストを４少なくする。ただし、コストは０以下にはならない。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "darkness",
+        "fire"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "鬼寄せの術",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex2-060",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM25-EX2 王道vs邪道 デュエキングWDreaM 2025",
+      "races": [
+        "鬼札王国"
+      ]
+    }
+  },
+  {
+    "id": 2995,
+    "name": "極限の精霊インフィニティ・シリウス",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25bd2-007",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25BD2 7/16",
+      "card_texts": [
+        "コストを支払うかわりに、自分のエンジェル・コマンド・クリーチャーを５体タップして、このクリーチャーを召喚してもよい。\n∞ブレイカー（「∞ ブレイカー」を持つクリーチャーは、相手のシールドを好きな数ブレイクできる）\nブロッカー\nジャストダイバー\n自分のコスト８以下のエンジェル・コマンドは攻撃もブロックもされず、呪文によって相手に選ばれない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "water"
+      ],
+      "cost": null,
+      "cost_is_infinite": true,
+      "name": "極限の精霊インフィニティ・シリウス",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25bd2-007",
+      "power_text": "∞",
+      "power_value": null,
+      "product_name": "DM25-BD2 ドリーム英雄譚デッキ アルカディアスの​書",
+      "races": [
+        "エンジェル・コマンド"
+      ]
+    }
+  },
+  {
+    "id": 3023,
+    "name": "裏斬隠 テンサイ・ハート",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex1-057",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX1 57/89",
+      "card_texts": [
+        "ウラ・ニンジャ・ストライク３（水）（相手のクリーチャーが攻撃またはブロックした時、自分のマナゾーンのカードが３枚以上で水文明があり、その攻撃中に「ニンジャ・ストライク」を使っていなければ、このシノビをコストを支払わずに召喚してもよい。そのターンの終わりに、このシノビを山札の下に置く）\nこのクリーチャーが出た時、カードを２枚引き、自分の手札を１枚捨てる。次の自分のターンのはじめまで、その捨てたカードと同じコストの相手のクリーチャーはすべて、攻撃もブロックもできない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "裏斬隠 テンサイ・ハート",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex1-057",
+      "power_text": "3000",
+      "power_value": 3000,
+      "product_name": "DM25-EX1 愛感謝祭 ヒロインBEST",
+      "races": [
+        "サイバー・ウイルス",
+        "グレートメカオー",
+        "シノビ"
+      ]
+    }
+  },
+  {
+    "id": 3080,
+    "name": "星光の精霊龍 ベルフォール",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex1-055",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25EX1 55/89",
+      "card_texts": [
+        "ジャストダイバー（このクリーチャーが出た時、次の自分のターンのはじめまで、このクリーチャーは相手に選ばれず、攻撃されない）\n相手のクリーチャーが、相手の手札以外から出る時、かわりにそれを持ち主の手札に加える。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 4,
+      "cost_is_infinite": false,
+      "name": "星光の精霊龍 ベルフォール",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex1-055",
+      "power_text": "5000",
+      "power_value": 5000,
+      "product_name": "DM25-EX1 愛感謝祭 ヒロインBEST",
+      "races": [
+        "エンジェル・コマンド・ドラゴン"
+      ]
+    }
+  },
+  {
+    "id": 3414,
+    "name": "サーイ=サイクル",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25sd1-009",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM25SD1 9/13",
+      "card_texts": [
+        "自分のターンのはじめに、自分の山札の上から１枚を墓地に置く。その後、自分のシールドを１つ手札に加える。ただし、その「S・トリガー」は使えない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "サーイ=サイクル",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25sd1-009",
+      "power_text": "2000",
+      "power_value": 2000,
+      "product_name": "DM25-SD1 いきなりつよいデッキ 技の王道",
+      "races": [
+        "アビスロイヤル"
+      ]
+    }
+  },
+  {
+    "id": 3603,
+    "name": "宇宙妖精エリンギ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24bd5-006",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM24BD5 6/60",
+      "card_texts": [
+        "{STP} S・トリガー・プラス（このクリーチャーを自分のシールドゾーンから手札に加える時、コストを支払わずにすぐ召喚してもよい。それが相手のターンで、そのターン中に自分のシールドが２つ以上ブレイクされていれば、このクリーチャーに{x+}能力を与える）\n{x+} このクリーチャーが出た時、相手のクリーチャーをすべてタップする。\nブロッカー\nこのクリーチャーが出た時、カードを２枚引く。その後、自分の手札を１枚マナゾーンに置いてもよい。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "water",
+        "nature"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "宇宙妖精エリンギ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24bd5-006",
+      "power_text": "4500",
+      "power_value": 4500,
+      "product_name": "DM24-BD5 エキサイティング・デュエパ・デッキ アセビと異世界フェアリーたち",
+      "races": [
+        "スノーフェアリー"
+      ]
+    }
+  },
+  {
+    "id": 3882,
+    "name": "金天使 エン・ゴルギーニ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24ex3-006",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM24EX3 6/80",
+      "card_texts": [
+        "ハイパーエナジー（このクリーチャーを召喚する時、コストが異なる自分のクリーチャーを好きな数タップしてもよい。こうしてタップしたクリーチャー１体につき、このクリーチャーの召喚コストを２少なくする。ただし、コストは０以下にはならない）\nブロッカー\nW・ブレイカー\nこのクリーチャーが出た時または攻撃する時、自分の他のクリーチャーを１体選んでもよい。次の自分のターンのはじめまで、そのクリーチャーは離れない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "金天使 エン・ゴルギーニ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24ex3-006",
+      "power_text": "6000",
+      "power_value": 6000,
+      "product_name": "DM24-EX3 刺激爆発デュエナマイトパック",
+      "races": [
+        "メカ・エンジェル・コマンド"
+      ]
+    }
+  },
+  {
+    "id": 3885,
+    "name": "タイク・タイソンズ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24ex3-TF36",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM24EX3 TF36/TF46",
+      "card_texts": [
+        "Jチェンジ４（このクリーチャーが攻撃する時、このクリーチャーと自分のマナゾーンにあるコスト４以下のジョーカーズ・クリーチャー１体を入れ替えてもよい）\nこのクリーチャーが離れた時、自分の山札の上から１枚目をマナゾーンに置く。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "タイク・タイソンズ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24ex3-TF36",
+      "power_text": "1000",
+      "power_value": 1000,
+      "product_name": "DM24-EX3 刺激爆発デュエナマイトパック",
+      "races": [
+        "ジョーカーズ"
+      ]
+    }
+  },
+  {
+    "id": 4186,
+    "name": "ジョジョジョ・マキシマム",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24ex2-024",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM24EX2 24/100",
+      "card_texts": [
+        "G・ゼロ：バトルゾーンまたはマナゾーンに自分のジョーカーズが合計11枚以上あれば、この呪文をコストを支払わずに唱えてもよい。\n自分のクリーチャーを数える。このターン、自分のクリーチャー１体はその数のシールドを追加でブレイクし、そのクリーチャーの攻撃中、相手は呪文を唱えられない。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "zero"
+      ],
+      "cost": 9,
+      "cost_is_infinite": false,
+      "name": "ジョジョジョ・マキシマム",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24ex2-024",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM24-EX2 天下夢双!!デュエキングDreaM 2024",
+      "races": [
+        "ジョーカーズ"
+      ]
+    }
+  },
+  {
+    "id": 4384,
+    "name": "次元の霊峰",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24bd1-021",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM24BD1 21/21",
+      "card_texts": [
+        "自分の山札を見る。その中から多色クリーチャーを１体選んで表向きにし、手札に加えてもよい。その後、山札をシャッフルする。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "次元の霊峰",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24bd1-021",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM24-BD1 ドリーム英雄譚デッキ ドギラゴンの書",
+      "races": []
+    }
+  },
+  {
+    "id": 4449,
+    "name": "勝熱と弾丸と自由の決断",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24bd2-008",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM24BD2 8/16",
+      "card_texts": [
+        "G・ゼロ：バトルゾーンまたはマナゾーンに自分のジョーカーズが合計７枚以上あれば、この呪文をコストを支払わずに唱えてもよい。\n次の中から２回選ぶ。（同じものを選んでもよい）\n▶バトルゾーンにある、コスト３以下のカードを１枚選び、持ち主の山札の下に置く。\n▶このターン、自分のクリーチャー１体は相手プレイヤーを攻撃できる。\n▶相手のクリーチャーを１体選ぶ。このターン、そのクリーチャーの能力をすべて無視する。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "zero"
+      ],
+      "cost": 4,
+      "cost_is_infinite": false,
+      "name": "勝熱と弾丸と自由の決断",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm24bd2-008",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DM24-BD2 ドリーム英雄譚デッキ ジョニーの書",
+      "races": [
+        "ジョーカーズ"
+      ]
+    }
+  },
+  {
+    "id": 5196,
+    "name": "龍月 ドラグ・スザーク / 龍・獄・殺",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm23rp4x-TR06",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM23RP4X TR6/TR9",
+      "card_texts": [
+        "ムゲンクライム ４（自分のクリーチャーを４体タップし、 [dd04]支払って、このクリーチャーを自分の手札または墓地から召喚してもよい）\nW・ブレイカー\nこのクリーチャーが出た時、GR召喚を４回する。",
+        "カードを１枚引き、自分の手札を１枚捨てる。\nGR召喚する。（GR召喚：自分の超GRの上から１枚目を、コストを支払ったものとして召喚する）"
+      ],
+      "card_types": [
+        "クリーチャー",
+        "呪文"
+      ],
+      "civilizations": [
+        "darkness",
+        "water"
+      ],
+      "cost": 10,
+      "cost_is_infinite": false,
+      "name": "龍月 ドラグ・スザーク / 龍・獄・殺",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm23rp4x-TR06",
+      "power_text": "11000",
+      "power_value": 11000,
+      "product_name": "DM23-RP4X アビス・レボリューション 第4弾 「竜皇神爆輝」 超刺激パック",
+      "races": [
+        "ドルスザク・ドラゴン",
+        "チーム零"
+      ]
+    }
+  },
+  {
+    "id": 5235,
+    "name": "DARK MATERIAL COMPLEX",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm23rp4x-02A",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM23RP4X 2A/20",
+      "card_texts": [
+        "ワールド・ブレイカー（このクリーチャーは相手のシールドをすべてブレイクする）\nこのクリーチャーはタップして出る。\n他のクリーチャーが離れた時、または自分のターンのはじめに、自分の山札の上から１枚目を表向きにして、このクリーチャーの下に置いてもよい。\nこのクリーチャーの下のカードが７枚以下なら、このクリーチャーは離れず、アンタップしない。\nこのクリーチャーの下に８枚目のカードが置かれた時、このクリーチャーをアンタップする。\nこのクリーチャーが攻撃する時、このクリーチャーの下にあるカードを１枚、墓地に置いてもよい。そのカードがクリーチャーなら、自分の墓地から出す。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 1,
+      "cost_is_infinite": false,
+      "name": "DARK MATERIAL COMPLEX",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm23rp4x-02A",
+      "power_text": "25000",
+      "power_value": 25000,
+      "product_name": "DM23-RP4X アビス・レボリューション 第4弾 「竜皇神爆輝」 超刺激パック",
+      "races": [
+        "パンドラボックス"
+      ]
+    }
+  },
+  {
+    "id": 5770,
+    "name": "夜露死苦 キャロル",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm23ex1-062",
+    "status": 200,
+    "metadata": {
+      "card_number": "DM23EX1 62/84",
+      "card_texts": [
+        "このクリーチャーがどこからでも墓地に置かれる時、自分のマナゾーンに水と火の文明があれば、このクリーチャーを墓地に置くかわりに手札に戻す。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water",
+        "fire"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "夜露死苦 キャロル",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm23ex1-062",
+      "power_text": "2000",
+      "power_value": 2000,
+      "product_name": "DM23-EX1 大感謝祭 ビクトリーBEST",
+      "races": [
+        "アウトレイジ"
+      ]
+    }
+  },
+  {
+    "id": 7057,
+    "name": "グレープ・ダール",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-016",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX19 16/68",
+      "card_texts": [
+        "マッハファイター（このクリーチャーは、出たターンの間、タップまたはアンタップしているクリーチャーを攻撃できる）\nJチェンジ６（このクリーチャーが攻撃する時、このクリーチャーと自分のマナゾーンにあるコスト６以下のジョーカーズ１体を入れ替えてもよい）\nこのクリーチャーが出た時、自分の山札の上から２枚をマナゾーンに置いてもよい。そうしたら、カードを１枚、自分のマナゾーンから墓地に置く。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "グレープ・ダール",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-016",
+      "power_text": "5000",
+      "power_value": 5000,
+      "product_name": "DMEX-19 マスター・ファイナル・メモリアル・パック",
+      "races": [
+        "ジョーカーズ",
+        "スペシャルズ"
+      ]
+    }
+  },
+  {
+    "id": 7107,
+    "name": "ジョリー・ザ・ジョルネード",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-m28",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX19 M28/M40",
+      "card_texts": [
+        "マスターJトルネード：相手のターンの終わりに、このクリーチャーが自分の手札にあり、このターン中に自分の他の「マスターJトルネード」能力をまだ使っていなければ、自分のジョーカーズ・クリーチャーをコストの合計が10以上になるように好きな数選び、手札に戻してもよい。そうしたら、このクリーチャーを出す。\nW・ブレイカー\nこのクリーチャーが出た時、GR召喚を３回する。\n自分のジョーカーズはブロックされない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 7,
+      "cost_is_infinite": false,
+      "name": "ジョリー・ザ・ジョルネード",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-m28",
+      "power_text": "10000",
+      "power_value": 10000,
+      "product_name": "DMEX-19 マスター・ファイナル・メモリアル・パック",
+      "races": [
+        "ジョーカーズ",
+        "ワンダフォース"
+      ]
+    }
+  },
+  {
+    "id": 7147,
+    "name": "大卍罪 ド・ラガンザーク 卍",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-m33",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX19 M33/M40",
+      "card_texts": [
+        "罪・無月の大罪（自分の墓地にあるオーラ１枚につき、このオーラを使うコストを１少なくしてもよい。そうしたら、このターンの終わりに、自分のクリーチャーを１体破壊する。ただし、コストは０以下にならない）\nこれをクリーチャーに付けた時、またはこれを付けたクリーチャーが攻撃する時、コスト８以下のオーラを２枚まで自分の墓地から選び、そのクリーチャーに付ける。\nこれが破壊される時、墓地に置くかわりに山札の下に置く。\n相手のターンの終わりに、これを自分の墓地から山札の上に置いてもよい。"
+      ],
+      "card_types": [
+        "オレガ・オーラ"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 10,
+      "cost_is_infinite": false,
+      "name": "大卍罪 ド・ラガンザーク 卍",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-m33",
+      "power_text": "0",
+      "power_value": 0,
+      "product_name": "DMEX-19 マスター・ファイナル・メモリアル・パック",
+      "races": [
+        "マスター・ドルスザク",
+        "マフィ・ギャング",
+        "デリートロン"
+      ]
+    }
+  },
+  {
+    "id": 7154,
+    "name": "♪銀河の裁きに勝てるもの無し",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-057",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX19 57/68",
+      "card_texts": [
+        "GR召喚する。（GR召喚：自分の超GRの上から１枚目を、コストを支払ったものとして召喚する）\nコスト３以下の呪文を１枚、コストを支払わずに自分の手札から唱えてもよい。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "light"
+      ],
+      "cost": 3,
+      "cost_is_infinite": false,
+      "name": "♪銀河の裁きに勝てるもの無し",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex19-057",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DMEX-19 マスター・ファイナル・メモリアル・パック",
+      "races": []
+    }
+  },
+  {
+    "id": 7504,
+    "name": "バーンメア・ザ・シルバー / オラオラ・スラッシュ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp20-a12",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMRP20 12A/20",
+      "card_texts": [
+        "W・ブレイカー\nこのクリーチャーが出た時、GR召喚を２回する。このターン、それらのGRクリーチャーに「スピードアタッカー」を与える。",
+        "S・トリガー\n次の自分のターンのはじめまで、相手のクリーチャーが攻撃する時、可能ならクリーチャーを攻撃する。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "fire",
+        "nature"
+      ],
+      "cost": 6,
+      "cost_is_infinite": false,
+      "name": "バーンメア・ザ・シルバー / オラオラ・スラッシュ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp20-a12",
+      "power_text": "6000",
+      "power_value": 6000,
+      "product_name": "DMRP-20 王来篇拡張パック第4弾 終末王龍大戦",
+      "races": [
+        "ジョーカーズ",
+        "ワンダフォース"
+      ]
+    }
+  },
+  {
+    "id": 7526,
+    "name": "戦国接続 ギャラクテスト・シデンシーザー",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp20-s09",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMRP20 S9/S11",
+      "card_texts": [
+        "EXライフ（このクリーチャーを出す時、自分の山札の上から１枚目をシールド化する。このクリーチャーが離れる時、かわりにそのシールドを墓地に置く）\nW・ブレイカー\nこのクリーチャーが出た時、カードを３枚まで、自分のマナゾーンまたは墓地から手札に戻す。\n自分のディスタスとディスペクターの召喚コストを最大２少なくする。ただし、コストは０以下にはならない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light",
+        "darkness",
+        "nature"
+      ],
+      "cost": 8,
+      "cost_is_infinite": false,
+      "name": "戦国接続 ギャラクテスト・シデンシーザー",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp20-s09",
+      "power_text": "14000",
+      "power_value": 14000,
+      "product_name": "DMRP-20 王来篇拡張パック第4弾 終末王龍大戦",
+      "races": [
+        "ディスペクター",
+        "ナイト",
+        "サムライ"
+      ]
+    }
+  },
+  {
+    "id": 7795,
+    "name": "スゴ腕プロジューサー / りんご娘はさんにんっ娘",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex17-047",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX17 47/138",
+      "card_texts": [
+        "ブロッカー\nこのクリーチャーが出た時または離れた時、GR召喚する。",
+        "S・トリガー\nこのカードを出す。\nこのターンの終わりに、このカードをバトルゾーンから自分のマナゾーンに置く。"
+      ],
+      "card_types": [
+        "クリーチャー",
+        "呪文"
+      ],
+      "civilizations": [
+        "water",
+        "nature"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "スゴ腕プロジューサー / りんご娘はさんにんっ娘",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex17-047",
+      "power_text": "3000",
+      "power_value": 3000,
+      "product_name": "DMEX-17 20周年超感謝メモリアルパック 究極の章 デュエキングMAX",
+      "races": [
+        "ジョーカーズ",
+        "ワンダフォース"
+      ]
+    }
+  },
+  {
+    "id": 7802,
+    "name": "希望の絆 鬼修羅",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex17-017",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX17 17/138",
+      "card_texts": [
+        "W・ブレイカー\nこのクリーチャーが出た時または離れた時、相手とガチンコ・ジャッジする。自分が勝ったら、次のうちいずれか１つを選ぶ。\n▼{Victory Icon}（ビクトリー）を持つクリーチャーを１体、またはコスト10以上のクリーチャーを１体、自分の手札から出す。\n▼自分の山札を見る。その中から{Victory Icon}（ビクトリー）を持つクリーチャー１体、またはコスト10以上のクリーチャーを１体相手に見せ、手札に加える。その後、山札をシャッフルする。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "fire"
+      ],
+      "cost": 8,
+      "cost_is_infinite": false,
+      "name": "希望の絆 鬼修羅",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex17-017",
+      "power_text": "8000",
+      "power_value": 8000,
+      "product_name": "DMEX-17 20周年超感謝メモリアルパック 究極の章 デュエキングMAX",
+      "races": [
+        "レッド・コマンド・ドラゴン",
+        "ヒューマノイド"
+      ]
+    }
+  },
+  {
+    "id": 7949,
+    "name": "天翼 クリティブ-１",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp19-031",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMRP19 31/95",
+      "card_texts": [
+        "相手が、自身のマナゾーンのカードの枚数よりコストが大きいクリーチャーを出した時、相手はそのクリーチャーを山札の下に置く。\nササゲール１（ディスペクターを召喚する時、コストを１少なくしてもよい。そうしたら、このクリーチャーを破壊する。そのディスペクターのコストは０以下にはならない）"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "天翼 クリティブ-１",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp19-031",
+      "power_text": "2500",
+      "power_value": 2500,
+      "product_name": "DMRP-19 王来篇拡張パック第3弾 禁断龍VS禁断竜",
+      "races": [
+        "ジャスティス・ウイング",
+        "ディスタス"
+      ]
+    }
+  },
+  {
+    "id": 7993,
+    "name": "霊刑連結 ジゴク・パルテノン",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp19-036",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMRP19 36/95",
+      "card_texts": [
+        "EXライフ（このクリーチャーを出す時、自分の山札の上から１枚目をシールド化する。このクリーチャーが離れる時、かわりにそのシールドを墓地に置く）\nW・ブレイカー（このクリーチャーはシールドを２つブレイクする）\n自分のターンの終わりに、相手は自身の手札を１枚選び、捨てる。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "霊刑連結 ジゴク・パルテノン",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp19-036",
+      "power_text": "6000",
+      "power_value": 6000,
+      "product_name": "DMRP-19 王来篇拡張パック第3弾 禁断龍VS禁断竜",
+      "races": [
+        "ディスペクター",
+        "デーモン・コマンド",
+        "アーク・セラフィム"
+      ]
+    }
+  },
+  {
+    "id": 8083,
+    "name": "熊四駆 ベアシガラ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex16-017",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX16 17/100",
+      "card_texts": [
+        "キリフダッシュ [nn04] (自分のクリーチャーの攻撃の終わりに、そのクリーチャーがその攻撃中にシールドをブレイクしていれば、このクリーチャーを [nn04] 支払って召喚してもよい）\nW・ブレイカー\nこのクリーチャーが出た時、自分の山札の上から２枚をマナゾーンに置く。その後、クリーチャーを１体、自分のマナゾーンから手札に戻してもよい。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 7,
+      "cost_is_infinite": false,
+      "name": "熊四駆 ベアシガラ",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex16-017",
+      "power_text": "8000",
+      "power_value": 8000,
+      "product_name": "DMEX-16 20周年超感謝メモリアルパック 技の章 英雄戦略パーフェクト20",
+      "races": [
+        "ジョーカーズ",
+        "チーム切札"
+      ]
+    }
+  },
+  {
+    "id": 9847,
+    "name": "運命の選択",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex08-280",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX08 280/???",
+      "card_texts": [
+        "自分の手札を１枚表向きにする。\nそれが自然のカードなら、自分の山札を見る。その中から自然のコスト３以下のクリーチャーを１体、バトルゾーンに出してもよい。その後、山札をシャッフルする。\nそれが火のカードなら、このターン、自分のクリーチャー１体に「スピードアタッカー」を与える。\nそれが光のカードなら、このターンの終わりに、自分のクリーチャーを１体アンタップする。"
+      ],
+      "card_types": [
+        "呪文"
+      ],
+      "civilizations": [
+        "nature"
+      ],
+      "cost": 4,
+      "cost_is_infinite": false,
+      "name": "運命の選択",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex08-280",
+      "power_text": null,
+      "power_value": null,
+      "product_name": "DMEX-08 謎のブラックボックスパック",
+      "races": []
+    }
+  },
+  {
+    "id": 10015,
+    "name": "トンカチ・シュモック",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp12-s06",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMRP12 S6/S12",
+      "card_texts": [
+        "W・ブレイカー\nこのクリーチャーがバトルゾーンに出た時、GR召喚する。\nこのクリーチャーが攻撃する時、Jトルネードを４回してもよい。そうしたら、このターンの後にもう一度自分のターンを行う。この能力は、追加ターンでは使えない。（Jトルネード：自分の他のジョーカーズを１体、手札に戻す）"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 6,
+      "cost_is_infinite": false,
+      "name": "トンカチ・シュモック",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp12-s06",
+      "power_text": "6000",
+      "power_value": 6000,
+      "product_name": "DMRP-12 超天篇 拡張パック第4弾 超超超天！覚醒ジョギラゴン vs. 零龍卍誕",
+      "races": [
+        "ジョーカーズ",
+        "ワンダフォース",
+        "スペシャルズ"
+      ]
+    }
+  },
+  {
+    "id": 10742,
+    "name": "音奏 ハイオリーダ / 音奏曲第3番「幻惑」",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex05-021",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX05 21/87",
+      "card_texts": [
+        "ブロッカー\nこのクリーチャーがバトルゾーンに出た時、自分の山札の上から１枚目を裏向きのまま、新しいシールドとして自分のシールドゾーンに置く。\n自分のシールドゾーンにカードが置かれた時、GR召喚する。",
+        "カードを１枚引き、その後、自分の手札を１枚裏向きのまま、新しいシールドとして自分のシールドゾーンに置く。その後、カードを１枚、自分のシールドゾーンから墓地に置く。"
+      ],
+      "card_types": [
+        "クリーチャー",
+        "呪文"
+      ],
+      "civilizations": [
+        "light",
+        "water"
+      ],
+      "cost": 5,
+      "cost_is_infinite": false,
+      "name": "音奏 ハイオリーダ / 音奏曲第3番「幻惑」",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex05-021",
+      "power_text": "4000",
+      "power_value": 4000,
+      "product_name": "DMEX-05 100%新世界！超GRパック100",
+      "races": [
+        "メタリカ",
+        "ワンダフォース"
+      ]
+    }
+  },
+  {
+    "id": 11986,
+    "name": "魔龍バベルギヌス",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex01-023",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMEX01 23/80",
+      "card_texts": [
+        "このクリーチャーがバトルゾーンに出た時、プレイヤーを１人選ぶ。そのプレイヤーのクリーチャーを１体破壊してもよい。そうしたら、そのプレイヤーの墓地から、《魔龍バベルギヌス》以外の進化ではないクリーチャーを１体選び、バトルゾーンに出す。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 7,
+      "cost_is_infinite": false,
+      "name": "魔龍バベルギヌス",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmex01-023",
+      "power_text": "1000",
+      "power_value": 1000,
+      "product_name": "DMEX-01 ゴールデン・ベスト",
+      "races": [
+        "ドラゴン・ゾンビ",
+        "グランド・デビル"
+      ]
+    }
+  },
+  {
+    "id": 13181,
+    "name": "エメラル",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx22b-023",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMX22 23/？？？",
+      "card_texts": [
+        "このクリーチャーがバトルゾーンに出た時、自分の手札を１枚裏向きにして、新しいシールドとしてシールドゾーンに置いてもよい。そうしたら、自分のシールドをひとつ、手札に戻す。ただし、その「S・トリガー」は使えない。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "water"
+      ],
+      "cost": 2,
+      "cost_is_infinite": false,
+      "name": "エメラル",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx22b-023",
+      "power_text": "1000",
+      "power_value": 1000,
+      "product_name": null,
+      "races": [
+        "サイバーロード"
+      ]
+    }
+  },
+  {
+    "id": 15103,
+    "name": "偽りの羅刹 アガサ・エルキュール",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx11-015",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMX11 15/84",
+      "card_texts": [
+        "相手がクリーチャーをバトルゾーンに出した時、自分のシールドをすべて見て、その中から進化ではないデーモン・コマンドを１体選び、バトルゾーンに出してもよい。\n相手が呪文を唱えた時、自分のシールドをすべて見て、その中から呪文を１枚選び、コストを支払わずに唱えてもよい。\nT・ブレイカー(このクリーチャーはシールドを３枚ブレイクする)"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "light"
+      ],
+      "cost": 9,
+      "cost_is_infinite": false,
+      "name": "偽りの羅刹 アガサ・エルキュール",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx11-015",
+      "power_text": "13500",
+      "power_value": 13500,
+      "product_name": null,
+      "races": [
+        "デーモン・コマンド",
+        "アンノウン"
+      ]
+    }
+  },
+  {
+    "id": 16824,
+    "name": "邪眼皇アレクサンドルIII世",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=c48-SEC001",
+    "status": 200,
+    "metadata": {
+      "card_number": "DMC48 ㊙1/㊙2",
+      "card_texts": [
+        "W・ブレイカー\n自分の手札または墓地から光、水、闇の呪文を唱えた時、バトルゾーンに自分のナイトが他に１枚でもあれば、自分の山札を見る。その中から、唱えた呪文と同じ名前の呪文を１枚選び、ストを支払わずに唱えてもよい。その後、山札をシャッフルする。"
+      ],
+      "card_types": [
+        "クリーチャー"
+      ],
+      "civilizations": [
+        "darkness"
+      ],
+      "cost": 7,
+      "cost_is_infinite": false,
+      "name": "邪眼皇アレクサンドルIII世",
+      "name_kana": null,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=c48-SEC001",
+      "power_text": "6000",
+      "power_value": 6000,
+      "product_name": null,
+      "races": [
+        "ダークロード",
+        "ドラゴン・ゾンビ",
+        "ナイト"
+      ]
+    }
+  }
+]

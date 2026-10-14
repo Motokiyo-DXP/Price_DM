@@ -1,0 +1,42 @@
+[
+  {
+    "audit": {
+      "total": 11834,
+      "checked_at": "2026-10-14T04:04:35.819265+00:00",
+      "empty_races": 1742,
+      "null_reading": 132,
+      "infinite_cost": 7,
+      "missing_types": 41,
+      "null_power_text": 2234,
+      "power_without_text": 0,
+      "missing_civilizations": 49,
+      "null_cost_non_infinite": 56,
+      "outside_ex4_empty_civilizations": [
+        {
+          "id": 21775,
+          "name": "DECKY THE HALL",
+          "types": [
+            "呪文"
+          ],
+          "provenance": {}
+        },
+        {
+          "id": 21228,
+          "name": "邪新年 ～ENTER THE DRAGON～",
+          "types": [
+            "ドラゴニック・フィールド"
+          ],
+          "provenance": {}
+        },
+        {
+          "id": 22102,
+          "name": "Katta's Crew is Coming to Town",
+          "types": [
+            "呪文"
+          ],
+          "provenance": {}
+        }
+      ]
+    }
+  }
+]

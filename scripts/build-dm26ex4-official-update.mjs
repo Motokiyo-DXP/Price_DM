@@ -2,6 +2,9 @@ import {buildReconciliationSql,officialCardId} from './build-dm26ex4-reconciliat
 const q=v=>`'${String(v).replaceAll("'","''")}'`;
 const json=v=>`${q(JSON.stringify(v))}::jsonb`;
 const columns=new Set(['name_kana','cost','cost_is_infinite','civilizations','card_types','races','power_text','power_value','card_texts']);
+export function normalizedTextArraySql(expression){
+ return `(select coalesce(jsonb_agg(replace(part.value,chr(13)||chr(10),chr(10)) order by part.ordinality),'[]'::jsonb) from jsonb_array_elements_text(case when jsonb_typeof(${expression})='array' then ${expression} else '[]'::jsonb end) with ordinality as part(value,ordinality))`;
+}
 
 // Supply explicit field availability from audited official detail pages. Unavailable
 // fields are retained, while official_absent clears only source-owned provisional values.
@@ -23,11 +26,13 @@ export function buildOfficialUpdateSql(records){
    if(item.status==='unavailable')continue;
    const isPrint=field==='card_texts',table=isPrint?'card_prints':'canonical_cards';
    const value=item.status==='official_absent'?(field==='cost_is_infinite'?false:['civilizations','card_types','races','card_texts'].includes(field)?[]:null):item.value;
-   const encoded=Array.isArray(value)?`array[${value.map(q).join(',')}]::text[]`:value===null?'null':typeof value==='string'?q(value):String(value);
+   const encoded=Array.isArray(value)?`array(select jsonb_array_elements_text(${json(value)}))::text[]`:value===null?'null':typeof value==='string'?q(value):String(value);
    const empty=Array.isArray(value)?`cardinality(t.${field})=0`:field==='cost_is_infinite'?`not t.cost_is_infinite`:`t.${field} is null`;
    const identity=isPrint?`t.card_number=${q(r.card_number)} and t.product_id=(select id from public.card_products where product_code='DM26-EX4')`:
     `t.id=(select p.canonical_card_id from public.card_prints p where p.card_number=${q(r.card_number)} and p.product_id=(select id from public.card_products where product_code='DM26-EX4'))`;
-   const owned=`t.metadata_provenance->${q(field)}->>'source' in ('dmwiki','official_catalog') and to_jsonb(t.${field}) is not distinct from t.metadata_provenance->${q(field)}->'value'`;
+   const current=isPrint?normalizedTextArraySql(`to_jsonb(t.${field})`):`to_jsonb(t.${field})`;
+   const imported=isPrint?normalizedTextArraySql(`t.metadata_provenance->${q(field)}->'value'`):`t.metadata_provenance->${q(field)}->'value'`;
+   const owned=`t.metadata_provenance->${q(field)}->>'source' in ('dmwiki','official_product_image','official_catalog') and ${current} is not distinct from ${imported}`;
    sql+=`do $$ begin if exists(select 1 from public.${table} t where ${identity} and not (${empty} or (${owned}) or t.${field} is not distinct from ${encoded})) then raise exception 'Unowned or manually edited field ${field}; stop for review'; end if; end $$;\n`;
    const group=updates.get(table)??{identity,fields:[],provenance:{}};
    group.fields.push(`${field}=${encoded}`);group.provenance[field]={source:'official_catalog',verified:true,source_url:r.official_url,status:item.status,value};updates.set(table,group);

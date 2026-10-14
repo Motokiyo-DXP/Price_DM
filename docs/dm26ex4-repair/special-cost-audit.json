@@ -1,0 +1,227 @@
+[
+  {
+    "id": 26,
+    "name": "新世界王の破壊",
+    "card_types": [
+      "キング・セル",
+      "呪文"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-TD17",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "13"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 210,
+    "name": "13番目の計画",
+    "card_types": [
+      "ルール・プラス",
+      "サイキック・クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex4-T03",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "7"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 828,
+    "name": "新世界王の思想",
+    "card_types": [
+      "キング・セル",
+      "キング・クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex1-004",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "9"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 833,
+    "name": "新世界王の闘気",
+    "card_types": [
+      "キング・セル",
+      "キング・クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex1-005",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "9"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 837,
+    "name": "新世界王の権威",
+    "card_types": [
+      "キング・セル",
+      "キング・クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex1-003",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "9"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 982,
+    "name": "禁断 ～封印されしX～",
+    "card_types": [
+      "禁断の鼓動",
+      "禁断クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex4-TR04",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "99"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 1118,
+    "name": "新世界王の創造",
+    "card_types": [
+      "キング・セル",
+      "呪文"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm25ex3-TD16",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "13"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 6910,
+    "name": "破壊の儀",
+    "card_types": [
+      "零龍星雲",
+      "零龍クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd22-004",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "0"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 6954,
+    "name": "墓地の儀",
+    "card_types": [
+      "零龍星雲",
+      "零龍クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd22-003",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "0"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 6960,
+    "name": "手札の儀",
+    "card_types": [
+      "零龍星雲",
+      "零龍クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd22-002",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "0"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 6962,
+    "name": "滅亡の起源 零無",
+    "card_types": [
+      "零龍の儀",
+      "零龍クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd22-001",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "0"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 7038,
+    "name": "FORBIDDEN STAR ～世界最後の日～",
+    "card_types": [
+      "最終禁断フィールド",
+      "最終禁断クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd21-001",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "999"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 7072,
+    "name": "復活の儀",
+    "card_types": [
+      "零龍星雲",
+      "零龍クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmbd22-005",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "0"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 21397,
+    "name": "王の覇気",
+    "card_types": [
+      "キング・セル",
+      "キング・クリーチャー"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy20-cp14",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "7"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  },
+  {
+    "id": 21463,
+    "name": "王の思念",
+    "card_types": [
+      "キング・セル",
+      "{キング・クリーチャー}"
+    ],
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy20-cp13",
+    "http_status": 200,
+    "official_costs": [
+      "",
+      "7"
+    ],
+    "availability": "official_first_face_has_no_numeric_cost"
+  }
+]
