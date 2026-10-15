@@ -5,10 +5,26 @@ import{spawnSync}from'node:child_process';
 import{buildRepairSql}from'./build-dm26ex4-metadata-repair.mjs';
 import{buildCompleteSql}from'./build-dm26ex4-complete.mjs';
 import{normalizedTextArraySql}from'./build-dm26ex4-official-update.mjs';
+import{buildReleaseSql}from'./dm26ex4-release-guard.mjs';
 const container=process.env.DM26EX4_LOCAL_CONTAINER;
 if(!container||container!=='price-dm-ex4-repair-20261014')throw Error('Explicit isolated local validation container is required');
 const baseline=JSON.parse(readFileSync(new URL('../docs/dm26ex4-baseline-20261014.json',import.meta.url),'utf8'));
 const plan=JSON.parse(readFileSync(new URL('../docs/dm26ex4-repair/plan.json',import.meta.url),'utf8'));
+test('bounded release wrapper executes with literal dollar quotes and rollback',()=>{
+ const source=readFileSync(new URL('./dm26ex4-metadata-repair.sql',import.meta.url),'utf8');
+ const sql=buildReleaseSql(source,{rollback:true});
+ assert.doesNotMatch(sql,/jsonb_agg/u);
+ const r=spawnSync('docker',['exec','-i',container,'psql','-U','supabase_admin','-d','postgres','-v','ON_ERROR_STOP=1'],{input:sql,encoding:'utf8'});
+ assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/ROLLBACK/u);
+});
+test('bounded release guard rejects an unexpected product change and rolls it back',()=>{
+ const before=query('select to_jsonb(p) from card_products p where id=266');
+ const source=readFileSync(new URL('./dm26ex4-metadata-repair.sql',import.meta.url),'utf8');
+ const sql=buildReleaseSql(source,{rollback:true}).replace('do $release$ declare',()=>"update public.card_products set product_code=product_code||'_scope_test' where id=266;\ndo $release$ declare");
+ const r=spawnSync('docker',['exec','-i',container,'psql','-U','supabase_admin','-d','postgres','-v','ON_ERROR_STOP=1'],{input:sql,encoding:'utf8'});
+ assert.notEqual(r.status,0);assert.match(r.stderr,/Outside repair scope changed/u);
+ assert.equal(query('select to_jsonb(p) from card_products p where id=266'),before);
+});
 function query(sql){const r=spawnSync('docker',['exec',container,'psql','-U','supabase_admin','-d','postgres','-At','-v','ON_ERROR_STOP=1','-c',sql],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);return r.stdout.trim();}
 test('real PostgreSQL diff equals the planned repair; every other field and ID is preserved',()=>{
  for(const [table,rows]of[['canonical_cards',baseline.cards],['card_prints',baseline.prints]]){
