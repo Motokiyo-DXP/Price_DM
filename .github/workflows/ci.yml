@@ -28,6 +28,9 @@ jobs:
       - name: Test production DB safety
         run: npm run test:db-safety
 
+      - name: Test shopping list sharing authorization
+        run: npm run test:shopping-sharing
+
       - name: Test Rule Engine
         run: npm run test:rule
 

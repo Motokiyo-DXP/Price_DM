@@ -61,9 +61,21 @@ export async function loadCardDetail(
     };
   }
 
-  const summary = summaryResult.data;
+  let summary = summaryResult.data;
   if (!summary) {
-    return { card: null, error: null };
+    const { data: canonical, error: canonicalError } = await supabase.from("canonical_cards")
+      .select("id, name, name_kana, game_id, aliases, aliases_kana").eq("id", canonicalCardId).is("deleted_at", null).maybeSingle();
+    if (canonicalError) return { card: null, error: "カードを読み込めませんでした。" };
+    if (!canonical) return { card: null, error: null };
+    const { data: game } = await supabase.from("tcg_games").select("name, slug").eq("id", canonical.game_id).maybeSingle();
+    summary = {
+      canonical_card_id: canonical.id, name: canonical.name, name_kana: canonical.name_kana,
+      game_id: canonical.game_id, game_name: game?.name ?? null, game_slug: game?.slug ?? null,
+      aliases: canonical.aliases, aliases_kana: canonical.aliases_kana, print_count: 0,
+      sale_price: null, buy_price: null, sale_record_count: 0, buy_record_count: 0,
+      sale_trend: null, buy_trend: null, stock_status: "unknown", last_observed_on: null,
+      is_stale: false, uses_print_fallback: false,
+    };
   }
 
   const detailErrors = [

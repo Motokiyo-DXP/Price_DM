@@ -11,6 +11,8 @@ export const config = {
     "/decks/:path*",
     "/rooms/:path*",
     "/register/:path*",
+    "/shopping-list/:path*",
+    "/api/shopping-list/:path*",
     "/api/registration-session",
     "/api/price-records",
     "/api/shop-candidates",

@@ -41,7 +41,7 @@ import {
 } from "@/lib/registration-shop-selection";
 import { STOCK_STATUS_LABELS, StockStatus } from "@/lib/types";
 import { ShopCorrectionForm } from "@/components/shop-correction-form";
-import { CardArtwork } from "@/components/card-artwork";
+import { ExpandableCardArtwork } from "@/components/expandable-card-artwork";
 import { getCardImageUrl } from "@/lib/card-image";
 
 type SearchMode = "broad" | "precise";
@@ -874,7 +874,7 @@ export default function RegisterPage() {
           <h2>カード情報</h2>
           {selectedCard && (
             <div className="registration-card-preview" role="status">
-              <CardArtwork imageUrl={selectedImageUrl} name={selectedCard.name} sizes="76px" />
+              <ExpandableCardArtwork imageUrl={selectedImageUrl} name={selectedCard.name} sizes="76px" />
               <strong>{selectedCard.name}</strong>
             </div>
           )}

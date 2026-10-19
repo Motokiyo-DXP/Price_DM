@@ -1262,6 +1262,12 @@ export type Database = {
       }
     }
     Functions: {
+      shopping_share_settings: { Args: Record<PropertyKey, never>; Returns: Json }
+      set_shopping_friend: { Args: { p_reader: string; p_enabled: boolean }; Returns: undefined }
+      set_shopping_url: { Args: { p_enabled: boolean }; Returns: string | null }
+      shared_shopping_lists: { Args: Record<PropertyKey, never>; Returns: { share_id: string; display_name: string }[] }
+      read_shopping_list: { Args: { p_share_id?: string; p_token?: string }; Returns: number[] }
+
       get_or_create_deck_share_token: { Args: { p_deck_id: string }; Returns: string | null }
       get_shared_deck: { Args: { p_share_token: string }; Returns: Json | null }
       deck_filter_options: {
