@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CardArtwork } from "@/components/card-artwork";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { buildShoppingListGroups, type ShoppingCard, type ShoppingListEntry, type ShoppingPriceKind, type ShoppingPriceRecord } from "@/lib/shopping-list";
@@ -9,7 +9,7 @@ import { buildShoppingListGroups, type ShoppingCard, type ShoppingListEntry, typ
 const yen = (value: number) => `${value.toLocaleString("ja-JP")}円`;
 const artworkSizes = "(max-width: 620px) 70px, 88px";
 
-function PricedShoppingCard({ entry, kind, onRemove }: { entry: ShoppingListEntry; kind: ShoppingPriceKind; onRemove: (id: number) => void }) {
+function PricedShoppingCard({ entry, kind, onRemove }: { entry: ShoppingListEntry; kind: ShoppingPriceKind; onRemove?: (id: number) => void }) {
   return (
     <article className="shopping-card shopping-card-priced">
       <Link aria-label={`${entry.name}の詳細を開く`} className="shopping-card-detail-link" href={`/cards/${entry.id}`} />
@@ -25,29 +25,30 @@ function PricedShoppingCard({ entry, kind, onRemove }: { entry: ShoppingListEntr
           <div><dt>平均価格</dt><dd>{yen(entry.averagePrice)}</dd></div>
         </dl>
       </div>
-      <button aria-label={`${entry.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(entry.id)} type="button"><span aria-hidden="true">★</span></button>
+      {onRemove && <button aria-label={`${entry.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(entry.id)} type="button"><span aria-hidden="true">★</span></button>}
     </article>
   );
 }
 
-function UnpricedShoppingCard({ card, onRemove }: { card: ShoppingCard; onRemove: (id: number) => void }) {
+function UnpricedShoppingCard({ card, onRemove }: { card: ShoppingCard; onRemove?: (id: number) => void }) {
   return (
     <article className="shopping-card shopping-card-unpriced">
-      <Link aria-label={`${card.name}の価格登録を開く`} className="shopping-card-detail-link" href={`/register?cardId=${card.id}`} />
+      <Link aria-label={`${card.name}の価格登録を開く`} className="shopping-card-detail-link" href={onRemove ? `/register?cardId=${card.id}` : `/cards/${card.id}`} />
       <CardArtwork imageUrl={card.imageUrl} name={card.name} sizes={artworkSizes} />
       <div className="shopping-card-copy">
         <h3>{card.name}</h3>
         <p>価格データがありません</p>
       </div>
-      <button aria-label={`${card.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(card.id)} type="button"><span aria-hidden="true">★</span></button>
+      {onRemove && <button aria-label={`${card.name}を買い物リストから削除`} className="shopping-remove-bookmark" onClick={() => onRemove(card.id)} type="button"><span aria-hidden="true">★</span></button>}
     </article>
   );
 }
 
-export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; records: ShoppingPriceRecord[] }) {
+export function ShoppingListView({ cards, records, readOnly = false }: { cards: ShoppingCard[]; records: ShoppingPriceRecord[]; readOnly?: boolean }) {
   const [kind, setKind] = useState<ShoppingPriceKind>("sale");
   const [showSecondChoices, setShowSecondChoices] = useState(false);
   const [removedCardIds, setRemovedCardIds] = useState<number[]>([]);
+  useEffect(() => setRemovedCardIds([]), [cards]);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const visibleCards = useMemo(() => cards.filter((card) => !removedCardIds.includes(card.id)), [cards, removedCardIds]);
   const visibleRecords = useMemo(() => records.filter((record) => !removedCardIds.includes(record.canonicalCardId)), [records, removedCardIds]);
@@ -56,6 +57,7 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
   const cardsWithoutPrices = visibleCards.filter((card) => !pricedCardIds.has(card.id));
 
   const removeBookmark = async (id: number) => {
+    if (readOnly) return;
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
       setRemoveError("買い物リストを更新できませんでした。");
@@ -71,7 +73,8 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
   };
 
   const removeAllBookmarks = async () => {
-    if (!visibleCards.length || !window.confirm(`買い物リストの${visibleCards.length}件をすべて解除しますか？`)) return;
+    if (readOnly) return;
+    if (!visibleCards.length || !window.confirm("買い物リストをすべて解除しますか？")) return;
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
       setRemoveError("買い物リストを更新できませんでした。");
@@ -79,7 +82,11 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
     }
     const ids = visibleCards.map((card) => card.id);
     setRemoveError(null);
-    const { error } = await supabase.from("account_card_bookmarks").delete().in("canonical_card_id", ids);
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) { setRemoveError("ログイン状態を確認できませんでした。"); return; }
+    // A snapshot may lag additions in another tab. Clear the authoritative list,
+    // scoped by verified ownership and the existing owner-only DELETE policy.
+    const { error } = await supabase.from("account_card_bookmarks").delete().eq("user_id", auth.user.id);
     if (error) setRemoveError("全件解除できませんでした。再度お試しください。");
     else setRemovedCardIds((current) => [...new Set([...current, ...ids])]);
   };
@@ -89,9 +96,9 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
       <div className="shopping-list-heading">
         <div>
           <p className="eyebrow">MY BOOKMARKS</p>
-          <h1>買い物リスト</h1>
+          <h1>買い物リスト</h1>{readOnly && <p>共有リスト（閲覧専用）</p>}
         </div>
-        {visibleCards.length > 0 && <button aria-label="買い物リストを全件解除" className="shopping-remove-all" onClick={() => void removeAllBookmarks()} type="button"><span aria-hidden="true" className="ui-icon ui-icon-trash" /></button>}
+        {!readOnly && visibleCards.length > 0 && <button aria-label="買い物リストを全件解除" className="shopping-remove-all" onClick={() => void removeAllBookmarks()} type="button"><span aria-hidden="true" className="ui-icon ui-icon-trash" /></button>}
         <div className="shopping-list-controls">
           <div className="shopping-kind-toggle" role="group" aria-label="価格の種類">
             <button aria-pressed={kind === "sale"} className={kind === "sale" ? "active" : ""} onClick={() => setKind("sale")} type="button">販売</button>
@@ -120,7 +127,7 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
           <section className="shopping-store" key={group.shopId}>
             <h2>{group.shopName}</h2>
             <div className="shopping-store-cards">
-              {visibleEntries.map((entry) => <PricedShoppingCard entry={entry} key={`${group.shopId}-${entry.id}`} kind={kind} onRemove={(id) => void removeBookmark(id)} />)}
+              {visibleEntries.map((entry) => <PricedShoppingCard entry={entry} key={`${group.shopId}-${entry.id}`} kind={kind} onRemove={readOnly ? undefined : (id) => void removeBookmark(id)} />)}
             </div>
           </section>
         );
@@ -130,7 +137,7 @@ export function ShoppingListView({ cards, records }: { cards: ShoppingCard[]; re
         <section className="shopping-store shopping-unpriced">
           <h2>{kind === "sale" ? "販売価格未登録" : "買取価格未登録"}</h2>
           <div className="shopping-store-cards">
-            {cardsWithoutPrices.map((card) => <UnpricedShoppingCard card={card} key={card.id} onRemove={(id) => void removeBookmark(id)} />)}
+            {cardsWithoutPrices.map((card) => <UnpricedShoppingCard card={card} key={card.id} onRemove={readOnly ? undefined : (id) => void removeBookmark(id)} />)}
           </div>
         </section>
       ) : null}

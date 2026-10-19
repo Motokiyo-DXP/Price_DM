@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
-import { CardArtwork } from "@/components/card-artwork";
+import { ExpandableCardArtwork } from "@/components/expandable-card-artwork";
 import { CardSummary, Trend } from "@/lib/types";
 import {
   SearchMode,
@@ -371,9 +371,7 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       <div className="grid">
         {cards.map((card, index) => (
           <article className={card.isStale ? "card muted" : "card"} key={card.id}>
-            <Link aria-label={card.name + "の詳細を見る"} className="market-card-artwork-link" href={"/cards/" + card.id}>
-              <CardArtwork eager={index < 6} imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 620px) 82px, 104px" />
-            </Link>
+            <ExpandableCardArtwork triggerClassName="market-card-artwork-link" eager={index < 6} imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 620px) 82px, 104px" />
             <div className="card-head">
               <div>
                 <h2>
