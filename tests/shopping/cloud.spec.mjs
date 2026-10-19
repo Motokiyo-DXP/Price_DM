@@ -12,12 +12,19 @@ test.beforeAll(async()=>{
   if(new URL(baseURL).hostname==="dm-price-tracker.vercel.app")throw Error("Cloud suite cannot target Production");
 });
 const ok=result=>{expect(result.error?.message??null).toBeNull();return result.data;};
+async function previewAccess(context){
+  // Keep the short-lived Vercel token away from Supabase and image origins.
+  if(process.env.VERCEL_OIDC_TOKEN && new URL(baseURL).hostname.endsWith(".vercel.app")){
+    await context.route(`${new URL(baseURL).origin}/**`,route=>route.continue({headers:{...route.request().headers(),"x-vercel-trusted-oidc-idp-token":process.env.VERCEL_OIDC_TOKEN}}));
+  }
+}
 async function signed(role){
   const db=createClient(state.url,state.publicKey,{auth:{persistSession:false,autoRefreshToken:false}});
   const data=ok(await db.auth.signInWithPassword({email:state.users[role].email,password:state.users[role].password}));
   return {db,session:data.session};
 }
 async function login(context,role){
+  await previewAccess(context);
   const signedIn=await signed(role);
   const encoded=`base64-${Buffer.from(JSON.stringify(signedIn.session)).toString("base64url")}`;
   const name=`sb-${state.ref}-auth-token`;
@@ -75,6 +82,7 @@ test("two browser processes on real Supabase: sync, disconnect, revoke and logou
   const second=await chromium.launch();const ownerContext=await browser.newContext(),friendContext=await browser.newContext();
   const anonContext=await second.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   try {
+    await previewAccess(anonContext);
     const {db:owner}=await login(ownerContext,"owner");const {db:friend}=await login(friendContext,"friend");await reset(owner);
     const ownerPage=await ownerContext.newPage(),friendPage=await friendContext.newPage(),urlPage=await anonContext.newPage();
     await ownerPage.goto("/shopping-list");await ownerPage.getByText("共有",{exact:true}).click();
