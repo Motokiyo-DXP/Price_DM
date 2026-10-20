@@ -1269,6 +1269,7 @@ export type Database = {
       read_shopping_list: { Args: { p_share_id?: string; p_token?: string }; Returns: number[] }
 
       get_or_create_deck_share_token: { Args: { p_deck_id: string }; Returns: string | null }
+      get_public_shared_deck: { Args: { p_share_token: string }; Returns: Json | null }
       get_shared_deck: { Args: { p_share_token: string }; Returns: Json | null }
       deck_filter_options: {
         Args: Record<PropertyKey, never>
