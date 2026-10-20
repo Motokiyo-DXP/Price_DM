@@ -11,6 +11,9 @@ const realImages = realImageUrls ? await Promise.all(realImageUrls.map(async url
  if (!response.ok) throw Error(`Real card image returned ${response.status}`);
  return Buffer.from(await response.arrayBuffer());
 })) : null;
+const layoutFixtures = process.env.OGP_LAYOUT_FIXTURES ? JSON.parse(await readFile(process.env.OGP_LAYOUT_FIXTURES, 'utf8')) : null;
+const layoutImages = new Map();
+const fixturePrints = [1,2,3].map(id=>({id,canonical_card_id:id,image_key:`fixture/${id}`,product_name:null,card_number:null,official_card_id:null}));
 await db.exec(`create role anon; create role authenticated;
 create table decks(id uuid primary key, share_token uuid unique, name text, format text default 'original', description text default '', visibility text, icon_canonical_card_id int);
 create table canonical_cards(id int primary key, name text);
@@ -29,6 +32,22 @@ for(let i=1;i<=3;i++) {
 await db.exec(`update deck_cards set quantity=20 where canonical_card_id=1;
 insert into deck_cards(deck_id,canonical_card_id,card_print_id,zone,quantity,sort_order)
 values('10000000-0000-4000-8000-000000000001',2,2,'main',20,1);`);
+if (layoutFixtures) {
+ for (const [index, fixture] of layoutFixtures.entries()) {
+  const deckId = `10000000-0000-4000-8000-00000000000${index+1}`;
+  await db.query('delete from deck_cards where deck_id=$1',[deckId]);
+  for (const [cardIndex, card] of fixture.cards.entries()) {
+   const id = 100 + index * 100 + cardIndex;
+   await db.query('insert into canonical_cards values($1,$2)',[id,card.name]);
+   await db.query('insert into deck_cards(deck_id,canonical_card_id,card_print_id,zone,quantity,sort_order) values($1,$2,$2,$3,$4,$5)',[deckId,id,card.zone,card.quantity,cardIndex]);
+   fixturePrints.push({id,canonical_card_id:id,image_key:`fixture/${id}`,product_name:null,card_number:null,official_card_id:null});
+   const response = await fetch(card.imageUrl);
+   if(!response.ok)throw Error(`Layout artwork returned ${response.status}`);
+   layoutImages.set(id,Buffer.from(await response.arrayBuffer()));
+  }
+  await db.query('update decks set icon_canonical_card_id=$1 where id=$2',[100 + index*100 + fixture.iconIndex,deckId]);
+ }
+}
 await db.exec('set role anon');
 for (const [token,expected] of [['20000000-0000-4000-8000-000000000001','検証デッキA'],['20000000-0000-4000-8000-000000000003',null],['20000000-0000-4000-8000-000000000009',null]]) {
  const {rows}=await db.query('select get_public_shared_deck($1) as deck',[token]);
@@ -42,6 +61,8 @@ const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname.startsWith('/images/')) {
    if(brokenImages){res.statusCode=404;return res.end();}
+   const layoutId = Number(url.pathname.match(/\/(\d+)\.webp$/)?.[1]);
+   if(layoutImages.has(layoutId)){res.setHeader('Content-Type','image/webp');return res.end(layoutImages.get(layoutId));}
    if(realImages){res.setHeader('Content-Type','image/webp');return res.end(realImages[url.pathname.includes('1.webp')?0:1]);}
    const color=url.pathname.includes('1.webp')?'#dc3535':'#2879df';
    res.setHeader('Content-Type','image/webp');return res.end(await sharp({create:{width:250,height:350,channels:3,background:color}}).webp().toBuffer());
@@ -49,6 +70,8 @@ const server=http.createServer(async(req,res)=>{
   let body='';for await(const part of req)body+=part;
   res.setHeader('Content-Type','application/json');
   if(url.pathname==='/broken-images'){brokenImages=true;return res.end('{}');}
+  if(url.pathname==='/missing-icon'){await db.exec("update decks set icon_canonical_card_id=9999 where id='10000000-0000-4000-8000-000000000002'");return res.end('{}');}
+  if(url.pathname==='/missing-card'){fixturePrints.find(p=>p.id===1).image_key=null;return res.end('{}');}
   if(url.pathname==='/rename') {await db.query("update decks set name='改名後デッキA' where name='検証デッキA'");return res.end('{}');}
   if(url.pathname==='/private-a') {await db.query("update decks set visibility='private' where name='改名後デッキA'");return res.end('{}');}
   if(url.pathname.includes('/rpc/')) {
@@ -57,7 +80,7 @@ const server=http.createServer(async(req,res)=>{
    const {rows}=await db.query(`select ${func}($1) as deck`,[JSON.parse(body).p_share_token]);
    await db.exec('reset role');return res.end(JSON.stringify(rows[0].deck));
   }
-  if(url.pathname.endsWith('/card_prints'))return res.end(JSON.stringify([1,2,3].map(id=>({id,canonical_card_id:id,image_key:`fixture/${id}`,product_name:null,card_number:null,official_card_id:null}))));
+  if(url.pathname.endsWith('/card_prints'))return res.end(JSON.stringify(fixturePrints));
   return res.end('[]');
  }catch(error){res.statusCode=500;res.end(JSON.stringify({message:error.message}));}
 });
