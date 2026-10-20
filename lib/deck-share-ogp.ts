@@ -5,6 +5,8 @@ import { isUuid, parseSharedDeck } from "./shared-deck";
 import { getCardImageUrl } from "./card-image";
 import { pickCardPrintImageKey } from "./card-print-order";
 import { loadDeckCardPrints } from "./deck-print-images";
+import { getDeckIconSelection } from "./deck-icon";
+import { expandDeckShareCards } from "./deck-share-image-layout";
 
 export const shareOrigin = "https://dm-price-tracker.vercel.app";
 export const shareDescription = "デュエル・マスターズのデッキをチェック";
@@ -17,13 +19,17 @@ export const getDeckShareOgp = cache(async (token: string | undefined) => {
   const { data, error } = await supabase.rpc("get_public_shared_deck", { p_share_token: token });
   const deck = error ? null : parseSharedDeck(data);
   if (!deck) return null;
-  const cards = deck.cards.filter(card => card.zone === "main").toSorted((a, b) =>
-    Number(b.canonical_card_id === deck.icon_canonical_card_id) - Number(a.canonical_card_id === deck.icon_canonical_card_id) || a.sort_order - b.sort_order);
-  const ids = [...new Set(cards.map(card => card.canonical_card_id))].slice(0, 6);
+  const icon = getDeckIconSelection(deck.cards, deck.icon_canonical_card_id);
+  const ids = [...new Set([...deck.cards.map(card => card.canonical_card_id), ...(icon ? [icon.canonicalCardId] : [])])];
   const prints = await loadDeckCardPrints(supabase, ids).catch(() => []);
-  const images = ids.map(id => getCardImageUrl(pickCardPrintImageKey(
-    (prints ?? []).filter(print => print.canonical_card_id === id), cards.find(card => card.canonical_card_id === id)?.card_print_id,
-  ))).filter((url): url is string => Boolean(url));
-  const revision = createHash("sha256").update(JSON.stringify([deck, images])).digest("hex").slice(0, 20);
-  return { name: deck.name, images, revision };
+  const imageFor = (id: number, printId: number | null) => getCardImageUrl(pickCardPrintImageKey(
+    prints.filter(print => print.canonical_card_id === id), printId,
+  ));
+  const cards = expandDeckShareCards(deck.cards).map(card => ({
+    name: card.name, zone: card.zone, imageUrl: imageFor(card.canonical_card_id, card.card_print_id),
+  }));
+  const iconImage = icon ? imageFor(icon.canonicalCardId, icon.cardPrintId) : null;
+  // Include the renderer version so existing SNS image URLs also change on layout updates.
+  const revision = createHash("sha256").update(JSON.stringify(["two-column-v1", deck, iconImage, cards])).digest("hex").slice(0, 20);
+  return { name: deck.name, iconImage, cards, revision };
 });

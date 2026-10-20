@@ -51,7 +51,15 @@ test("anonymous initial HTML, separate images, rename, privacy and legacy viewin
   await writeFile(".local/ogp-test/evidence/a.png", ai.bytes);
   await writeFile(".local/ogp-test/evidence/b.png", bi.bytes);
   await writeFile(".local/ogp-test/evidence/a.html", a.html);
+  await fetch(fixture + "/missing-icon", { method: "POST" });
+  const missingIcon = await image((await metadata(token(2))).image);
+  assert.notEqual(missingIcon.hash, bi.hash);
+  await writeFile(".local/ogp-test/evidence/missing-icon.png", missingIcon.bytes);
+  await fetch(fixture + "/missing-card", { method: "POST" });
+  const missingCard = await image((await metadata(token(1))).image);
+  await writeFile(".local/ogp-test/evidence/missing-card.png", missingCard.bytes);
   const fallback = await image("https://example.test/api/shared-decks/default/og-image");
+  assert.notEqual(missingCard.hash, fallback.hash);
   for (const id of [token(3), token(9), "invalid", token(1) + "/other"]) {
     const deck = await metadata(encodeURIComponent(id));
     assert.equal(deck.title, "デッキ検索 | TCG 相場チェッカー");
