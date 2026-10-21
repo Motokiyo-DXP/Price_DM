@@ -1,6 +1,6 @@
 # PROJECT_STATE
 
-Last updated: 2026-09-16
+Last updated: 2026-10-22
 Repository: `Motokiyo-DXP/Price_DM`
 Baseline: `main@fd3b82f44e7229e1adfddfd0d70b651bf93e5fd6` (R12 start, after PR #16)
 Implementation / Operations Plan: `project/rule-automation/IMPLEMENTATION_OPERATIONS_PLAN.md`
@@ -28,7 +28,8 @@ Rule design: Duel Masters Rule Automation v5
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
 - R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
 - R11 TAP Production Shadow Validation: COMPLETE / MAIN via PR #16
-- R12 CHARGE Design Gate: CHARGE SELECTED / DESIGN READY
+- R12 CHARGE Design Gate: COMPLETE
+- R13 CHARGE Pure Core + test-only Shadow: IMPLEMENTED / VALIDATED (see CHARGE_SHADOW_VALIDATION.md)
 
 ## Key findings
 
@@ -76,7 +77,7 @@ Status: Pure Rule Core **COMPLETE**; test-only Shadow **VALIDATED**; Production 
 
 TAP Vertical Slice: Production Shadow validation is complete on main via PR #16, limited to `mana`, one existing card, `untapped -> tapped`, explicit TAP. Legacy remains Production authority; Rule Core is comparison-only. UNTAP, battle TAP, and attack TAP remain outside validation. See [`VERTICAL_SLICE_TAP.md`](./VERTICAL_SLICE_TAP.md), [`TAP_SHADOW_VALIDATION.md`](./TAP_SHADOW_VALIDATION.md), and `data/evidence/tap_base_evidence.json`.
 
-CHARGE is selected as R12, design ready for one already-selected card from actor hand to actor mana. Entry state derives from Rule-side civilization characteristics. Production Shadow is `DEFERRED_NO_SEMANTIC_INTENT`; test-only Shadow is planned. See [`VERTICAL_SLICE_CHARGE.md`](./VERTICAL_SLICE_CHARGE.md) and `data/evidence/charge_base_evidence.json`. DISCARD Production Shadow remains deferred for the same semantic-intent distinction.
+CHARGE is selected as R12, design ready for one already-selected card from actor hand to actor mana. Entry state derives from Rule-side civilization characteristics. Production Shadow is `DEFERRED_NO_SEMANTIC_INTENT`; Pure Core and test-only Shadow are implemented and validated; see `CHARGE_SHADOW_VALIDATION.md`. See [`VERTICAL_SLICE_CHARGE.md`](./VERTICAL_SLICE_CHARGE.md) and `data/evidence/charge_base_evidence.json`. DISCARD Production Shadow remains deferred for the same semantic-intent distinction.
 
 ## Source of truth
 

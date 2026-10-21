@@ -2,6 +2,7 @@ import type { DiscardAction, DrawAction, RuleAction, TapAction } from "./actions
 import type { RuleEvent } from "./events.ts";
 import { drawOne } from "./primitives/draw.ts";
 import { discardOne } from "./primitives/discard.ts";
+import { chargeOne } from "./primitives/charge.ts";
 import { tapOne } from "./primitives/tap.ts";
 import type { ResolutionStatus, RuleState, UnsupportedCapability } from "./types.ts";
 
@@ -60,6 +61,8 @@ export function resolveRuleAction<TPayload>(
       return resolveDraw(input, action);
     case "DISCARD":
       return resolveDiscard(input, action);
+    case "CHARGE":
+      return { action, ...chargeOne(input, action), status: "RESOLVED", unsupported: [] };
     case "TAP":
       return resolveTap(input, action);
   }

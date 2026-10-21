@@ -1,8 +1,11 @@
 export type PlayerId = "p1" | "p2";
 
+export type Civilization = "light" | "water" | "darkness" | "fire" | "nature" | "zero";
+
 export type RuleCard<TPayload = unknown> = Readonly<{
   instanceId: string;
   payload: TPayload;
+  characteristics?: Readonly<{ civilizations: readonly Civilization[] }>;
 }>;
 
 export type RuleManaCardState<TPayload = unknown> = Readonly<{

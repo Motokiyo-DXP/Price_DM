@@ -50,6 +50,8 @@ export type TapNoStateChangeAlreadyTappedEvent = TapEventBase & Readonly<{
 }>;
 
 export type RuleEvent =
+  | ChargeAttemptedEvent
+  | CardChargedEvent
   | DrawAttemptedEvent
   | CardDrawnEvent
   | DrawFailedNoCardEvent
@@ -58,3 +60,18 @@ export type RuleEvent =
   | TapAttemptedEvent
   | CardTappedEvent
   | TapNoStateChangeAlreadyTappedEvent;
+
+
+type ChargeEventBase = Readonly<{
+  player: PlayerId;
+  cardInstanceId: string;
+  sourceZone: "hand";
+  proposedDestinationZone: "mana";
+  reason: "CHARGE";
+}>;
+export type ChargeAttemptedEvent = ChargeEventBase & Readonly<{ type: "CHARGE_ATTEMPTED" }>;
+export type CardChargedEvent = ChargeEventBase & Readonly<{
+  type: "CARD_CHARGED";
+  finalDestinationZone: "mana";
+  entryTapped: boolean;
+}>;
