@@ -71,6 +71,7 @@ import {
 import { runDrawProductionShadow } from "@/lib/rule-engine/shadow/draw";
 import { toggleCardTapWithProductionShadow } from "@/lib/rule-engine/shadow/tap";
 import { isCardFaceVisible } from "@/lib/playfield-visibility";
+import { shieldDisplay } from "@/lib/shield-display";
 import {
   calculateMarkingMenuPositions,
   calculateMarkingMenuCenter,
@@ -996,6 +997,16 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
   const lastEmptyTapAt = useRef(0);
   const cardsRef = useRef<HTMLDivElement | null>(null);
   const zoneRef = useRef<HTMLElement | null>(null);
+  const shields = zone === "shield" ? shieldDisplay(cards) : null;
+  const previousPriority = useRef<{ owner: PlayerId; ids: Set<string> }>({ owner, ids: new Set() });
+  useIsomorphicLayoutEffect(() => {
+    const ids = shields?.priorityIds ?? new Set<string>();
+    const previous = previousPriority.current;
+    if (cardsRef.current && ids.size && (previous.owner !== owner || [...ids].some((id) => !previous.ids.has(id)))) {
+      cardsRef.current.scrollLeft = 0;
+    }
+    previousPriority.current = { owner, ids };
+  }, [owner, shields]);
   useIsomorphicLayoutEffect(() => {
     const container = cardsRef.current;
     if (!container || !fan) return;
@@ -1048,7 +1059,7 @@ function Zone({ owner, view, zone, cards, onMove, onTap, onDoubleTap, onDetails,
     return () => { window.cancelAnimationFrame(frame); container.removeEventListener("scroll", updateFan); window.removeEventListener("resize", updateFan); };
   }, [cards, fan]);
   const renderedIds = new Set<string>();
-  const displayCards = cards;
+  const displayCards = shields?.cards ?? cards;
   const renderCard = (card: CardInstance) => <CardView key={card.instanceId} card={card} owner={owner} view={view} zone={zone} onMove={onMove} onTap={onTap} onDoubleTap={onDoubleTap} onDetails={onDetails} onMarkingMenuStart={onCardMarkingMenuStart} onMarkingMenuMove={onMarkingMenuMove} onMarkingMenuEnd={onMarkingMenuEnd} onOptions={onOptions} selected={selectedCards.has(card.instanceId)} inspected={inspection?.cardId === card.instanceId} inspectionViewer={inspection?.viewer} revealHiddenCards={revealHiddenCards} privateReveal={privateReveal} revealPublic={revealPublic} revealDeckToOwner={revealDeckToOwner} />;
   const renderStack = (stackId: string) => {
     const members = cards.filter((item) => item.stackId === stackId).sort((a, b) => (a.stackOrder ?? 0) - (b.stackOrder ?? 0));
