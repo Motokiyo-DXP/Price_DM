@@ -2,11 +2,11 @@ import { PGlite } from '@electric-sql/pglite';
 import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { readFileSync } from 'node:fs';
 export const readMigration = name => readFileSync(new URL(`../../supabase/migrations/${name}`, import.meta.url), 'utf8');
-export async function createCardSearchDb() {
-  const db = new PGlite({extensions:{pg_trgm}});
+export async function createCardSearchDb(database) {
+  const db = database ?? new PGlite({extensions:{pg_trgm}});
   await db.exec(`create schema private; create schema auth; create schema extensions;
     create extension pg_trgm with schema extensions;
-    create role anon; create role authenticated; grant usage on schema private,auth,extensions to anon,authenticated;
+    do $$ begin create role anon; exception when duplicate_object then null; end $$; do $$ begin create role authenticated; exception when duplicate_object then null; end $$; grant usage on schema private,auth,extensions to anon,authenticated;
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     create table tcg_games(id bigint primary key,slug text,name text);
     create table canonical_cards(id bigint primary key,game_id bigint,name text,name_kana text,cost integer,civilizations text[],card_types text[],races text[],power_value integer,deleted_at timestamptz);
@@ -34,6 +34,7 @@ export async function createCardSearchDb() {
     insert into card_prints(id,canonical_card_id,product_name,card_number,image_key,card_texts) values
       (1,1,'商品A','DM-01 1','one','{ブロッカー}'),(2,2,'商品A','DM-01 2','two','{}'),
       (3,3,'天門商品','DM-02 3','three','{ブロッカー}'),(4,4,'商品B','DM-03 4','four','{}');`);
+  await db.exec("alter table canonical_cards add column power_text text, add column cost_is_infinite boolean not null default false");
   const norm = readMigration('20260904145848_restore_nfkc_card_search_normalization.sql');
   await db.exec(norm.slice(0,norm.indexOf('$$;')+3));
   await db.exec(`insert into card_search_terms(canonical_card_id,normalized_term,term_kind)
@@ -44,6 +45,8 @@ export async function createCardSearchDb() {
   await db.exec(readMigration('20260923145858_optimize_registration_long_search.sql'));
   await db.exec(readMigration('20260924185334_deck_market_search_first_response.sql'));
   await db.exec(readMigration('20261004193830_deck_search_metadata_filters_release.sql'));
+  const latestFilters = readMigration('20261010011417_deck_filter_races_and_infinite_ranges.sql');
+  await db.exec(latestFilters.slice(latestFilters.indexOf('create or replace function private.search_deck_cards_filtered_fast_impl(')));
   await db.exec(readMigration('20260906190323_optimize_card_image_search.sql'));
   return db;
 }

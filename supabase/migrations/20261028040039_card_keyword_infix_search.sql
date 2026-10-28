@@ -225,7 +225,7 @@ as $$
   )
   select page.id, page.game_slug, page.game_name, page.name, page.name_kana,
     (select count(*)::integer from public.card_prints as prints where prints.canonical_card_id = page.id and prints.deleted_at is null)
-    
+
   from page order by page.is_exact desc, page.is_prefix desc, page.is_contains desc,
     page.match_score desc, page.name, page.id;
 $$;
@@ -262,7 +262,7 @@ as $$
       pg_catalog.bool_or(matches.is_prefix) as is_prefix, pg_catalog.bool_or(matches.is_contains) as is_contains,
       pg_catalog.min(matches.match_tier)::smallint as match_tier, pg_catalog.max(matches.match_score) as match_score
     from matches group by matches.canonical_card_id
-    
+
   ), page as materialized (
     select cards.id, games.slug as game_slug, games.name as game_name, cards.name, cards.name_kana,
       ranked.is_exact, ranked.is_prefix, ranked.is_contains, ranked.match_tier, ranked.match_score
@@ -518,7 +518,8 @@ begin
       left join term_matches as matches
         on matches.canonical_card_id = cards.id
       where
-        (p_min_power is null or cards.power_value >= p_min_power)
+        (p_min_power is null or cards.power_value >= p_min_power
+          or (cards.power_text = '∞' and p_max_power is null))
         and (p_max_power is null or cards.power_value <= p_max_power)
         and case when pg_catalog.cardinality(race_tokens) = 0 then true else not exists (
           select 1 from pg_catalog.unnest(race_tokens) as token
@@ -569,7 +570,8 @@ begin
         )
         and (
           (p_min_cost is null and p_max_cost is null)
-          or (cards.cost is null and p_no_cost)
+          or (cards.cost is null and not coalesce(cards.cost_is_infinite, false) and p_no_cost)
+          or (cards.cost_is_infinite and p_max_cost is null)
           or (
             (p_min_cost is not null or p_max_cost is not null)
             and cards.cost is not null

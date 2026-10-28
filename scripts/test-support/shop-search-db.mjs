@@ -2,9 +2,9 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 const migration = (name) => readFileSync(new URL(`../../supabase/migrations/${name}`, import.meta.url), 'utf8');
 export const shopSearchMigration = migration('20261027015613_shop_keyword_and_search.sql');
-export async function createShopSearchDb() {
-  const db = new PGlite();
-  await db.exec(`create role anon; create role authenticated;
+export async function createShopSearchDb(database) {
+  const db = database ?? new PGlite();
+  await db.exec(`do $$ begin create role anon; exception when duplicate_object then null; end $$; do $$ begin create role authenticated; exception when duplicate_object then null; end $$;
     create table public.shops (id bigint primary key, name text not null, name_kana text,
       aliases text[] not null default '{}', prefecture text, municipality text,
       operational_status text not null default 'active');
