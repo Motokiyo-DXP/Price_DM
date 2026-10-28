@@ -1,0 +1,22 @@
+[
+  {
+    "id": 11724,
+    "name": "フェアリー・シャワー",
+    "official_card_id": "dmex08-083",
+    "card_number": "DMEX08 83/???",
+    "image_key": "official/dmex08-083",
+    "image_width": 384,
+    "image_height": 536,
+    "image_byte_size": 11842
+  },
+  {
+    "id": 15210,
+    "name": "フェアリー・ライフ",
+    "official_card_id": "dmx22b-070",
+    "card_number": "DMX22 70/？？？",
+    "image_key": "official/dmx22b-070",
+    "image_width": 384,
+    "image_height": 536,
+    "image_byte_size": 14312
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "engine": "isolated PGlite PostgreSQL",
+  "snapshot_rows": 627,
+  "image_updates": 4,
+  "metadata_updates": 159,
+  "dry_run_rollback": true,
+  "apply_verified": true,
+  "repeat_apply_refused": true,
+  "rollback_restores_entire_snapshot": true,
+  "lock_conflict_aborts_transaction": true,
+  "production_sql_executed": false
+}

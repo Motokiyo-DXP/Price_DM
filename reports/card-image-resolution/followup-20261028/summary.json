@@ -1,0 +1,20 @@
+{
+  "low_resolution_prints": 468,
+  "searched_NEM_first_page": 468,
+  "prints_with_number_matched_candidates": 231,
+  "candidate_images_decoded": 234,
+  "prints_with_native_at_least_384px_candidate": 227,
+  "prints_with_only_sub384px_candidate": 4,
+  "no_number_match_on_first_search_page": 237,
+  "adopted_replacement_prints": 0,
+  "actually_improved_prints": 0,
+  "unimproved_prints": 468,
+  "metadata_rows_verified": 159,
+  "metadata_objects_sha256_unchanged_since_baseline": 159,
+  "large_image_stratified_sample": 72,
+  "visually_flagged_large_image_print_ids": [
+    20736
+  ],
+  "production_DB_R2_writes": 0,
+  "merge_deploy": 0
+}

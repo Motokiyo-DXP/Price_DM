@@ -1,0 +1,294 @@
+[
+  {
+    "print_id": 12817,
+    "official_card_id": "dmrp09-005",
+    "card_number": "DMRP09 5/102",
+    "before": {
+      "print_id": 12817,
+      "canonical_card_id": 6993,
+      "legacy_card_id": null,
+      "official_card_id": "dmrp09-005",
+      "card_number": "DMRP09 5/102",
+      "product_name": "DMRP-09 超天篇 拡張パック第１弾 新世界ガチ誕！超ＧＲとオレガ・オーラ!!",
+      "product_id": 133,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp09-005",
+      "manually_locked": false,
+      "deleted_at": null,
+      "image_key": "official/dmrp09-005",
+      "image_width": 250,
+      "image_height": 350,
+      "image_byte_size": 32642,
+      "image_updated_at": "2026-08-28T22:00:31.567883+00:00",
+      "updated_at": "2026-09-29T06:50:03.944032+00:00"
+    },
+    "before_asset": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 32642,
+      "sha256": "f9132c0199c356fa422f6e4ad4068dc3da6a493b88d98059411e55338ddd301b"
+    },
+    "source_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000090472_nJD72Rf.jpg",
+    "product_url": "https://www.nemcard.com/view/item/000000009047",
+    "source": {
+      "width": 573,
+      "height": 800,
+      "format": "jpeg",
+      "byte_size": 136275,
+      "sha256": "9340e96b7789387a13eb5f88a60c9d3ceadbebc862e9e8a9aadc7432c9bb8111"
+    },
+    "after": {
+      "width": 384,
+      "height": 536,
+      "format": "webp",
+      "byte_size": 60050,
+      "sha256": "c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b"
+    },
+    "image_key": "official/dmrp09-005-reviewed-sha256-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b",
+    "relative_file": "official/dmrp09-005-reviewed-sha256-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b.webp",
+    "permission": {
+      "user_confirmed_site_use": true,
+      "source_provider": "NEM",
+      "basis": "User confirms contacted provider permits website use for this task; private DM not retained or published"
+    },
+    "print_review": {
+      "artwork": "pending",
+      "border": "pending",
+      "rarity": "pending",
+      "printed_text": "pending"
+    },
+    "upload_status": "not_uploaded",
+    "release_status": "candidate_only_not_authorized_for_application",
+    "review": {
+      "card_name": "confirmed",
+      "card_number": "confirmed",
+      "illustration": "confirmed",
+      "border": "confirmed",
+      "rarity": "confirmed",
+      "printed_text": "confirmed",
+      "orientation": "confirmed",
+      "crop": "confirmed",
+      "quality": "confirmed"
+    },
+    "review_evidence": "RP09 VR 5/102; both artwork halves, cost 4/3, power 4000, sacrifice/removal and cost<=4 fire/dark summon text and flavor inspected against old image and official detail."
+  },
+  {
+    "print_id": 12827,
+    "official_card_id": "dmrp09-003",
+    "card_number": "DMRP09 3/102",
+    "before": {
+      "print_id": 12827,
+      "canonical_card_id": 7836,
+      "legacy_card_id": null,
+      "official_card_id": "dmrp09-003",
+      "card_number": "DMRP09 3/102",
+      "product_name": "DMRP-09 超天篇 拡張パック第１弾 新世界ガチ誕！超ＧＲとオレガ・オーラ!!",
+      "product_id": 133,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp09-003",
+      "manually_locked": false,
+      "deleted_at": null,
+      "image_key": "official/dmrp09-003",
+      "image_width": 250,
+      "image_height": 350,
+      "image_byte_size": 27784,
+      "image_updated_at": "2026-08-28T22:00:31.567883+00:00",
+      "updated_at": "2026-09-29T06:38:31.284271+00:00"
+    },
+    "before_asset": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 27784,
+      "sha256": "9d3593fcf73bde977e0c9e93508c449d32521d82185b386c31e897a101f054b7"
+    },
+    "source_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000172572_DvfrOqI.jpg",
+    "product_url": "https://www.nemcard.com/view/item/000000017257",
+    "source": {
+      "width": 400,
+      "height": 559,
+      "format": "jpeg",
+      "byte_size": 64074,
+      "sha256": "34f8fcb4c5604208981a8bb41459eae32320059a714a7510ba7909c76a4396dc"
+    },
+    "after": {
+      "width": 384,
+      "height": 537,
+      "format": "webp",
+      "byte_size": 50594,
+      "sha256": "1298b25448fedf6e2f9d09e32e7d9c90b4dc38486b3b9673ca062c94f4fffee3"
+    },
+    "image_key": "official/dmrp09-003-reviewed-sha256-1298b25448fedf6e2f9d09e32e7d9c90b4dc38486b3b9673ca062c94f4fffee3",
+    "relative_file": "official/dmrp09-003-reviewed-sha256-1298b25448fedf6e2f9d09e32e7d9c90b4dc38486b3b9673ca062c94f4fffee3.webp",
+    "permission": {
+      "user_confirmed_site_use": true,
+      "source_provider": "NEM",
+      "basis": "User confirms contacted provider permits website use for this task; private DM not retained or published"
+    },
+    "print_review": {
+      "artwork": "pending",
+      "border": "pending",
+      "rarity": "pending",
+      "printed_text": "pending"
+    },
+    "upload_status": "not_uploaded",
+    "release_status": "candidate_only_not_authorized_for_application",
+    "review": {
+      "card_name": "confirmed",
+      "card_number": "confirmed",
+      "illustration": "confirmed",
+      "border": "confirmed",
+      "rarity": "confirmed",
+      "printed_text": "confirmed",
+      "orientation": "confirmed",
+      "crop": "confirmed",
+      "quality": "confirmed"
+    },
+    "review_evidence": "RP09 VR 3/102; both artwork halves, cost 6/2, power 6000, W breaker and two spells cost<=3 text, discard text and flavor inspected."
+  },
+  {
+    "print_id": 13118,
+    "official_card_id": "dmrp08-g05",
+    "card_number": "DMRP08 G5/G5",
+    "before": {
+      "print_id": 13118,
+      "canonical_card_id": 4736,
+      "legacy_card_id": null,
+      "official_card_id": "dmrp08-g05",
+      "card_number": "DMRP08 G5/G5",
+      "product_name": "DMRP-08 双極篇 拡張パック第４弾 超決戦!バラギアラ!!無敵オラオラ輪廻∞",
+      "product_id": 129,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp08-g05",
+      "manually_locked": false,
+      "deleted_at": null,
+      "image_key": "official/dmrp08-g05",
+      "image_width": 250,
+      "image_height": 350,
+      "image_byte_size": 36198,
+      "image_updated_at": "2026-08-28T22:00:48.964286+00:00",
+      "updated_at": "2026-09-29T06:42:10.95602+00:00"
+    },
+    "before_asset": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 36198,
+      "sha256": "0a3de0bcd52b14d0092970884f2c79f8589c10fa6dfba02b593d2dd5bc96dc24"
+    },
+    "source_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000112332_3wNNYTo.jpg",
+    "product_url": "https://www.nemcard.com/view/item/000000011233",
+    "source": {
+      "width": 570,
+      "height": 800,
+      "format": "jpeg",
+      "byte_size": 133871,
+      "sha256": "3f2f98afcb465b19f58b31930ae62a773f037e1d7671963d8146a04f724c7676"
+    },
+    "after": {
+      "width": 384,
+      "height": 539,
+      "format": "webp",
+      "byte_size": 55482,
+      "sha256": "a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d"
+    },
+    "image_key": "official/dmrp08-g05-reviewed-sha256-a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d",
+    "relative_file": "official/dmrp08-g05-reviewed-sha256-a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d.webp",
+    "permission": {
+      "user_confirmed_site_use": true,
+      "source_provider": "NEM",
+      "basis": "User confirms contacted provider permits website use for this task; private DM not retained or published"
+    },
+    "print_review": {
+      "artwork": "pending",
+      "border": "pending",
+      "rarity": "pending",
+      "printed_text": "pending"
+    },
+    "upload_status": "not_uploaded",
+    "release_status": "candidate_only_not_authorized_for_application",
+    "review": {
+      "card_name": "confirmed",
+      "card_number": "confirmed",
+      "illustration": "confirmed",
+      "border": "confirmed",
+      "rarity": "confirmed",
+      "printed_text": "confirmed",
+      "orientation": "confirmed",
+      "crop": "confirmed",
+      "quality": "confirmed"
+    },
+    "review_evidence": "RP08 SR G5/G5; gold ornamental frame, same illustration, cost 9 power 12000, T breaker and both removal/mana abilities inspected."
+  },
+  {
+    "print_id": 13610,
+    "official_card_id": "dmrp06-s06",
+    "card_number": "DMRP06 S6/S10",
+    "before": {
+      "print_id": 13610,
+      "canonical_card_id": 157,
+      "legacy_card_id": null,
+      "official_card_id": "dmrp06-s06",
+      "card_number": "DMRP06 S6/S10",
+      "product_name": "DMRP-06 双極篇 拡張パック第２弾 逆襲のギャラクシー 卍・獄・殺!!",
+      "product_id": 120,
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmrp06-s06",
+      "manually_locked": false,
+      "deleted_at": null,
+      "image_key": "official/dmrp06-s06",
+      "image_width": 250,
+      "image_height": 350,
+      "image_byte_size": 31684,
+      "image_updated_at": "2026-08-28T22:01:07.720621+00:00",
+      "updated_at": "2026-09-29T06:50:03.944032+00:00"
+    },
+    "before_asset": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 31684,
+      "sha256": "640fc017eb2f6b9a8bc428693d262cfe7d92e46f783483f049402022de869030"
+    },
+    "source_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000169872_vSKhk0C.jpg",
+    "product_url": "https://www.nemcard.com/view/item/000000016987",
+    "source": {
+      "width": 400,
+      "height": 559,
+      "format": "jpeg",
+      "byte_size": 69964,
+      "sha256": "d3a5fc55019c68c7c59e121ad56c1acd7390a2274567ddc37e0bcfc18adea654"
+    },
+    "after": {
+      "width": 384,
+      "height": 537,
+      "format": "webp",
+      "byte_size": 58072,
+      "sha256": "4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a"
+    },
+    "image_key": "official/dmrp06-s06-reviewed-sha256-4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a",
+    "relative_file": "official/dmrp06-s06-reviewed-sha256-4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a.webp",
+    "permission": {
+      "user_confirmed_site_use": true,
+      "source_provider": "NEM",
+      "basis": "User confirms contacted provider permits website use for this task; private DM not retained or published"
+    },
+    "print_review": {
+      "artwork": "pending",
+      "border": "pending",
+      "rarity": "pending",
+      "printed_text": "pending"
+    },
+    "upload_status": "not_uploaded",
+    "release_status": "candidate_only_not_authorized_for_application",
+    "review": {
+      "card_name": "confirmed",
+      "card_number": "confirmed",
+      "illustration": "confirmed",
+      "border": "confirmed",
+      "rarity": "confirmed",
+      "printed_text": "confirmed",
+      "orientation": "confirmed",
+      "crop": "confirmed",
+      "quality": "confirmed"
+    },
+    "review_evidence": "RP06 SR S6/S10; both artwork halves, cost 9/3 power 8000, graveyard cost reduction, -1000, W breaker, mill 3 and return creature text inspected."
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "audited": 627,
+  "approved": 0,
+  "pending_review": 0,
+  "unresolved": 468,
+  "reasons": {
+    "no_higher_native_resolution_source": 441,
+    "asset_error: HTTP 404": 27,
+    "already_target_width_visual_quality_unreviewed": 159
+  },
+  "already_target_width": 159,
+  "low_resolution_before": 468,
+  "low_resolution_after": 468,
+  "genuinely_improved_print_ids": [],
+  "official_detail_pages_checked": 27,
+  "official_detail_images_decoded": 43,
+  "production_writes": 0
+}

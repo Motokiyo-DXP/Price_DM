@@ -1,0 +1,203 @@
+[
+  {
+    "print_id": 12817,
+    "official_card_id": "dmrp09-005",
+    "card_name": "龍装05号 イヴィルヴィ / イーヴィル・フォース",
+    "card_number": "DMRP09 5/102",
+    "before": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 32642,
+      "sha256": "f9132c0199c356fa422f6e4ad4068dc3da6a493b88d98059411e55338ddd301b"
+    },
+    "candidate": {
+      "product_url": "https://www.nemcard.com/view/item/000000009047",
+      "source_image_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000090472_nJD72Rf.jpg",
+      "product_title": "龍装05号イヴィルヴィ/イーヴィル・フォース 【VR】(DMRP09 5/102)",
+      "number_match": true,
+      "identity_review": "pending_artwork_border_rarity_printed_text_review",
+      "rights_review": "permission_not_established",
+      "native": {
+        "width": 573,
+        "height": 800,
+        "format": "jpeg",
+        "byte_size": 136275,
+        "sha256": "9340e96b7789387a13eb5f88a60c9d3ceadbebc862e9e8a9aadc7432c9bb8111"
+      },
+      "quality_review": "pending_native_detail_visual_review",
+      "local_source": "candidates/12817-9340e96b7789387a13eb5f88a60c9d3ceadbebc862e9e8a9aadc7432c9bb8111.source",
+      "after": {
+        "width": 384,
+        "height": 536,
+        "format": "webp",
+        "byte_size": 60050,
+        "sha256": "c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b"
+      },
+      "proposed_image_key": "reviewed/dmrp09-005-sha256-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b",
+      "local_comparison": "candidates/12817-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b.webp"
+    },
+    "adopted": false,
+    "identity_review": "pending_visual_review",
+    "rights_review": "permission_not_established",
+    "resample_review": "non_generative_interpolation_no_recovered_detail_not_adopted",
+    "visual_review": "artwork_border_cost_power_and_visible_set_number_consistent_in_side_by_side_review",
+    "printed_text_review": "visible_text_consistent_full_printed_text_signoff_pending",
+    "quality_review": "candidate_visibly_clearer_than_existing_image"
+  },
+  {
+    "print_id": 13610,
+    "official_card_id": "dmrp06-s06",
+    "card_name": "龍装鬼 オブザ08号 / 終焉の開闢",
+    "card_number": "DMRP06 S6/S10",
+    "before": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 31684,
+      "sha256": "640fc017eb2f6b9a8bc428693d262cfe7d92e46f783483f049402022de869030"
+    },
+    "candidate": {
+      "product_url": "https://www.nemcard.com/view/item/000000016987",
+      "source_image_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000169872_vSKhk0C.jpg",
+      "product_title": "【プレイ用】龍装鬼 オブザ08号/終焉の開闢 (DMRP06 S6/S10)",
+      "number_match": true,
+      "identity_review": "pending_artwork_border_rarity_printed_text_review",
+      "rights_review": "permission_not_established",
+      "native": {
+        "width": 400,
+        "height": 559,
+        "format": "jpeg",
+        "byte_size": 69964,
+        "sha256": "d3a5fc55019c68c7c59e121ad56c1acd7390a2274567ddc37e0bcfc18adea654"
+      },
+      "quality_review": "pending_native_detail_visual_review",
+      "local_source": "candidates/13610-d3a5fc55019c68c7c59e121ad56c1acd7390a2274567ddc37e0bcfc18adea654.source",
+      "after": {
+        "width": 384,
+        "height": 537,
+        "format": "webp",
+        "byte_size": 58072,
+        "sha256": "4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a"
+      },
+      "proposed_image_key": "reviewed/dmrp06-s06-sha256-4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a",
+      "local_comparison": "candidates/13610-4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a.webp"
+    },
+    "adopted": false,
+    "identity_review": "pending_visual_review",
+    "rights_review": "permission_not_established",
+    "resample_review": "non_generative_interpolation_no_recovered_detail_not_adopted",
+    "visual_review": "artwork_border_cost_power_and_visible_set_number_consistent_in_side_by_side_review",
+    "printed_text_review": "visible_text_consistent_full_printed_text_signoff_pending",
+    "quality_review": "candidate_visibly_clearer_than_existing_image"
+  },
+  {
+    "print_id": 17316,
+    "official_card_id": "dmr05-s01",
+    "card_name": "「命」の頂 グレイテスト・グレート",
+    "card_number": "DMR05 S1/S7",
+    "before": {
+      "width": 137,
+      "height": 191,
+      "format": "webp",
+      "byte_size": 9552,
+      "sha256": "8a59045ec68876662968d2cbc6a6df9dd3f96ca5c2847aab7a06ca7ee4be722e"
+    },
+    "candidate": {
+      "product_url": "https://www.nemcard.com/view/item/000000013532",
+      "source_image_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000135322_9xSLtRe.jpg",
+      "product_title": "【プレイ用】「命」の頂 グレイテスト・グレート (DMR05 S1/S7)",
+      "number_match": true,
+      "identity_review": "pending_artwork_border_rarity_printed_text_review",
+      "rights_review": "permission_not_established",
+      "native": {
+        "width": 400,
+        "height": 559,
+        "format": "jpeg",
+        "byte_size": 66059,
+        "sha256": "3e1b3f473bfdedd639bf3977af91dc08aebb15c28312dca1d8b53fc1593ec10a"
+      },
+      "quality_review": "pending_native_detail_visual_review",
+      "local_source": "candidates/17316-3e1b3f473bfdedd639bf3977af91dc08aebb15c28312dca1d8b53fc1593ec10a.source",
+      "after": {
+        "width": 384,
+        "height": 537,
+        "format": "webp",
+        "byte_size": 55558,
+        "sha256": "b173936788073c75c4bda1aed39d7cd61fd44f07d28cdc1ccd595f89c7185699"
+      },
+      "proposed_image_key": "reviewed/dmr05-s01-sha256-b173936788073c75c4bda1aed39d7cd61fd44f07d28cdc1ccd595f89c7185699",
+      "local_comparison": "candidates/17316-b173936788073c75c4bda1aed39d7cd61fd44f07d28cdc1ccd595f89c7185699.webp"
+    },
+    "adopted": false,
+    "identity_review": "pending_visual_review",
+    "rights_review": "permission_not_established",
+    "resample_review": "non_generative_interpolation_no_recovered_detail_not_adopted",
+    "visual_review": "artwork_border_cost_power_and_visible_set_number_consistent_in_side_by_side_review",
+    "printed_text_review": "137px_original_cannot_support_full_printed_text_verification",
+    "quality_review": "candidate_visibly_clearer_than_existing_image"
+  },
+  {
+    "print_id": 17140,
+    "official_card_id": "dmx13-028",
+    "card_name": "デ・バウラ・チャージャー",
+    "card_number": "DMX13 28/36",
+    "before": {
+      "width": 137,
+      "height": 191,
+      "format": "webp",
+      "byte_size": 10164,
+      "sha256": "e3f6e66957fb84c70acb58dd32eae0c8ea4b2237f18eaaacd0b8e922bee1e2f0"
+    },
+    "candidate": null,
+    "adopted": false,
+    "identity_review": "pending_visual_review",
+    "rights_review": "permission_not_established",
+    "resample_review": "non_generative_interpolation_no_recovered_detail_not_adopted",
+    "visual_review": "not_individually_signed_off"
+  },
+  {
+    "print_id": 13118,
+    "official_card_id": "dmrp08-g05",
+    "card_name": "偽りの王 ヴィルヘルム",
+    "card_number": "DMRP08 G5/G5",
+    "before": {
+      "width": 250,
+      "height": 350,
+      "format": "webp",
+      "byte_size": 36198,
+      "sha256": "0a3de0bcd52b14d0092970884f2c79f8589c10fa6dfba02b593d2dd5bc96dc24"
+    },
+    "candidate": {
+      "product_url": "https://www.nemcard.com/view/item/000000011233",
+      "source_image_url": "https://makeshop-multi-images.akamaized.net/nemcard/itemimages/0000000112332_3wNNYTo.jpg",
+      "product_title": "偽りの王ヴィルヘルム 【UGC】(DMRP08 G5/G5)",
+      "number_match": true,
+      "identity_review": "pending_artwork_border_rarity_printed_text_review",
+      "rights_review": "permission_not_established",
+      "native": {
+        "width": 570,
+        "height": 800,
+        "format": "jpeg",
+        "byte_size": 133871,
+        "sha256": "3f2f98afcb465b19f58b31930ae62a773f037e1d7671963d8146a04f724c7676"
+      },
+      "quality_review": "pending_native_detail_visual_review",
+      "local_source": "candidates/13118-3f2f98afcb465b19f58b31930ae62a773f037e1d7671963d8146a04f724c7676.source",
+      "after": {
+        "width": 384,
+        "height": 539,
+        "format": "webp",
+        "byte_size": 55482,
+        "sha256": "a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d"
+      },
+      "proposed_image_key": "reviewed/dmrp08-g05-sha256-a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d",
+      "local_comparison": "candidates/13118-a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d.webp"
+    },
+    "adopted": false,
+    "identity_review": "pending_visual_review",
+    "rights_review": "permission_not_established",
+    "resample_review": "non_generative_interpolation_no_recovered_detail_not_adopted",
+    "visual_review": "not_individually_signed_off"
+  }
+]

@@ -37,6 +37,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Test card image audit and release safety
+        run: npm run test:images
+
       - name: Test search
         run: npm run test:search
 

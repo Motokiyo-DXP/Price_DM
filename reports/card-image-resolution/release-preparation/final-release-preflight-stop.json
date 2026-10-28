@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-28 JST",
+  "decision": "STOP_BEFORE_PRODUCTION_WRITES",
+  "reason": "Another Price_DM production release is active, including a follow-up release for a production-discovered search input issue",
+  "remote_main_sha": "b6ec06e7850ad63d443a49c994d5a5a4850a631d",
+  "worktree_sha": "6ad0f252c6564af7727252c9edbe40637f80f09c",
+  "competing_thread": {
+    "id": "01a17b11-18f0-7de2-9ed2-e195fd6786ab",
+    "title": "検索エンジン",
+    "status": "active",
+    "current_operation": "follow-up production release preparation"
+  },
+  "deployment": {
+    "id": "dpl_GrofoK7DprCjjPEdMoTf5nP57UjN",
+    "state": "READY",
+    "sha": "b6ec06e7850ad63d443a49c994d5a5a4850a631d",
+    "alias": [
+      "dm-price-tracker.vercel.app"
+    ]
+  },
+  "migrations": {
+    "count": 181,
+    "latest": [
+      {
+        "version": "20261016181706",
+        "name": "shopping_list_sharing"
+      },
+      {
+        "version": "20261020145639",
+        "name": "public_shared_deck_ogp"
+      },
+      {
+        "version": "20261027015613",
+        "name": "shop_keyword_and_search"
+      },
+      {
+        "version": "20261028040039",
+        "name": "card_keyword_infix_search"
+      }
+    ]
+  },
+  "image_release": {
+    "adopted": 0,
+    "uploaded": 0,
+    "upload_failures": 0,
+    "db_updates": 0,
+    "metadata_updates": 0,
+    "image_pr": null,
+    "image_merge_sha": null,
+    "deployed_by_this_task": false
+  },
+  "validation": {
+    "prior_image_tests": 43,
+    "current_release_tests_run": false,
+    "current_production_image_smoke_run": false
+  },
+  "permissions": {
+    "user_reports_approved_via_private_DM": true,
+    "private_message_not_requested_or_published": true,
+    "provider_conditions_candidate_mapping": "not yet recorded per candidate"
+  }
+}
