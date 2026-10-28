@@ -10,7 +10,7 @@ import {
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
 import { pickCardPrint, sortCardPrintsOldestFirst } from "@/lib/card-print-order";
-import { normalizeJapaneseSearch, normalizeShopSearch } from "@/lib/search-normalization";
+import { normalizeCardSearchQuery, normalizeShopSearchQuery } from "@/lib/search-normalization";
 import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 import {
   mapRegistrationCardOptions,
@@ -142,6 +142,8 @@ export default function RegisterPage() {
   const [candidateSubmitting, setCandidateSubmitting] = useState(false);
   const [candidateFeedback, setCandidateFeedback] = useState<Feedback | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("broad");
+  const [cardPage, setCardPage] = useState({ key: "", offset: 0 });
+  const [hasMoreCards, setHasMoreCards] = useState(false);
   const [searchingCards, setSearchingCards] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeOptionIndex, setActiveOptionIndex] = useState(-1);
@@ -160,10 +162,17 @@ export default function RegisterPage() {
   const [systemError, setSystemError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [observedOn] = useState(todayForDateInput);
-  const normalizedCardQuery = normalizeJapaneseSearch(cardQuery);
-  const normalizedShopQuery = normalizeShopSearch(shopQuery);
+  const normalizedCardQuery = normalizeCardSearchQuery(cardQuery);
+  const normalizedShopQuery = normalizeShopSearchQuery(shopQuery);
   const searchCardQuery = useMemo(() => cardQuery.trim(), [normalizedCardQuery]);
   const searchShopQuery = useMemo(() => shopQuery.trim(), [normalizedShopQuery]);
+  const cardSearchKey = JSON.stringify([gameSlug, searchMode, searchCardQuery]);
+  const cardSearchOffset = cardPage.key === cardSearchKey ? cardPage.offset : 0;
+  useEffect(() => {
+    setCardPage({ key: cardSearchKey, offset: 0 });
+    setHasMoreCards(false);
+    setCardOptions([]);
+  }, [cardSearchKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -280,6 +289,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
+    // Raw edits abort requests even when the normalized query stays the same.
     const query = searchCardQuery;
     const requestSequence = ++cardSearchRequestSequence.current;
 
@@ -307,9 +317,10 @@ export default function RegisterPage() {
       const controller = new AbortController();
       cardSearchAbortController.current = controller;
       const { data, error } = await supabase
-        .rpc("search_registration_cards", {
+        .rpc("search_registration_cards_page", {
           p_game_slug: gameSlug,
           p_limit: 30,
+          p_offset: cardSearchOffset,
           p_mode: searchMode,
           p_query: query,
         })
@@ -327,7 +338,11 @@ export default function RegisterPage() {
       }
 
       setSystemError(null);
-      setCardOptions(mapRegistrationCardOptions(data));
+      const options = mapRegistrationCardOptions(data);
+      setCardOptions((current) => cardSearchOffset === 0 ? options : [
+        ...current, ...options.filter((option) => !current.some((existing) => existing.id === option.id)),
+      ]);
+      setHasMoreCards(options.length === 30);
       setActiveOptionIndex(-1);
       window.requestAnimationFrame(() => {
         if (requestSequence !== cardSearchRequestSequence.current) return;
@@ -346,10 +361,11 @@ export default function RegisterPage() {
       window.clearTimeout(timer);
       cardSearchAbortController.current?.abort();
     };
-  }, [searchCardQuery, gameSlug, searchMode]);
+  }, [searchCardQuery, cardQuery, gameSlug, searchMode, cardSearchOffset, cardPage]);
 
   useEffect(() => {
     let cancelled = false;
+    // Raw edits clear candidates, including equivalent whitespace/width changes.
     const query = searchShopQuery;
     const requestSequence = ++shopSearchRequestSequence.current;
 
@@ -385,7 +401,7 @@ export default function RegisterPage() {
         p_limit: 20,
         p_offset: 0,
         p_prefecture: shopPrefecture || undefined,
-        p_query: normalizeShopSearch(query),
+        p_query: normalizeShopSearchQuery(query),
       });
 
       if (cancelled || requestSequence !== shopSearchRequestSequence.current) return;
@@ -407,7 +423,7 @@ export default function RegisterPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [selectedShop, shopPrefecture, searchShopQuery, shopQueryCompositionRevision]);
+  }, [selectedShop, shopPrefecture, searchShopQuery, shopQuery, shopQueryCompositionRevision]);
 
   useEffect(() => {
     let cancelled = false;
@@ -461,7 +477,7 @@ export default function RegisterPage() {
       p_limit: 20,
       p_offset: shopOptions.length,
       p_prefecture: shopPrefecture || undefined,
-      p_query: normalizeShopSearch(shopQuery.trim()),
+      p_query: normalizeShopSearchQuery(shopQuery.trim()),
     });
     if (requestSequence !== shopSearchRequestSequence.current) return;
     setSearchingShops(false);
@@ -1009,6 +1025,12 @@ export default function RegisterPage() {
                     <small>{card.print_count}件の収録版</small>
                   </li>
                 ))}
+              {!searchingCards && hasMoreCards && cardOptions.length > 0 && (
+                <li><button type="button" onPointerDown={(event) => event.preventDefault()}
+                  onClick={() => setCardPage({ key: cardSearchKey, offset: cardOptions.length })}>
+                  カード候補をさらに表示
+                </button></li>
+              )}
             </ul>
           )}
           <p className="form-help">
@@ -1053,7 +1075,7 @@ export default function RegisterPage() {
             onCompositionEnd={(event) => {
               if (!shopSearchInput.onCompositionEnd(event)) return;
               setShopQueryCompositionRevision((current) => current + 1);
-              if (normalizeShopSearch(event.currentTarget.value) !== normalizedShopQuery) {
+              if (normalizeShopSearchQuery(event.currentTarget.value) !== normalizedShopQuery) {
                 resetShopSearchResults();
                 setSelectedShop(null);
                 setShopSuggestionsOpen(true);

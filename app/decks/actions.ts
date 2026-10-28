@@ -404,12 +404,28 @@ async function importDeckCopy(auth: NonNullable<Awaited<ReturnType<typeof authen
   redirect(destination === "edit" ? `/decks/${copy.id}/edit` : `/playtest/${copy.id}/opponent`);
 }
 
-export async function getOrCreateDeckShareTokenAction(deckId: string): Promise<string | null> {
-  if (!isShareUuid(deckId)) return null;
+export async function getOrCreateDeckShareTokenAction(deckId: string): Promise<
+  { status: "ready"; token: string } | { status: "error"; message: string }
+> {
+  const failed = { status: "error" as const, message: "共有URLを作成できませんでした。" };
+  if (!isShareUuid(deckId)) return failed;
   const auth = await authenticatedClient();
-  if (!auth) return null;
-  const { data, error } = await auth.supabase.rpc("get_or_create_deck_share_token", { p_deck_id: deckId });
-  return error || !isShareUuid(data) ? null : data;
+  if (!auth) return failed;
+  const { data: deck, error: deckError } = await auth.supabase.from("decks").select("visibility")
+    .eq("id", deckId).eq("owner_id", auth.userId).maybeSingle();
+  if (deckError || !deck) return failed;
+  // Sharing grants publication consent; use the current server-side visibility.
+  const { data: token, error } = await auth.supabase.rpc("get_or_create_deck_share_token", { p_deck_id: deckId });
+  if (error || !isShareUuid(token)) return failed;
+  if (deck.visibility !== "public") {
+    const { data: published, error: publishError } = await auth.supabase.from("decks")
+      .update({ visibility: "public", updated_at: new Date().toISOString() })
+      .eq("id", deckId).eq("owner_id", auth.userId).select("id").maybeSingle();
+    if (publishError || !published) return { status: "error", message: "公開状態を保存できませんでした。" };
+    revalidatePath("/decks");
+    revalidatePath("/deck-search");
+  }
+  return { status: "ready", token };
 }
 
 export async function importSharedDeckAction(formData: FormData) {

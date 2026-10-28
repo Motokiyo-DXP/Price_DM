@@ -16,7 +16,7 @@ import { DeckAnalysis } from "@/components/deck-analysis";
 import { getDeckCardAddCount, MAX_COPIES_PER_CARD, MAX_MAIN_DECK_CARDS } from "@/lib/deck-validation";
 import { constrainDeckPanePercent, DECK_EDITOR_LAYOUT, getAnalysisTrackPercent, getDeckPreviewMinimumWidth, resolveAnalysisResize } from "@/lib/deck-editor-layout";
 import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
-import { normalizeJapaneseSearch } from "@/lib/search-normalization";
+import { normalizeCardSearchQuery } from "@/lib/search-normalization";
 
 type ImageOption = { printId: number; url: string };
 type SearchCard = DeckSearchCard;
@@ -126,7 +126,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
   });
   const costOptions = allCosts;
   const visibleResults = results;
-  const normalizedQuery = normalizeJapaneseSearch(query);
+  const normalizedQuery = normalizeCardSearchQuery(query);
   const searchQuery = useMemo(() => query.trim(), [normalizedQuery]);
   const normalizedCardNumberFilter = cardNumberFilter.trim().toLowerCase();
   const searchCardNumberFilter = useMemo(() => cardNumberFilter.trim(), [normalizedCardNumberFilter]);

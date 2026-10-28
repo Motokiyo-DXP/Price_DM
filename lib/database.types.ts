@@ -1066,6 +1066,7 @@ export type Database = {
           name_key: string | null
           operational_status: string
           prefecture: string | null
+          search_document: string | null
           source_store_id: string | null
           source_url: string | null
           source_verified_at: string | null
@@ -1087,6 +1088,7 @@ export type Database = {
           name_key?: string | null
           operational_status?: string
           prefecture?: string | null
+          search_document?: never
           source_store_id?: string | null
           source_url?: string | null
           source_verified_at?: string | null
@@ -1108,6 +1110,7 @@ export type Database = {
           name_key?: string | null
           operational_status?: string
           prefecture?: string | null
+          search_document?: never
           source_store_id?: string | null
           source_url?: string | null
           source_verified_at?: string | null
@@ -1738,6 +1741,7 @@ export type Database = {
         }[]
       }
       normalize_card_search: { Args: { p_value: string }; Returns: string }
+      shop_search_document: { Args: { p_name: string; p_name_kana: string; p_aliases: string[]; p_municipality: string }; Returns: string }
       normalize_shop_search: { Args: { p_value: string }; Returns: string }
       review_price_correction_for_admin: {
         Args: {
@@ -1775,6 +1779,10 @@ export type Database = {
         Args: { p_query?: string; p_game_slug?: string; p_limit?: number; p_mode?: string }
         Returns: { id: number; game_slug: string; game_name: string; name: string; name_kana: string; print_count: number; image_key: string | null }[]
       }
+      search_market_cards_page: {
+        Args: { p_query: string; p_offset?: number; p_game_slug?: string; p_limit?: number; p_mode?: string }
+        Returns: { id: number; game_name: string; name: string; name_kana: string | null; print_count: number; image_key: string | null }[]
+      }
       search_market_cards: {
         Args: { p_query: string; p_game_slug?: string; p_limit?: number; p_mode?: string }
         Returns: { id: number; game_name: string; name: string; name_kana: string | null; print_count: number; image_key: string | null }[]
@@ -1785,6 +1793,23 @@ export type Database = {
           p_limit?: number
           p_mode?: string
           p_query?: string
+        }
+        Returns: {
+          game_name: string
+          game_slug: string
+          id: number
+          name: string
+          name_kana: string
+          print_count: number
+        }[]
+      }
+      search_registration_cards_page: {
+        Args: {
+          p_game_slug?: string
+          p_limit?: number
+          p_mode?: string
+          p_offset?: number
+          p_query: string
         }
         Returns: {
           game_name: string
