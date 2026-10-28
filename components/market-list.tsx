@@ -17,7 +17,7 @@ import { readFavoriteCardIds } from "@/lib/favorite-cards";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import cartIcon from "@/SVG/カートのアイコン素材.svg";
 import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
-import { normalizeJapaneseSearch } from "@/lib/search-normalization";
+import { normalizeCardSearchQuery } from "@/lib/search-normalization";
 
 type MarketListProps = {
   initialCards: CardSummary[];
@@ -44,7 +44,9 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
   const [remoteSearch, setRemoteSearch] = useState<{
     key: string;
     cards: CardSummary[];
+    hasMore: boolean;
   } | null>(null);
+  const [searchPage, setSearchPage] = useState({ key: "", offset: 0 });
   const [searchStatus, setSearchStatus] = useState<"idle" | "searching" | "success" | "empty" | "error">("idle");
   const [searchStatusKey, setSearchStatusKey] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -121,9 +123,13 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
     () => new Map(initialCards.map((card) => [card.id, card])),
     [initialCards],
   );
-  const normalizedQuery = normalizeJapaneseSearch(query);
+  const normalizedQuery = normalizeCardSearchQuery(query);
   const searchQuery = useMemo(() => query.trim(), [normalizedQuery]);
   const currentSearchKey = `${searchMode}:${searchQuery}`;
+  const searchOffset = searchPage.key === currentSearchKey ? searchPage.offset : 0;
+  useEffect(() => {
+    setSearchPage({ key: currentSearchKey, offset: 0 });
+  }, [currentSearchKey]);
   const currentSearchStatus = searchStatusKey === currentSearchKey
     ? searchStatus
     : searchQuery ? "searching" : "idle";
@@ -160,9 +166,10 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       let data;
       let error;
       try {
-        ({ data, error } = await supabase.rpc("search_market_cards", {
+        ({ data, error } = await supabase.rpc("search_market_cards_page", {
           p_game_slug: "duel-masters",
           p_limit: 100,
+          p_offset: searchOffset,
           p_mode: searchMode,
           p_query: trimmedQuery,
         }).abortSignal(controller.signal));
@@ -205,8 +212,14 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
         printResults.flatMap(({ data: prints }) => prints ?? []),
       );
       const mappedCards = mapMarketSearchResults(data, pricedCardsById, representatives);
-      setRemoteSearch({ key: searchKey, cards: mappedCards });
-      setSearchStatus(mappedCards.length > 0 ? "success" : "empty");
+      setRemoteSearch((current) => ({
+        key: searchKey,
+        cards: searchOffset > 0 && current?.key === searchKey
+          ? [...current.cards, ...mappedCards.filter((card) => !current.cards.some((existing) => existing.id === card.id))]
+          : mappedCards,
+        hasMore: rows.length === 100,
+      }));
+      setSearchStatus(mappedCards.length > 0 || searchOffset > 0 ? "success" : "empty");
       setSearchError(null);
     }, CARD_SEARCH_DEBOUNCE_MS);
 
@@ -215,7 +228,7 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       window.clearTimeout(timer);
       controller?.abort();
     };
-  }, [pricedCardsById, searchQuery, searchMode]);
+  }, [pricedCardsById, searchQuery, searchMode, searchOffset, searchPage]);
 
   const toggleFavorite = async (id: string) => {
     if (favoriteUserId === undefined) {
@@ -248,15 +261,15 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
       ? remoteSearch.cards
       : initialCards.filter((card) => {
       return (
-          searchTextMatches(
-          query,
+          query.split(/[\s　]+/u).filter(Boolean).every((word) => searchTextMatches(
+          word,
           [
             card.name,
             card.nameKana,
             ...card.aliases,
           ],
           searchMode,
-        )
+        ))
       );
     });
     if (trimmedQuery && sortMode === "search") return matchingCards;
@@ -422,6 +435,13 @@ export function MarketList({ initialCards, loadError }: MarketListProps) {
           </article>
         ))}
       </div>
+
+      {searchQuery && remoteSearch?.key === currentSearchKey && remoteSearch.hasMore && (
+        <button type="button" disabled={currentSearchStatus === "searching"}
+          onClick={() => setSearchPage({ key: currentSearchKey, offset: remoteSearch.cards.length })}>
+          カードをさらに表示
+        </button>
+      )}
 
       {!loadError && !searchError && currentSearchStatus === "idle" && initialCards.length === 0 && (
         <p className="empty">登録済みのカードはありません。</p>

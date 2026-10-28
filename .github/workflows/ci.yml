@@ -9,6 +9,18 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      search-postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 55472:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -24,6 +36,16 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Test search
+        run: npm run test:search
+
+      - name: Test search with native PostgreSQL and PostgREST
+        env:
+          PRICE_DM_NATIVE_TEST_URL: postgres://postgres@127.0.0.1:55472/postgres
+        run: |
+          curl --fail --location --silent --show-error https://github.com/PostgREST/postgrest/releases/download/v16.4/postgrest-v16.4-linux-static-x86-64.tar.xz | tar -xJ -C "$RUNNER_TEMP"
+          PRICE_DM_POSTGREST_EXE="$RUNNER_TEMP/postgrest" node scripts/test-search-release-native.mjs
 
       - name: Test production DB safety
         run: npm run test:db-safety
