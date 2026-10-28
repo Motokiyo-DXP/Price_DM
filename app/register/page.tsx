@@ -289,6 +289,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
+    // Raw edits abort requests even when the normalized query stays the same.
     const query = searchCardQuery;
     const requestSequence = ++cardSearchRequestSequence.current;
 
@@ -360,10 +361,11 @@ export default function RegisterPage() {
       window.clearTimeout(timer);
       cardSearchAbortController.current?.abort();
     };
-  }, [searchCardQuery, gameSlug, searchMode, cardSearchOffset, cardPage]);
+  }, [searchCardQuery, cardQuery, gameSlug, searchMode, cardSearchOffset, cardPage]);
 
   useEffect(() => {
     let cancelled = false;
+    // Raw edits clear candidates, including equivalent whitespace/width changes.
     const query = searchShopQuery;
     const requestSequence = ++shopSearchRequestSequence.current;
 
@@ -421,7 +423,7 @@ export default function RegisterPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [selectedShop, shopPrefecture, searchShopQuery, shopQueryCompositionRevision]);
+  }, [selectedShop, shopPrefecture, searchShopQuery, shopQuery, shopQueryCompositionRevision]);
 
   useEffect(() => {
     let cancelled = false;
