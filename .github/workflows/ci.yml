@@ -28,8 +28,8 @@ jobs:
       - name: Test production DB safety
         run: npm run test:db-safety
 
-      - name: Test deck sharing image layout
-        run: node --experimental-strip-types --test lib/deck-share-image-layout.test.mjs
+      - name: Test deck sharing flow and image layout
+        run: node --experimental-strip-types --test lib/deck-share-image-layout.test.mjs lib/deck-share-action.test.mjs
 
       - name: Test shopping list sharing authorization
         run: npm run test:shopping-sharing

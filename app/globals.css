@@ -2005,3 +2005,4 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
 .shopping-share-url{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.shopping-share-url input{background:#15191f;border:1px solid #59616b;color:#fff;flex:1;min-width:0;padding:10px;width:100%}
 .shopping-sharing nav a{color:#f3c800;display:block;padding:12px 0}
 @media(max-width:620px){.shopping-sharing{margin:10px}.shopping-share-url{display:grid}.shopping-list-heading{flex-wrap:wrap;gap:12px}}
+.deck-share-button:disabled{cursor:wait;opacity:.6}
