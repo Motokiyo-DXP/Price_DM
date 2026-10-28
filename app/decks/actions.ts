@@ -404,8 +404,8 @@ async function importDeckCopy(auth: NonNullable<Awaited<ReturnType<typeof authen
   redirect(destination === "edit" ? `/decks/${copy.id}/edit` : `/playtest/${copy.id}/opponent`);
 }
 
-export async function getOrCreateDeckShareTokenAction(deckId: string, publish = false): Promise<
-  { status: "ready"; token: string } | { status: "confirmation-required" } | { status: "error"; message: string }
+export async function getOrCreateDeckShareTokenAction(deckId: string): Promise<
+  { status: "ready"; token: string } | { status: "error"; message: string }
 > {
   const failed = { status: "error" as const, message: "共有URLを作成できませんでした。" };
   if (!isShareUuid(deckId)) return failed;
@@ -414,8 +414,7 @@ export async function getOrCreateDeckShareTokenAction(deckId: string, publish = 
   const { data: deck, error: deckError } = await auth.supabase.from("decks").select("visibility")
     .eq("id", deckId).eq("owner_id", auth.userId).maybeSingle();
   if (deckError || !deck) return failed;
-  // Recheck on the server: the list may predate a visibility change in another tab.
-  if (deck.visibility !== "public" && !publish) return { status: "confirmation-required" };
+  // Sharing grants publication consent; use the current server-side visibility.
   const { data: token, error } = await auth.supabase.rpc("get_or_create_deck_share_token", { p_deck_id: deckId });
   if (error || !isShareUuid(token)) return failed;
   if (deck.visibility !== "public") {

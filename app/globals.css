@@ -2005,5 +2005,4 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
 .shopping-share-url{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.shopping-share-url input{background:#15191f;border:1px solid #59616b;color:#fff;flex:1;min-width:0;padding:10px;width:100%}
 .shopping-sharing nav a{color:#f3c800;display:block;padding:12px 0}
 @media(max-width:620px){.shopping-sharing{margin:10px}.shopping-share-url{display:grid}.shopping-list-heading{flex-wrap:wrap;gap:12px}}
-
-.deck-share-confirm{background:#292c38;border:1px solid #727c98;border-radius:12px;color:#f5f6fa;margin:auto;max-width:calc(100vw - 32px);padding:24px;width:440px}.deck-share-confirm::backdrop{background:#090b12c7}.deck-share-confirm p{line-height:1.6}.deck-share-confirm button{border:1px solid #727c98;border-radius:6px;background:#495473;color:#fff;cursor:pointer;margin-right:12px;min-height:44px;min-width:80px;padding:10px 18px}.deck-share-confirm button:first-of-type{background:#ecc100;color:#20232d}.deck-share-confirm button:disabled,.deck-share-button:disabled{cursor:wait;opacity:.6}
+.deck-share-button:disabled{cursor:wait;opacity:.6}
