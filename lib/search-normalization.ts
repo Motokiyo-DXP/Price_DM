@@ -66,6 +66,11 @@ export function normalizeShopSearchQuery(value: string) {
   return value.split(/[\s　]+/u).map(normalizeShopSearch).filter(Boolean).join(" ");
 }
 
+// Query dependencies must retain word boundaries; SQL normalizes each word itself.
+export function normalizeCardSearchQuery(value: string) {
+  return value.split(/[\s　]+/u).map(normalizeJapaneseSearch).filter(Boolean).join(" ");
+}
+
 function levenshteinDistance(left: string, right: string) {
   const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
 
