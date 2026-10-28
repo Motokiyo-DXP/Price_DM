@@ -10,7 +10,7 @@ import {
 } from "react";
 import { normalizePriceInput } from "@/lib/price-input-validation";
 import { pickCardPrint, sortCardPrintsOldestFirst } from "@/lib/card-print-order";
-import { normalizeJapaneseSearch, normalizeShopSearch } from "@/lib/search-normalization";
+import { normalizeJapaneseSearch, normalizeShopSearchQuery } from "@/lib/search-normalization";
 import { isImeCompositionEnter, useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 import {
   mapRegistrationCardOptions,
@@ -161,7 +161,7 @@ export default function RegisterPage() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [observedOn] = useState(todayForDateInput);
   const normalizedCardQuery = normalizeJapaneseSearch(cardQuery);
-  const normalizedShopQuery = normalizeShopSearch(shopQuery);
+  const normalizedShopQuery = normalizeShopSearchQuery(shopQuery);
   const searchCardQuery = useMemo(() => cardQuery.trim(), [normalizedCardQuery]);
   const searchShopQuery = useMemo(() => shopQuery.trim(), [normalizedShopQuery]);
 
@@ -385,7 +385,7 @@ export default function RegisterPage() {
         p_limit: 20,
         p_offset: 0,
         p_prefecture: shopPrefecture || undefined,
-        p_query: normalizeShopSearch(query),
+        p_query: normalizeShopSearchQuery(query),
       });
 
       if (cancelled || requestSequence !== shopSearchRequestSequence.current) return;
@@ -461,7 +461,7 @@ export default function RegisterPage() {
       p_limit: 20,
       p_offset: shopOptions.length,
       p_prefecture: shopPrefecture || undefined,
-      p_query: normalizeShopSearch(shopQuery.trim()),
+      p_query: normalizeShopSearchQuery(shopQuery.trim()),
     });
     if (requestSequence !== shopSearchRequestSequence.current) return;
     setSearchingShops(false);
@@ -1053,7 +1053,7 @@ export default function RegisterPage() {
             onCompositionEnd={(event) => {
               if (!shopSearchInput.onCompositionEnd(event)) return;
               setShopQueryCompositionRevision((current) => current + 1);
-              if (normalizeShopSearch(event.currentTarget.value) !== normalizedShopQuery) {
+              if (normalizeShopSearchQuery(event.currentTarget.value) !== normalizedShopQuery) {
                 resetShopSearchResults();
                 setSelectedShop(null);
                 setShopSuggestionsOpen(true);

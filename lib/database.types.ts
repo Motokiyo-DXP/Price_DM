@@ -1066,6 +1066,7 @@ export type Database = {
           name_key: string | null
           operational_status: string
           prefecture: string | null
+          search_document: string | null
           source_store_id: string | null
           source_url: string | null
           source_verified_at: string | null
@@ -1087,6 +1088,7 @@ export type Database = {
           name_key?: string | null
           operational_status?: string
           prefecture?: string | null
+          search_document?: never
           source_store_id?: string | null
           source_url?: string | null
           source_verified_at?: string | null
@@ -1108,6 +1110,7 @@ export type Database = {
           name_key?: string | null
           operational_status?: string
           prefecture?: string | null
+          search_document?: never
           source_store_id?: string | null
           source_url?: string | null
           source_verified_at?: string | null
@@ -1738,6 +1741,7 @@ export type Database = {
         }[]
       }
       normalize_card_search: { Args: { p_value: string }; Returns: string }
+      shop_search_document: { Args: { p_name: string; p_name_kana: string; p_aliases: string[]; p_municipality: string }; Returns: string }
       normalize_shop_search: { Args: { p_value: string }; Returns: string }
       review_price_correction_for_admin: {
         Args: {
