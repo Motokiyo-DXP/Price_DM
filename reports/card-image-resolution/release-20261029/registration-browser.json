@@ -1,0 +1,14 @@
+{
+  "images": [
+    {
+      "alt": "龍装05号 イヴィルヴィ / イーヴィル・フォース",
+      "complete": true,
+      "height": 536,
+      "src": "https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/official/dmrp09-005-reviewed-sha256-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b.webp",
+      "width": 384
+    }
+  ],
+  "route": "/register",
+  "scrollWidth": 375,
+  "viewport": 390
+}

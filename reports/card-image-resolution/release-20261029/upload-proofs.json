@@ -1,0 +1,54 @@
+[
+  {
+    "print_id": 12817,
+    "image_key": "official/dmrp09-005-reviewed-sha256-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b",
+    "url": "https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/official/dmrp09-005-reviewed-sha256-c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b.webp",
+    "status": 200,
+    "width": 384,
+    "height": 536,
+    "format": "webp",
+    "byte_size": 60050,
+    "sha256": "c08b5d6f247ef07e25ef7953412c576ce7197ea36264f9c475214ec1b9dde12b",
+    "uploaded": true,
+    "verified_at": "2026-10-28T18:30:58.793Z"
+  },
+  {
+    "print_id": 12827,
+    "image_key": "official/dmrp09-003-reviewed-sha256-1298b25448fedf6e2f9d09e32e7d9c90b4dc38486b3b9673ca062c94f4fffee3",
+    "url": "https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/official/dmrp09-003-reviewed-sha256-1298b25448fedf6e2f9d09e32e7d9c90b4dc38486b3b9673ca062c94f4fffee3.webp",
+    "status": 200,
+    "width": 384,
+    "height": 537,
+    "format": "webp",
+    "byte_size": 50594,
+    "sha256": "1298b25448fedf6e2f9d09e32e7d9c90b4dc38486b3b9673ca062c94f4fffee3",
+    "uploaded": true,
+    "verified_at": "2026-10-28T18:31:01.501Z"
+  },
+  {
+    "print_id": 13118,
+    "image_key": "official/dmrp08-g05-reviewed-sha256-a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d",
+    "url": "https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/official/dmrp08-g05-reviewed-sha256-a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d.webp",
+    "status": 200,
+    "width": 384,
+    "height": 539,
+    "format": "webp",
+    "byte_size": 55482,
+    "sha256": "a25710747989d43f626c0736f21524307f121c9cf63d48969ce8dbfac388444d",
+    "uploaded": true,
+    "verified_at": "2026-10-28T18:31:04.229Z"
+  },
+  {
+    "print_id": 13610,
+    "image_key": "official/dmrp06-s06-reviewed-sha256-4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a",
+    "url": "https://dm-price-tracker-card-images.tcg-price-checker.workers.dev/official/dmrp06-s06-reviewed-sha256-4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a.webp",
+    "status": 200,
+    "width": 384,
+    "height": 537,
+    "format": "webp",
+    "byte_size": 58072,
+    "sha256": "4d2f5edce7ac79c3aea1e5be206200423099c9dbe87d34252f351de8acfbfd5a",
+    "uploaded": true,
+    "verified_at": "2026-10-28T18:31:06.863Z"
+  }
+]

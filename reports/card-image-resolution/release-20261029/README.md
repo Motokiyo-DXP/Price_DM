@@ -25,4 +25,22 @@ The existing image Worker accepts only `official/` and `sample/` namespaces. Ear
 
 An isolated PostgreSQL/PGlite rehearsal used all **627** saved target rows: dry-run rollback, actual four-image/159-metadata apply, repeat-apply refusal, complete restoration of the saved snapshot, and lock-conflict abort all passed (`rehearsal.json`). Image tests include source/output tampering, wrong printing, missing review/permission, aspect changes, unsupported namespace and unchanged identity. The release SQL is data-only; no migration is added or rewritten.
 
-This folder is a pre-apply plan until upload, DB and production-screen evidence is appended. A prepared or merged report alone is not proof that images changed in Production.
+## Production results
+
+All four new objects were uploaded and publicly verified as HTTP 200/WebP, with decoded dimensions and complete SHA-256 equal to the staged bytes (`upload-proofs.json`). Upload failures: **0**. Old objects were retained.
+
+The transaction then applied successfully: **4 image rows + 159 metadata rows = 163 changed rows**. The 627-row before/after comparison found zero unintended target changes and preserved all identity/product/lock/deletion fields (`db-verification.json`). Across all **23,636** prints, the non-image-data hash remained `c8cc2d8bfe9f3ea7ef9016e8b255ffd4`. Low-resolution count is now **464**, down from 468; missing dimensions are **0**, down from 159 (`production-invariants.json`). No migration was added or changed.
+
+49 image tests and 8 DB-safety tests passed. Typecheck/build passed after integrating the already-released current main. Local build logs the absent Supabase connection configuration; it is not represented as a full authenticated local app test. PR **#41** has passing CI, including the image tests and existing search/native PostgreSQL checks.
+
+### Production browser checks
+
+- Card detail for canonical IDs 6993/7836/157 references the new correct image URLs. The browser decoded the 6993 image as **384×536**, complete. The Wilhelm canonical detail correctly retains its older DMR07 representative image; the selected RP08 G5/G5 print itself has the verified new asset. Representative-image precedence was not changed.
+- Market search for イヴィルヴィ, price-registration selection, and a new unsaved deck editor all load the new 384px image. No price/deck was saved. Desktop **1280px** and mobile viewport **390px** were checked; page scroll widths stayed within the viewport (market/detail 375 at 390px, editor 390 at 390px). These are browser viewport checks, not physical-phone tests.
+- The inspected browser reported zero console errors. The public deck search loads normally, but no public deck currently contains any of these four canonical cards. Consequently target-print rendering in an existing public deck, shared OGP or battle was **not** verified. No test deck, user-room state, public share or price data was created to manufacture this evidence.
+- An existing public shared deck and its **1200×630 PNG OGP** returned HTTP 200 (`public-share-control.json`). This is a regression control, not proof of OGP rendering for an updated print.
+- Gameplay screen rendering of an updated print, real two-client battle, physical PC/phone devices and authenticated save/reload were not exercised. Stored game/deck snapshots that already contain old image URLs were deliberately left intact.
+
+![Production market search at 390px](mobile-market.png)
+
+Remaining low-resolution prints: **464** (223 held exact-print candidates + 237 not found on the inspected search page + 4 whose candidate was still small). This is a partial image-quality release; the 227-candidate audit is not represented as 227 fully approved printings. The standalone 384px quality-review concern `dm12-039` also remains unresolved.
