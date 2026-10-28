@@ -49,7 +49,7 @@
     "images:prepare": "node scripts/prepare-card-images.mjs",
     "images:sync:dm": "node scripts/sync-dm-card-images.mjs",
     "images:sql:dm": "node scripts/build-dm-card-image-sql.mjs",
-    "test:images:sync": "node --test scripts/sync-dm-card-images.test.mjs",
+    "test:images:sync": "node --test scripts/sync-dm-card-images.test.mjs scripts/audit-card-image-resolution.test.mjs scripts/card-image-followup.test.mjs scripts/prepare-card-image-release-bundle.test.mjs scripts/reviewed-card-image-patch.test.mjs",
     "audit:shops": "node scripts/audit-shop-manifest.mjs",
     "test:shops:audit": "node --test scripts/audit-shop-manifest.test.mjs",
     "test": "npm run test:prices && npm run test:api-validation && npm run test:market && npm run test:card-detail && npm run test:favorites && npm run test:friends && npm run test:routes && npm run test:maps && npm run test:commerce-links && npm run test:search && npm run test:decks && npm run test:rooms && npm run test:playfield && npm run test:images && npm run test:shops:audit && npm run test:import:dm && npm run test:dm26ex4 && npm run test:db-safety",
@@ -57,7 +57,11 @@
     "test:shopping-sharing": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/shopping-share-access.test.mjs scripts/shopping-sharing-db.test.mjs",
     "test:shopping-browser": "playwright test --config playwright.shopping.config.mjs",
     "test:shopping-cloud": "playwright test --config playwright.shopping-cloud.config.mjs",
-    "test:shopping-sse": "node scripts/measure-shopping-sse.mjs"
+    "test:shopping-sse": "node scripts/measure-shopping-sse.mjs",
+    "images:audit:resolution": "node scripts/audit-card-image-resolution.mjs",
+    "images:research:candidates": "node scripts/research-card-image-candidates.mjs",
+    "images:metadata:prepare": "node scripts/build-card-image-metadata-patch.mjs",
+    "images:release:prepare": "node scripts/prepare-card-image-release-bundle.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",

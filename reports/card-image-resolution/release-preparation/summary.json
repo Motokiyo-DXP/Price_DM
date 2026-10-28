@@ -1,0 +1,10 @@
+{
+  "candidates_checked": 468,
+  "prepared_candidate_assets": 227,
+  "held": 241,
+  "metadata_rows": 159,
+  "image_updates_authorized": 0,
+  "production_writes": 0,
+  "release_owner_status": "another_production_release_in_progress_preparation_only",
+  "snapshot_notice": "Saved preflight snapshot only; MUST refresh after competing release completes"
+}

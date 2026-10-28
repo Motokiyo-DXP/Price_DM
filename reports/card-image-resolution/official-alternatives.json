@@ -1,0 +1,804 @@
+[
+  {
+    "print_id": 16021,
+    "official_card_id": "dmx18-006",
+    "card_name": "百獣槍 ジャベレオン",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-006",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-006a.jpg",
+        "alt": "百獣槍 ジャベレオン",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-006a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 13073,
+          "sha256": "8419023d045126c6091ab2f8a614202ac8d17851af833672e50e65979afed1a2"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-006b.jpg",
+        "alt": "百獣聖堂 レオサイユ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-006b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 10352,
+          "sha256": "1a2d5ece3cc1b992afe8c6e8c35733a02fe0687e8883716735b90bc97c63f811"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-006c.jpg",
+        "alt": "頂天聖 レオザワルド",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-006c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 16913,
+          "sha256": "10a9f2353f3fc7844bf1a16edb2ea12286566cb7c1e6020e9bc535fef2b74693"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16023,
+    "official_card_id": "dmx18-011",
+    "card_name": "煉獄刃 ヘルフエズ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-011",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-011a.jpg",
+        "alt": "煉獄刃 ヘルフエズ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-011a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 12946,
+          "sha256": "11ca5db06ad77cc734192d6eb845a26547e08d29722501ad9fffaaf7682f9123"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-011b.jpg",
+        "alt": "煉獄宮殿 ヘルクライム",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-011b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 10531,
+          "sha256": "2ce9f237155a075fb02a75a51adf56934b7b9c2ae9e7a98bd1c5b4949a89a952"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-011c.jpg",
+        "alt": "大殺壊 ヘルセカイ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-011c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 16603,
+          "sha256": "b3812fba7d32de4ce65e96585eac911223bcf66ae601797e06316f829d67ef9e"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16064,
+    "official_card_id": "dmx18-046",
+    "card_name": "卵殻塊 ジュラピル",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-046",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-046a.jpg",
+        "alt": "卵殻塊 ジュラピル",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-046a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 11805,
+          "sha256": "969d0c2d068f2ec9c66bf108ee8034d5b361fd479d8546d885a1d197d5255162"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-046b.jpg",
+        "alt": "生誕神秘 ル=ピラッジュ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-046b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 10370,
+          "sha256": "51a6c2fdd48076dac0bae36b8f3c69d21ae0af705b1503180c5a657327d44e44"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-046c.jpg",
+        "alt": "成長類石塊目 ジュランクルーガ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-046c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 16235,
+          "sha256": "b5ffeffdd7cfc82efb82ba7874a811fd492af825659c0dfd9d8c681a1bf2b0a2"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16066,
+    "official_card_id": "dmx18-041",
+    "card_name": "熱龍爪 メリケン・バルク",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-041",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-041a.jpg",
+        "alt": "熱龍爪 メリケン・バルク",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-041a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 12734,
+          "sha256": "238b4d9d0d0c93b9b5a81a8d863e90390aca2046c0422e18a160affdd2e35197"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-041b.jpg",
+        "alt": "熱決闘場 バルク・アリーナ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-041b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 11044,
+          "sha256": "ef368fdbdf7426036c5bb2e415151dfd1ef7a54b5b75f635bd5efb5d3c00f566"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-041c.jpg",
+        "alt": "熱血龍 バリキレ・メガマッチョ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-041c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 16693,
+          "sha256": "9ef90e9a3604523dd76e1f10851b79f2ed2166fa330e37f9a0ce883f32e27a36"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16084,
+    "official_card_id": "dmx18-026",
+    "card_name": "龍芭扇 ファンパイ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-026",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-026a.jpg",
+        "alt": "龍芭扇 ファンパイ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-026a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 12715,
+          "sha256": "0dc87ff72221f60d7b4afe6d61cbdb1397c4594ebf3f2cbf45c694d25b9e0fa9"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-026b.jpg",
+        "alt": "龍脈空船 トンナンシャーペ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-026b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 11875,
+          "sha256": "c3399a0365569a0af30b8785faf0cad58accb0f6b72369a06113848031e2a128"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-026c.jpg",
+        "alt": "亜空艦 ダイスーシドラ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-026c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 17012,
+          "sha256": "34c50f504bc20ac7b8fb286026d77a9ff84ae50b8f6ff271c681aa50b36836b8"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16085,
+    "official_card_id": "dmx18-021",
+    "card_name": "太陽槍 ラヴェリテ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-021",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-021a.jpg",
+        "alt": "太陽槍 ラヴェリテ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-021a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 13266,
+          "sha256": "abcfe024c99ff61c6ef656bfeccad6f2d5381cbc66866711a7520aa1eb72fb53"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-021b.jpg",
+        "alt": "白夜教会 ブランノワール",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-021b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 11432,
+          "sha256": "308e176e8c99e0ff3ce285c00df63a986f3a88730cae00e0a00ba4a4d397f48a"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-021c.jpg",
+        "alt": "日蝕の精霊龍 ソレイルノワール",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-021c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 18083,
+          "sha256": "5442c286bc314f0364d5abe73a8ce63f61d6fd5eb573521b774775d3a320e881"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16088,
+    "official_card_id": "dmx18-031",
+    "card_name": "立体兵器 龍素ランチャー",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-031",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-031a.jpg",
+        "alt": "立体兵器 龍素ランチャー",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-031a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 13351,
+          "sha256": "4a1cd48fba825061ec444457a04972666ae6a375603ff35e086c52113965ce8e"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-031b.jpg",
+        "alt": "龍素戦闘機 エウクレイデス",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-031b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 10869,
+          "sha256": "0af09658e7c15fbe1fd9f722421ec4352317f6ff1d1b49330def366754dd5942"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-031c.jpg",
+        "alt": "龍素記号Ad ユークリッド",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-031c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 16036,
+          "sha256": "beb2b316c20b828a78b86f2303e625accfabb55c3399756f6fee206c6f166c9d"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 16093,
+    "official_card_id": "dmx18-036",
+    "card_name": "悪夢卍 ミガワリ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dmx18-036",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/dmx18-036a.jpg",
+        "alt": "悪夢卍 ミガワリ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-036a.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 191,
+          "format": "jpeg",
+          "byte_size": 11759,
+          "sha256": "d6b1df1f2b6e9a179966577011934b43aed361ff597d895fe01a327a6d0f60af"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-036b.jpg",
+        "alt": "忍者屋敷 カラクリガエシ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-036b.jpg",
+        "status": 200,
+        "native": {
+          "width": 191,
+          "height": 137,
+          "format": "jpeg",
+          "byte_size": 11955,
+          "sha256": "77e6f639cb25bfdcf2af8096e3da35d408b9dd47c64223ce7251efa40b79c1ae"
+        }
+      },
+      {
+        "src": "/wp-content/card/cardimage/dmx18-036c.jpg",
+        "alt": "絡繰の悪魔龍 ウツセミヘンゲ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/dmx18-036c.jpg",
+        "status": 200,
+        "native": {
+          "width": 137,
+          "height": 293,
+          "format": "jpeg",
+          "byte_size": 16904,
+          "sha256": "750100a6c16e35f28f87b2a2e6eb059dad7dcb07b92ffa92eff00891fa5e8d06"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 23166,
+    "official_card_id": "promoy17-sp4d02",
+    "card_name": "ガンバＧ/ガガン・ガン・ガガン",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-sp4d02",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-sp4d02a.jpg",
+        "alt": "ガンバＧ/ガガン・ガン・ガガン",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-sp4d02a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 32957,
+          "sha256": "4d227122a879e9ae7e6a71e3f942174c600b358b202472d4e97c9b55e9be22e5"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 23941,
+    "official_card_id": "promoy17-003",
+    "card_name": "奇石 ミクセル / ジャミング・チャフ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-003",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-003a.jpg",
+        "alt": "奇石 ミクセル / ジャミング・チャフ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-003a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 33537,
+          "sha256": "b0bf32d502acbd3bd2c6209f80ee6358dd3401241a40e7e1e8e22e422965f0f2"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 23993,
+    "official_card_id": "promoy17-007",
+    "card_name": "鉄拳の構え 幻惚/テッケニア・スパーク",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-007",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-007a.jpg",
+        "alt": "鉄拳の構え 幻惚/テッケニア・スパーク",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-007a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 37207,
+          "sha256": "a8919b2dab8155674bd96dca5bbb23da35446abcea729c9475cb03e7751e422e"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24003,
+    "official_card_id": "promoy17-002",
+    "card_name": "ハザード・オウ禍武斗/禍武斗の轟印",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-002",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-002a.jpg",
+        "alt": "ハザード・オウ禍武斗/禍武斗の轟印",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-002a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 35159,
+          "sha256": "a028074592319062e29c868e343ec27341c71af9942eb36a140369fa3aa8b2ab"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24039,
+    "official_card_id": "promoy17-085",
+    "card_name": "ムシ無視のんのん / 灰になるほどヒート",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-085",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-085a.jpg",
+        "alt": "ムシ無視のんのん / 灰になるほどヒート",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-085a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 33763,
+          "sha256": "5be3848474dcc7b85a458cbc59bec7d4c0075856dab477a17efe5a2d22e1ef59"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24044,
+    "official_card_id": "promoy17-104",
+    "card_name": "レレディ・バ・グーバ / ツインパクト・マップ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-104",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-104a.jpg",
+        "alt": "レレディ・バ・グーバ / ツインパクト・マップ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-104a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 38402,
+          "sha256": "5977ecf251a9fcee9a7592ce8038cfb5e7cd737711b743b41303e8a9c8207431"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24046,
+    "official_card_id": "promoy17-100",
+    "card_name": "コンダマ / 魂フエミドロ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-100",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-100a.jpg",
+        "alt": "コンダマ / 魂フエミドロ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-100a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 38697,
+          "sha256": "26c0bb123a8a38fb12c7367fc2e6faebcdaafba10f48932f89df2d02a1a08ce3"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24047,
+    "official_card_id": "promoy17-028",
+    "card_name": "ファビュラ・スネイル / ゴルチョップ・トラップ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-028",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-028a.jpg",
+        "alt": "ファビュラ・スネイル / ゴルチョップ・トラップ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-028a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 36896,
+          "sha256": "90247cbc5422b51ecb5fd17fc6653d4e34f45fe785ad41e2d4d4cd0b8223f6fc"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24048,
+    "official_card_id": "promoy17-029",
+    "card_name": "ファビュラ・スネイル / ゴルチョップ・トラップ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-029",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-029a.jpg",
+        "alt": "ファビュラ・スネイル / ゴルチョップ・トラップ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-029a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 41663,
+          "sha256": "d1c05e9b0110bf8005736198829eb59ee67e106764d5c2707d5f31e3ad5a9792"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24049,
+    "official_card_id": "promoy17-015",
+    "card_name": "奇石 ミクセル / ジャミング・チャフ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-015",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-015a.jpg",
+        "alt": "奇石 ミクセル / ジャミング・チャフ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-015a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 38309,
+          "sha256": "229b7c05eead766afc001b58f61fde8b4b43c6430ff799b0cd633427bb2690e7"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24071,
+    "official_card_id": "promoy17-102",
+    "card_name": "ホービット/壁キョーボリア",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-102",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-102a.jpg",
+        "alt": "ホービット/壁キョーボリア",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-102a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 40590,
+          "sha256": "5c298973ba6964b38774498d583a144fbc8466aaefca3fa530af5fb757f8977d"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24073,
+    "official_card_id": "promoy17-035",
+    "card_name": "ガンバＧ/ガガン・ガン・ガガン",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-035",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-035a.jpg",
+        "alt": "ガンバＧ/ガガン・ガン・ガガン",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-035a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 38756,
+          "sha256": "54e0cd630d93c04a0c73ec9fa40c4f13b869bb4a26f03eaa5cbeea51f1843bd2"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24075,
+    "official_card_id": "promoy17-042",
+    "card_name": "龍装者 シャイニー/エッジ・スパーク",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-042",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-042a.jpg",
+        "alt": "龍装者 シャイニー/エッジ・スパーク",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-042a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 41398,
+          "sha256": "f78398ebf1d9aef6091ba02e09c724622557fb8cc2cc0379384623673643e257"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24080,
+    "official_card_id": "promoy17-053",
+    "card_name": "紅弔の魔人 ギリアール/闘い踊る凶器",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-053",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-053a.jpg",
+        "alt": "紅弔の魔人 ギリアール/闘い踊る凶器",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-053a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 35576,
+          "sha256": "424cfc60b1f593b6f309a4ee75c97cf84b7d8385a6ea011feda8419a31e61fad"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24081,
+    "official_card_id": "promoy17-055",
+    "card_name": "紅弔の魔人 ギリアール/闘い踊る凶器",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-055",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-055a.jpg",
+        "alt": "紅弔の魔人 ギリアール/闘い踊る凶器",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-055a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 40567,
+          "sha256": "3d28d3e7a7c12ea78ea815c6d2211c47b6fff19024eb8efbc78e2774fda8ce62"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24089,
+    "official_card_id": "promoy17-022",
+    "card_name": "卍 デ・ルパンサー 卍 / 葬爪",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-022",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-022a.jpg",
+        "alt": "卍 デ・ルパンサー 卍 / 葬爪",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-022a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 42149,
+          "sha256": "d022f7aa164014c50320a4a059cb4afa42a63930b0edfd6975d7c34c03c47a8a"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24105,
+    "official_card_id": "promoy17-047",
+    "card_name": "S.Q.QX/5.S.U.",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-047",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-047a.jpg",
+        "alt": "S.Q.QX/5.S.U.",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-047a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 37816,
+          "sha256": "45308950e2811d554285b096be407c3c370828b7c9fd6448264f6c77f1b1a1e1"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24107,
+    "official_card_id": "promoy17-057",
+    "card_name": "めっちゃ！デンヂャラスG３ / ケッシング・ゼロ",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-057",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-057a.jpg",
+        "alt": "めっちゃ！デンヂャラスG3 / ケッシング・ゼロ",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-057a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 39552,
+          "sha256": "2bf9d75b2a0ac570cab9ccf238033d12ff40a48b3706f90a7b1544069fcde3ef"
+        }
+      }
+    ]
+  },
+  {
+    "print_id": 24109,
+    "official_card_id": "promoy17-105",
+    "card_name": "侵略開始!! にゃんこ軍団/にゃんこ砲発射！",
+    "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=promoy17-105",
+    "detail_status": 200,
+    "candidates": [
+      {
+        "src": "/wp-content/card/cardimage/promoy17-105a.jpg",
+        "alt": "侵略開始!! にゃんこ軍団/にゃんこ砲発射！",
+        "url": "https://dm.takaratomy.co.jp/wp-content/card/cardimage/promoy17-105a.jpg",
+        "status": 200,
+        "native": {
+          "width": 250,
+          "height": 350,
+          "format": "jpeg",
+          "byte_size": 36905,
+          "sha256": "08a6e5bd1dff720c9aa20f97c16505f0e6f5e56670750b0050ba6411bdda6f15"
+        }
+      }
+    ]
+  }
+]
