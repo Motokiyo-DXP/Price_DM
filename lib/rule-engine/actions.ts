@@ -22,4 +22,11 @@ export type TapAction = Readonly<{
   cause: RuleCause;
 }>;
 
-export type RuleAction = DrawAction | DiscardAction | TapAction;
+export type ChargeAction = Readonly<{
+  type: "CHARGE";
+  actor: PlayerId;
+  cardInstanceId: string;
+  cause: RuleCause;
+}>;
+
+export type RuleAction = DrawAction | DiscardAction | TapAction | ChargeAction;

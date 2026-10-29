@@ -103,7 +103,8 @@ AIに一度仕組みを作らせる
 - R9 behavior-preserving Legacy TAP helper extraction: COMPLETE / MAIN via PR #14
 - R10 TAP Production Shadow: COMPLETE / MAIN via PR #15
 - R11 TAP Validation: COMPLETE / MAIN via PR #16
-- R12 CHARGE Design: CURRENT / CHARGE SELECTED / DESIGN READY
+- R12 CHARGE Design: COMPLETE
+- R13 CHARGE Pure Core + test-only Shadow: IMPLEMENTED / VALIDATED; Production remains DEFERRED_NO_SEMANTIC_INTENT
 
 DRAWではLegacy結果のみをProduction authorityとして利用し、Rule Core結果は比較専用とする方針を維持したままValidationまで完了した。
 
