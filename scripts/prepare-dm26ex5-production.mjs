@@ -1,0 +1,20 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} from 'node:crypto';import path from 'node:path';import {assertProductionDbRelease} from './production-db-guard.mjs';
+const root=process.cwd(),bundle=path.join(root,'docs/releases/dm26ex5-20261108');
+if(process.argv.includes('--production-payload'))assertProductionDbRelease(root);
+const m=JSON.parse(await readFile(path.join(bundle,'release-candidate-manifest.json'),'utf8'));
+let sql=await readFile(path.join(bundle,'release-candidate.sql'),'utf8');
+if(createHash('sha256').update(sql).digest('hex')!==m.sql_sha256||m.rows.length!==115)throw Error('release artifact mismatch');
+const tables=['canonical_cards','card_prints','card_products','card_search_terms','deck_cards','price_records'];
+const before=`SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='90s';
+DO $$ BEGIN IF NOT pg_try_advisory_xact_lock(hashtextextended('price-dm-production-release',0)) THEN RAISE EXCEPTION 'another release holds lock'; END IF; END $$;
+LOCK TABLE public.canonical_cards,public.card_prints,public.card_products,public.card_search_terms IN SHARE ROW EXCLUSIVE MODE;
+LOCK TABLE public.deck_cards,public.price_records IN SHARE MODE;
+DO $$ BEGIN IF (SELECT count(*) FROM supabase_migrations.schema_migrations)<>181 OR EXISTS(SELECT 1 FROM card_products WHERE product_code='DM26-EX5') OR EXISTS(SELECT 1 FROM card_prints WHERE official_card_id ILIKE 'dm26ex5-%' OR card_number ILIKE 'dm26ex5 %') THEN RAISE EXCEPTION 'release baseline changed'; END IF; END $$;
+${tables.map(t=>`CREATE TEMP TABLE ex5_before_${t} ON COMMIT DROP AS SELECT id,to_jsonb(t) value FROM public.${t} t;`).join('\n')}`;
+const after=tables.map(t=>`DO $$ BEGIN IF EXISTS(SELECT 1 FROM ex5_before_${t} b LEFT JOIN public.${t} a ON a.id=b.id WHERE a.id IS NULL OR to_jsonb(a) IS DISTINCT FROM b.value) THEN RAISE EXCEPTION 'existing ${t} changed'; END IF; END $$;`).join('\n')+`
+DO $$ BEGIN IF (SELECT count(*) FROM canonical_cards)-(SELECT count(*) FROM ex5_before_canonical_cards)<>24 OR (SELECT count(*) FROM card_prints)-(SELECT count(*) FROM ex5_before_card_prints)<>115 OR (SELECT count(*) FROM card_products)-(SELECT count(*) FROM ex5_before_card_products)<>1 OR (SELECT count(*) FROM deck_cards)<>(SELECT count(*) FROM ex5_before_deck_cards) OR (SELECT count(*) FROM price_records)<>(SELECT count(*) FROM ex5_before_price_records) THEN RAISE EXCEPTION 'unexpected release diff'; END IF; END $$;
+SELECT jsonb_build_object('official_prints',115,'new_canonicals',24,'reused_canonicals',86,'existing_rows_unchanged',true) release_result;`;
+if((sql.match(/\nBEGIN;/g)??[]).length!==1||!/COMMIT;\s*$/.test(sql))throw Error('unexpected transaction boundary');
+sql=sql.replace('\nBEGIN;',()=> '\nBEGIN;\n'+before).replace(/COMMIT;\s*$/,()=>after+'\nCOMMIT;\n');
+await mkdir('.local',{recursive:true});await writeFile('.local/dm26ex5-production-payload.sql',"SET price_dm.release_project_ref='fxhlobydispnbywxhirn'; SET price_dm.release_candidate='DM26-EX5-115';\n"+sql);
+console.log('Generated guarded payload; no database changes executed.');

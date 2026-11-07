@@ -1,0 +1,1089 @@
+{
+  "status": "ready_for_dedicated_release_preflight",
+  "rows": [
+    {
+      "official_id": "dm26ex5-G001",
+      "number": "DM26EX5 G1/G20",
+      "name": "天頂と停滞と水晶の決断",
+      "decision": "REUSE",
+      "canonical_id": 3530,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G002",
+      "number": "DM26EX5 G2/G20",
+      "name": "闘門の精霊ウェルキウス",
+      "decision": "REUSE",
+      "canonical_id": 1288,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G003",
+      "number": "DM26EX5 G3/G20",
+      "name": "叡智の聖騎士 スクアーロ / エナジー・ライト",
+      "decision": "REUSE",
+      "canonical_id": 166,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G004",
+      "number": "DM26EX5 G4/G20",
+      "name": "超神星マーキュリー・ギガブリザード",
+      "decision": "REUSE",
+      "canonical_id": 17848,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G005",
+      "number": "DM26EX5 G5/G20",
+      "name": "ヨビニオン・ハルカス",
+      "decision": "REUSE",
+      "canonical_id": 647,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G006",
+      "number": "DM26EX5 G6/G20",
+      "name": "超神星DOOM・ドラゲリオン",
+      "decision": "REUSE",
+      "canonical_id": 433,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G007",
+      "number": "DM26EX5 G7/G20",
+      "name": "凶鬼03号 ガシャゴズラ",
+      "decision": "REUSE",
+      "canonical_id": 7452,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G008",
+      "number": "DM26EX5 G8/G20",
+      "name": "アーテル・ゴルギーニ",
+      "decision": "REUSE",
+      "canonical_id": 438,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G009",
+      "number": "DM26EX5 G9/G20",
+      "name": "愛銀河マーズ・シンギュラリティ",
+      "decision": "REUSE",
+      "canonical_id": 3020,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G010",
+      "number": "DM26EX5 G10/G20",
+      "name": "氷結龍 ダイヤモンド・クレバス",
+      "decision": "REUSE",
+      "canonical_id": 3594,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G011",
+      "number": "DM26EX5 G11/G20",
+      "name": "ヨビニオン・マルル",
+      "decision": "REUSE",
+      "canonical_id": 892,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G012",
+      "number": "DM26EX5 G12/G20",
+      "name": "時の秘術師 ミラクルスター",
+      "decision": "REUSE",
+      "canonical_id": 11333,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G013",
+      "number": "DM26EX5 G13/G20",
+      "name": "～邪眼帝 PARTⅡ～",
+      "decision": "REUSE",
+      "canonical_id": 1102,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G014",
+      "number": "DM26EX5 G14/G20",
+      "name": "「覇道」の頂 シュラ・ベートーベン",
+      "decision": "REUSE",
+      "canonical_id": 4860,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP001",
+      "number": "DM26EX5 DP1/DP40",
+      "name": "神聖麒 シューゲイザー",
+      "decision": "REUSE",
+      "canonical_id": 7714,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP002",
+      "number": "DM26EX5 DP2/DP40",
+      "name": "大河聖霊エル・ドラード",
+      "decision": "REUSE",
+      "canonical_id": 16010,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G015",
+      "number": "DM26EX5 G15/G20",
+      "name": "貴布人 テブルカッケ＝エディ",
+      "decision": "REUSE",
+      "canonical_id": 623,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G016",
+      "number": "DM26EX5 G16/G20",
+      "name": "プリンセス・パーティ ～シラハの絆～",
+      "decision": "REUSE",
+      "canonical_id": 1153,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G017",
+      "number": "DM26EX5 G17/G20",
+      "name": "ボルシャック・ロマネスク",
+      "decision": "REUSE",
+      "canonical_id": 3031,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP003",
+      "number": "DM26EX5 DP3/DP40",
+      "name": "光神龍スペル・デル・フィン",
+      "decision": "REUSE",
+      "canonical_id": 9163,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP004",
+      "number": "DM26EX5 DP4/DP40",
+      "name": "ウソと盗みのエンターテイナー",
+      "decision": "REUSE",
+      "canonical_id": 9475,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-005",
+      "number": "DM26EX5 5/40",
+      "name": "悪魔龍 ダークマスターズ",
+      "decision": "REUSE",
+      "canonical_id": 4477,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-008",
+      "number": "DM26EX5 8/40",
+      "name": "幻想妖精カチュア",
+      "decision": "REUSE",
+      "canonical_id": 6697,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-009",
+      "number": "DM26EX5 9/40",
+      "name": "武家類武士目 ステージュラ",
+      "decision": "REUSE",
+      "canonical_id": 3589,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-010",
+      "number": "DM26EX5 10/40",
+      "name": "アクア・スペルブルー / インビンシブル・オーラ",
+      "decision": "REUSE",
+      "canonical_id": 926,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G018",
+      "number": "DM26EX5 G18/G20",
+      "name": "光開の精霊サイフォゲート",
+      "decision": "REUSE",
+      "canonical_id": 1245,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP005",
+      "number": "DM26EX5 DP5/DP40",
+      "name": "閃光の守護者ホーリー",
+      "decision": "REUSE",
+      "canonical_id": 4758,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP006",
+      "number": "DM26EX5 DP6/DP40",
+      "name": "DNA・スパーク",
+      "decision": "REUSE",
+      "canonical_id": 6391,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP007",
+      "number": "DM26EX5 DP7/DP40",
+      "name": "ヘブンズ・ゲート",
+      "decision": "REUSE",
+      "canonical_id": 1144,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP008",
+      "number": "DM26EX5 DP8/DP40",
+      "name": "オリオティス・ジャッジ",
+      "decision": "REUSE",
+      "canonical_id": 172,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP009",
+      "number": "DM26EX5 DP9/DP40",
+      "name": "終末の時計 ザ・クロック",
+      "decision": "REUSE",
+      "canonical_id": 476,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP010",
+      "number": "DM26EX5 DP10/DP40",
+      "name": "クリスタル・メモリー",
+      "decision": "REUSE",
+      "canonical_id": 11545,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP011",
+      "number": "DM26EX5 DP11/DP40",
+      "name": "ドンドン吸い込むナウ",
+      "decision": "REUSE",
+      "canonical_id": 448,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP012",
+      "number": "DM26EX5 DP12/DP40",
+      "name": "地獄門デス・ゲート",
+      "decision": "REUSE",
+      "canonical_id": 6358,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP013",
+      "number": "DM26EX5 DP13/DP40",
+      "name": "竜のフレア・エッグ",
+      "decision": "REUSE",
+      "canonical_id": 5119,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP014",
+      "number": "DM26EX5 DP14/DP40",
+      "name": "龍秘陣 ジャックポット・エントリー",
+      "decision": "REUSE",
+      "canonical_id": 3378,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP015",
+      "number": "DM26EX5 DP15/DP40",
+      "name": "ミステリー・キューブ",
+      "decision": "REUSE",
+      "canonical_id": 3000,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP016",
+      "number": "DM26EX5 DP16/DP40",
+      "name": "トレジャー・マップ",
+      "decision": "REUSE",
+      "canonical_id": 1247,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP017",
+      "number": "DM26EX5 DP17/DP40",
+      "name": "アルカディア・スパーク",
+      "decision": "REUSE",
+      "canonical_id": 4280,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP018",
+      "number": "DM26EX5 DP18/DP40",
+      "name": "フェアリー・シャワー",
+      "decision": "REUSE",
+      "canonical_id": 3662,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP019",
+      "number": "DM26EX5 DP19/DP40",
+      "name": "メンデルスゾーン",
+      "decision": "REUSE",
+      "canonical_id": 257,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-011",
+      "number": "DM26EX5 11/40",
+      "name": "音感の精霊龍 エメラルーダ",
+      "decision": "REUSE",
+      "canonical_id": 4956,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-012",
+      "number": "DM26EX5 12/40",
+      "name": "トライガード・チャージャー",
+      "decision": "REUSE",
+      "canonical_id": 4979,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-015",
+      "number": "DM26EX5 15/40",
+      "name": "ドンドン吹雪くナウ",
+      "decision": "REUSE",
+      "canonical_id": 4068,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-016",
+      "number": "DM26EX5 16/40",
+      "name": "学校男",
+      "decision": "REUSE",
+      "canonical_id": 6929,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-018",
+      "number": "DM26EX5 18/40",
+      "name": "呪紋のカルマ インカ",
+      "decision": "REUSE",
+      "canonical_id": 3671,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-019",
+      "number": "DM26EX5 19/40",
+      "name": "龍の呼び声",
+      "decision": "REUSE",
+      "canonical_id": 3399,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-020",
+      "number": "DM26EX5 20/40",
+      "name": "無双龍聖イージスブースト",
+      "decision": "REUSE",
+      "canonical_id": 8992,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP020",
+      "number": "DM26EX5 DP20/DP40",
+      "name": "ホーガン・ブラスター",
+      "decision": "REUSE",
+      "canonical_id": 7737,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP021",
+      "number": "DM26EX5 DP21/DP40",
+      "name": "スペルブック・チャージャー",
+      "decision": "REUSE",
+      "canonical_id": 10122,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP023",
+      "number": "DM26EX5 DP23/DP40",
+      "name": "特攻人形ジェニー",
+      "decision": "REUSE",
+      "canonical_id": 1233,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP024",
+      "number": "DM26EX5 DP24/DP40",
+      "name": "生死の天秤",
+      "decision": "REUSE",
+      "canonical_id": 10539,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP025",
+      "number": "DM26EX5 DP25/DP40",
+      "name": "勇愛の天秤",
+      "decision": "REUSE",
+      "canonical_id": 853,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP026",
+      "number": "DM26EX5 DP26/DP40",
+      "name": "獅子王の遺跡",
+      "decision": "REUSE",
+      "canonical_id": 4083,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP028",
+      "number": "DM26EX5 DP28/DP40",
+      "name": "デモンズ・ライト",
+      "decision": "REUSE",
+      "canonical_id": 5016,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP030",
+      "number": "DM26EX5 DP30/DP40",
+      "name": "リロード・チャージャー",
+      "decision": "REUSE",
+      "canonical_id": 9146,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP031",
+      "number": "DM26EX5 DP31/DP40",
+      "name": "ダーク・ライフ",
+      "decision": "REUSE",
+      "canonical_id": 6340,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-021",
+      "number": "DM26EX5 21/40",
+      "name": "アクア・ジェスタールーペ",
+      "decision": "REUSE",
+      "canonical_id": 14295,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-023",
+      "number": "DM26EX5 23/40",
+      "name": "コアクアンのおつかい",
+      "decision": "REUSE",
+      "canonical_id": 8966,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-024",
+      "number": "DM26EX5 24/40",
+      "name": "熱血龍 バトクロス・バトル",
+      "decision": "REUSE",
+      "canonical_id": 5165,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-025",
+      "number": "DM26EX5 25/40",
+      "name": "恋愛妖精アジサイ",
+      "decision": "REUSE",
+      "canonical_id": 3613,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-026",
+      "number": "DM26EX5 26/40",
+      "name": "天真妖精オチャッピィ",
+      "decision": "REUSE",
+      "canonical_id": 9268,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-027",
+      "number": "DM26EX5 27/40",
+      "name": "桜風妖精ステップル",
+      "decision": "REUSE",
+      "canonical_id": 3495,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-029",
+      "number": "DM26EX5 29/40",
+      "name": "青寂の精霊龍 カーネル / サイレント・ジェラシー",
+      "decision": "REUSE",
+      "canonical_id": 107,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-030",
+      "number": "DM26EX5 30/40",
+      "name": "闇鎧亜ジャック・アルカディアス／執拗なる鎧亜の牢獄",
+      "decision": "REUSE",
+      "canonical_id": 44080,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G019",
+      "number": "DM26EX5 G19/G20",
+      "name": "巨大設計図",
+      "decision": "REUSE",
+      "canonical_id": 1221,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-G020",
+      "number": "DM26EX5 G20/G20",
+      "name": "ボルシャック・栄光・ルピア",
+      "decision": "REUSE",
+      "canonical_id": 248,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP032",
+      "number": "DM26EX5 DP32/DP40",
+      "name": "ゼロの裏技ニヤリー・ゲット",
+      "decision": "REUSE",
+      "canonical_id": 4223,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP033",
+      "number": "DM26EX5 DP33/DP40",
+      "name": "サイバー・チューン",
+      "decision": "REUSE",
+      "canonical_id": 358,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP034",
+      "number": "DM26EX5 DP34/DP40",
+      "name": "ヤット・パウル",
+      "decision": "REUSE",
+      "canonical_id": 432,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP035",
+      "number": "DM26EX5 DP35/DP40",
+      "name": "霞み妖精ジャスミン",
+      "decision": "REUSE",
+      "canonical_id": 3596,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP036",
+      "number": "DM26EX5 DP36/DP40",
+      "name": "ライフプラン・チャージャー",
+      "decision": "REUSE",
+      "canonical_id": 10422,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP037",
+      "number": "DM26EX5 DP37/DP40",
+      "name": "フェアリー・クリスタル",
+      "decision": "REUSE",
+      "canonical_id": 4958,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP038",
+      "number": "DM26EX5 DP38/DP40",
+      "name": "フェアリーの火の子祭",
+      "decision": "REUSE",
+      "canonical_id": 930,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP039",
+      "number": "DM26EX5 DP39/DP40",
+      "name": "ピクシー・ライフ",
+      "decision": "REUSE",
+      "canonical_id": 4240,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-DP040",
+      "number": "DM26EX5 DP40/DP40",
+      "name": "熱湯グレンニャー",
+      "decision": "REUSE",
+      "canonical_id": 12743,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-033",
+      "number": "DM26EX5 33/40",
+      "name": "アクア少年 ジャバ・キッド",
+      "decision": "REUSE",
+      "canonical_id": 14068,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-034",
+      "number": "DM26EX5 34/40",
+      "name": "アクア・ガード",
+      "decision": "REUSE",
+      "canonical_id": 14269,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-036",
+      "number": "DM26EX5 36/40",
+      "name": "ダイヤモンド・カスケード",
+      "decision": "REUSE",
+      "canonical_id": 3636,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-037",
+      "number": "DM26EX5 37/40",
+      "name": "雪精 ジャーベル",
+      "decision": "REUSE",
+      "canonical_id": 12478,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-038",
+      "number": "DM26EX5 38/40",
+      "name": "青音の精霊龍 リンガール",
+      "decision": "REUSE",
+      "canonical_id": 19602,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-039",
+      "number": "DM26EX5 39/40",
+      "name": "【問２】ノロン⤴",
+      "decision": "REUSE",
+      "canonical_id": 6965,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-040",
+      "number": "DM26EX5 40/40",
+      "name": "バグ丸くん",
+      "decision": "REUSE",
+      "canonical_id": 9573,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-002",
+      "number": "DM26EX5 2/40",
+      "name": "ボルシャック・ドギラゴン",
+      "decision": "REUSE",
+      "canonical_id": 4374,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-003",
+      "number": "DM26EX5 3/40",
+      "name": "百族の長 プチョヘンザ",
+      "decision": "REUSE",
+      "canonical_id": 84,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-001",
+      "number": "DM26EX5 1/40",
+      "name": "煌龍 サッヴァーク",
+      "decision": "REUSE",
+      "canonical_id": 42,
+      "basis": "existing identity and attribute snapshot; reviewed exceptions guarded by old official print"
+    },
+    {
+      "official_id": "dm26ex5-SEC001",
+      "number": "DM26EX5 ㊙1/㊙5",
+      "name": "クリスタル・ツヴァイランサーP’S",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": 13703,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-SEC002",
+      "number": "DM26EX5 ㊙2/㊙5",
+      "name": "フェリックス・ミザリィ",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-SEC003",
+      "number": "DM26EX5 ㊙3/㊙5",
+      "name": "ダイヤモンド・ブリザードP’S",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": 14831,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-SEC004",
+      "number": "DM26EX5 ㊙4/㊙5",
+      "name": "龍聖霊マギア・デル・フィン",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-SEC005",
+      "number": "DM26EX5 ㊙5/㊙5",
+      "name": "無限龍王ボルシャック・ライジングNEX",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S001",
+      "number": "DM26EX5 S1/S10",
+      "name": "八重の精霊パーフェクト・エイティー",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S002",
+      "number": "DM26EX5 S2/S10",
+      "name": "超閃機 ジャバジャックP’S",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": 13118,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S003",
+      "number": "DM26EX5 S3/S10",
+      "name": "クリスタル・ツヴァイランサーP’S",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": 13703,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S004",
+      "number": "DM26EX5 S4/S10",
+      "name": "フェリックス・ミザリィ",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S005",
+      "number": "DM26EX5 S5/S10",
+      "name": "超神星ヴァルカン・アンチャンス",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S006",
+      "number": "DM26EX5 S6/S10",
+      "name": "ダイヤモンド・ブリザードP’S",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": 14831,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S007",
+      "number": "DM26EX5 S7/S10",
+      "name": "龍聖霊マギア・デル・フィン",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S008",
+      "number": "DM26EX5 S8/S10",
+      "name": "暗黒神羅凰ゼロ・フェニックス",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": 3079,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S009",
+      "number": "DM26EX5 S9/S10",
+      "name": "超天星ライゾウ「灼」",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-S010",
+      "number": "DM26EX5 S10/S10",
+      "name": "無限龍王ボルシャック・ライジングNEX",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-004",
+      "number": "DM26EX5 4/40",
+      "name": "アクア・エリート",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-006",
+      "number": "DM26EX5 6/40",
+      "name": "大獄の封殺ディアス Z",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-007",
+      "number": "DM26EX5 7/40",
+      "name": "翔竜提督アークピッチ",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-013",
+      "number": "DM26EX5 13/40",
+      "name": "アクア・ヘッドガール",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-014",
+      "number": "DM26EX5 14/40",
+      "name": "アクア・スターガール",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-017",
+      "number": "DM26EX5 17/40",
+      "name": "剛撃妖精ユキハナ",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-DP022",
+      "number": "DM26EX5 DP22/DP40",
+      "name": "亡禍医 ヘモグロ",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-DP027",
+      "number": "DM26EX5 DP27/DP40",
+      "name": "ヒメギャ・ルピア",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-DP029",
+      "number": "DM26EX5 DP29/DP40",
+      "name": "ノワー・ルピア",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-022",
+      "number": "DM26EX5 22/40",
+      "name": "アクア・インフォーマー",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-028",
+      "number": "DM26EX5 28/40",
+      "name": "浄域の精霊ウルソフィア",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-031",
+      "number": "DM26EX5 31/40",
+      "name": "究極・チャージャー",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-032",
+      "number": "DM26EX5 32/40",
+      "name": "アクア・フラッガー",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    },
+    {
+      "official_id": "dm26ex5-035",
+      "number": "DM26EX5 35/40",
+      "name": "ディザスター・チャージャー",
+      "decision": "CREATE",
+      "canonical_id": null,
+      "similar_existing_id": null,
+      "basis": "official same-name product list shows EX5 only; live exact normalized name, alias and search term checks found no match; similar candidates require final release review; similar source names are distinct official names (P’S suffix or 神羅凰), never aliases inferred from similarity"
+    }
+  ],
+  "roster_name_differences": [
+    {
+      "number": "DM26EX5 10/40",
+      "candidate": "アクア・スペルブルー／インビンシブル・オーラ",
+      "official": "アクア・スペルブルー / インビンシブル・オーラ",
+      "matches": false,
+      "official_card_id": "dm26ex5-010",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-010",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "アクア・スペルブルー / インビンシブル・オーラ",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 29/40",
+      "candidate": "青寂の精霊龍 カーネル／サイレント・ジェラシー",
+      "official": "青寂の精霊龍 カーネル / サイレント・ジェラシー",
+      "matches": false,
+      "official_card_id": "dm26ex5-029",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-029",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "青寂の精霊龍 カーネル / サイレント・ジェラシー",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 30/40",
+      "candidate": "闇鎧亜ジャック・アルカディアス／執拗なる鎧亜の牢獄",
+      "official": "闇鎧亜ジャック・アルカディアス / 執拗なる鎧亜の牢獄",
+      "matches": false,
+      "official_card_id": "dm26ex5-030",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-030",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "闇鎧亜ジャック・アルカディアス / 執拗なる鎧亜の牢獄",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 39/40",
+      "candidate": "〖問2〗ノロン⤴",
+      "official": "【問２】ノロン⤴",
+      "matches": false,
+      "official_card_id": "dm26ex5-039",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-039",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "【問２】ノロン⤴",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 S2/S10",
+      "candidate": "超閃機 ジャバジャックP'S",
+      "official": "超閃機 ジャバジャックP’S",
+      "matches": false,
+      "official_card_id": "dm26ex5-S002",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-S002",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "超閃機 ジャバジャックP’S",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 S3/S10",
+      "candidate": "クリスタル・ツヴァイランサーP'S",
+      "official": "クリスタル・ツヴァイランサーP’S",
+      "matches": false,
+      "official_card_id": "dm26ex5-S003",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-S003",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "クリスタル・ツヴァイランサーP’S",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 S6/S10",
+      "candidate": "ダイヤモンド・ブリザードP'S",
+      "official": "ダイヤモンド・ブリザードP’S",
+      "matches": false,
+      "official_card_id": "dm26ex5-S006",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-S006",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "ダイヤモンド・ブリザードP’S",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    },
+    {
+      "number": "DM26EX5 G3/G20",
+      "candidate": "叡智の聖騎士 スクアーロ／エナジー・ライト",
+      "official": "叡智の聖騎士 スクアーロ / エナジー・ライト",
+      "matches": false,
+      "official_card_id": "dm26ex5-G003",
+      "official_url": "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex5-G003",
+      "status": "RESOLVED_OFFICIAL_DISPLAY_NAME",
+      "selected_name": "叡智の聖騎士 スクアーロ / エナジー・ライト",
+      "basis": "official ID and number identify the print; preliminary display typography is not the canonical authority"
+    }
+  ],
+  "counts": {
+    "reuse": 86,
+    "create_prints": 29,
+    "create_names": 24
+  },
+  "signed": "separate provisional-rehearsal.json and signed candidates",
+  "sql_sha256": "fe1f7dab74e279fea3052fb18368741690c4fba1cd593044f3eac3974d40e267",
+  "validation": {
+    "exact_sql": {
+      "scope": "180/181 project migrations; synthetic auth/realtime/storage and synthetic card fixtures; no PostgREST, pg_cron omitted",
+      "database": "ex5_release_exact_v1",
+      "synthetic_id_remappings": {},
+      "results": [
+        {
+          "name": "all 115 forced rollback",
+          "status": "pass"
+        },
+        {
+          "name": "115 official prints present",
+          "status": "pass"
+        },
+        {
+          "name": "combined idempotency",
+          "status": "pass"
+        }
+      ]
+    },
+    "paths": [
+      {
+        "name": "search",
+        "status": 0
+      },
+      {
+        "name": "refs",
+        "status": 0
+      },
+      {
+        "name": "postgrest",
+        "status": 0
+      }
+    ],
+    "compatibility_exception": "Windows lacks pg_cron; skipped migration schedules only game-room retirement and has no card DB dependency",
+    "signed_excluded": 6,
+    "images_excluded": true
+  }
+}

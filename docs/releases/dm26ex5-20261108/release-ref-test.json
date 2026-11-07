@@ -1,0 +1,6 @@
+{
+  "scope": "real migrated PostgreSQL tables; synthetic auth/deck/price fixture; no PostgREST",
+  "database": "ex5_release_exact_v1",
+  "result": "pass",
+  "fixture": "EX5 isolated fixture"
+}

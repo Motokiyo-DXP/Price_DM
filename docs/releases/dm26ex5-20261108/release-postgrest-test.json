@@ -1,0 +1,13 @@
+{
+  "scope": "PostgREST 16.5 with synthetic JWT/auth and 180/181 migrations; not production PostgREST",
+  "results": [
+    {
+      "name": "anonymous RLS HTTP read",
+      "status": "pass"
+    },
+    {
+      "name": "authenticated HTTP RPC filters",
+      "status": "pass"
+    }
+  ]
+}
