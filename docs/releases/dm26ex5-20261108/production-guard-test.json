@@ -1,0 +1,19 @@
+{
+  "scope": "180/181 project migrations; synthetic auth/realtime/storage and synthetic card fixtures; no PostgREST, pg_cron omitted",
+  "database": "ex5_release_guard_test_v3",
+  "synthetic_id_remappings": {},
+  "results": [
+    {
+      "name": "all 115 forced rollback",
+      "status": "pass"
+    },
+    {
+      "name": "115 official prints present",
+      "status": "pass"
+    },
+    {
+      "name": "production wrapper rejects repeat",
+      "status": "pass"
+    }
+  ]
+}

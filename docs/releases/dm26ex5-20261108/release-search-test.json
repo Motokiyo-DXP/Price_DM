@@ -1,0 +1,14 @@
+{
+  "scope": "actual migrated PostgreSQL RPC and RLS with synthetic JWT/auth bootstrap; no PostgREST",
+  "database": "ex5_release_exact_v1",
+  "results": [
+    {
+      "name": "actual authenticated search RPC and filters",
+      "status": "pass"
+    },
+    {
+      "name": "anon RLS public print read",
+      "status": "pass"
+    }
+  ]
+}
