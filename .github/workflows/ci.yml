@@ -50,6 +50,9 @@ jobs:
           curl --fail --location --silent --show-error https://github.com/PostgREST/postgrest/releases/download/v16.4/postgrest-v16.4-linux-static-x86-64.tar.xz | tar -xJ -C "$RUNNER_TEMP"
           PRICE_DM_POSTGREST_EXE="$RUNNER_TEMP/postgrest" node scripts/test-search-release-native.mjs
 
+      - name: Test print rarity and filter semantics
+        run: npm run test:rarity
+
       - name: Test production DB safety
         run: npm run test:db-safety
 

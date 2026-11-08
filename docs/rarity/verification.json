@@ -1,0 +1,214 @@
+{
+  "checked_at": "2026-11-08T13:58:05.160Z",
+  "base_commit": "acf48c58fe5f39f096e7b09890aad3ea5f81898d",
+  "production_writes": 0,
+  "production_deployed": false,
+  "data": {
+    "total": 23751,
+    "registered_locally": 23746,
+    "unverified": 5,
+    "reasons": {
+      "missing_official_id": 4,
+      "official_number_mismatch": 1
+    },
+    "multi_face_prints": [
+      {
+        "id": 11784,
+        "official_card_id": "dmex08-007",
+        "card_number": "DMEX08 7/???",
+        "rarity_codes": [
+          "U",
+          "VIC"
+        ]
+      },
+      {
+        "id": 11792,
+        "official_card_id": "dmex08-008",
+        "card_number": "DMEX08 8/???",
+        "rarity_codes": [
+          "U",
+          "VIC"
+        ]
+      }
+    ]
+  },
+  "snapshot_test": {
+    "scope": "Local PostgreSQL identity snapshot; not production registration",
+    "database": "rarity_snapshot_26368",
+    "counts": {
+      "total": 23751,
+      "registered": 23746,
+      "unverified": 5
+    },
+    "reasons": {
+      "missing_official_id": 4,
+      "official_number_mismatch": 1
+    },
+    "distribution": [
+      {
+        "rarity": "C",
+        "count": 5431
+      },
+      {
+        "rarity": "DG",
+        "count": 1
+      },
+      {
+        "rarity": "DMR",
+        "count": 57
+      },
+      {
+        "rarity": "DSR",
+        "count": 17
+      },
+      {
+        "rarity": "FFL",
+        "count": 2
+      },
+      {
+        "rarity": "KDL",
+        "count": 6
+      },
+      {
+        "rarity": "KGM",
+        "count": 196
+      },
+      {
+        "rarity": "KGR",
+        "count": 2
+      },
+      {
+        "rarity": "LEG",
+        "count": 116
+      },
+      {
+        "rarity": "MAS",
+        "count": 78
+      },
+      {
+        "rarity": "MDG",
+        "count": 17
+      },
+      {
+        "rarity": "MDS",
+        "count": 5
+      },
+      {
+        "rarity": "MHZ",
+        "count": 10
+      },
+      {
+        "rarity": "MSS",
+        "count": 14
+      },
+      {
+        "rarity": "MSZ",
+        "count": 10
+      },
+      {
+        "rarity": "NONE",
+        "count": 2019
+      },
+      {
+        "rarity": "OR",
+        "count": 145
+      },
+      {
+        "rarity": "R",
+        "count": 5021
+      },
+      {
+        "rarity": "SPR",
+        "count": 60
+      },
+      {
+        "rarity": "SR",
+        "count": 3404
+      },
+      {
+        "rarity": "U",
+        "count": 4713
+      },
+      {
+        "rarity": "VIC",
+        "count": 209
+      },
+      {
+        "rarity": "VR",
+        "count": 2188
+      },
+      {
+        "rarity": "WVC",
+        "count": 27
+      }
+    ],
+    "checks": {
+      "apply": "pass",
+      "repeat": "pass",
+      "rollback": "pass",
+      "identityPreserved": "pass",
+      "finalLocalApply": "pass"
+    }
+  },
+  "postgrest": {
+    "database": "rarity_rest_36016",
+    "postgres": "PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit",
+    "oldClient": "pass",
+    "rarityOverload": "pass",
+    "unknownUnfiltered": "pass",
+    "anonDenied": "pass"
+  },
+  "browser": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "status": "pass",
+      "checks": "auto apply all fields, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "pass",
+      "checks": "auto apply all fields, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "status": "pass",
+      "checks": "auto apply all fields, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+      "pageErrors": []
+    }
+  ],
+  "artifact_sha256": {
+    ".local/rarity-prints-before.json": "4ef714da204ea7cbf8aaa3c0ba582e9b4eccdbebadd4deefafa43fcf846d517b",
+    ".local/rarity/reconciliation.json": "1f08eaaa398b46f992ad4928bf352eee87a9b2644c631ab38508a2fcb1c92034",
+    ".local/rarity/backfill.sql": "dda049510e7ee3c2f4fe840ea443e6a2320f3809f6798f01d7914c81cd01a082",
+    ".local/rarity/rollback-backfill.sql": "2cd6d1f3273d35beaeda827c374e1121e8a6fff15e9bbeae98405be166400eb2"
+  },
+  "limits": [
+    "Synthetic authentication in browser and PostgREST tests; hosted Supabase Auth not tested",
+    "Desktop Chromium emulation, no physical iOS/Android keyboard test",
+    "No GitHub push or remote CI; local tests and workflow change only",
+    "Production integration/backup/release session pending"
+  ],
+  "local_checks": {
+    "npm_test": {
+      "tests": 610,
+      "failures": 0,
+      "groups": 20
+    },
+    "typecheck": "pass",
+    "build": "pass",
+    "git_diff_check": "pass",
+    "native_rarity_search": "pass",
+    "generated_import_sql": "pass"
+  }
+}
