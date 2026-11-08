@@ -1,0 +1,62 @@
+{
+  "database": "ex5_images_1794109705015",
+  "scope": "PostgreSQL 17.11; existing 180-migration native template, synthetic 181 history, synthetic auth/card/deck/price fixtures; pg_cron omitted as in prior EX5 test",
+  "results": [
+    {
+      "name": "forced error after updates rolls back all rows",
+      "status": "pass"
+    },
+    {
+      "name": "initial apply: 115 official images; protected EX4/deck/price rows unchanged",
+      "status": "pass"
+    },
+    {
+      "name": "reapply: values and updated_at identical",
+      "status": "pass"
+    },
+    {
+      "name": "print lock rejects full transaction",
+      "status": "pass"
+    },
+    {
+      "name": "canonical lock rejects full transaction",
+      "status": "pass"
+    },
+    {
+      "name": "print soft delete rejects full transaction",
+      "status": "pass"
+    },
+    {
+      "name": "canonical soft delete rejects full transaction",
+      "status": "pass"
+    },
+    {
+      "name": "existing image conflict rejects full transaction",
+      "status": "pass"
+    },
+    {
+      "name": "number conflict rejects full transaction",
+      "status": "pass"
+    },
+    {
+      "name": "migration drift rejected",
+      "status": "pass"
+    },
+    {
+      "name": "wrong release project rejected",
+      "status": "pass"
+    },
+    {
+      "name": "concurrent release rejected",
+      "status": "pass"
+    },
+    {
+      "name": "signed or nonofficial ID rejected",
+      "status": "pass"
+    },
+    {
+      "name": "asset hash/key mismatch rejected",
+      "status": "pass"
+    }
+  ]
+}
