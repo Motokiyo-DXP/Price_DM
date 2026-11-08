@@ -1,0 +1,27 @@
+{
+  "official_prints": 115,
+  "twinpact_images": 4,
+  "webp_dimensions": [
+    "384x537",
+    "384x536"
+  ],
+  "source_dimensions": [
+    "650x909",
+    "650x908"
+  ],
+  "webp_total_bytes": 6561246,
+  "sql_sha256": "e9247ddfcfc57d27763c3ef8c9d7e69b0555ae46fcffea0da64c1fc2fed37a66",
+  "manifest_content_sha256": "c29df5632620026caee033f2da3be168900040d12af5d79dca816ac9a231bdc4",
+  "native_tests": 14,
+  "image_regression_tests": 49,
+  "db_safety_tests": 8,
+  "visual_sample": [
+    "dm26ex5-S007",
+    "dm26ex5-SEC004",
+    "dm26ex5-G003",
+    "dm26ex5-030",
+    "dm26ex5-DP030"
+  ],
+  "public_r2_status": "pending dedicated clean-main release",
+  "signed_prints": 0
+}
