@@ -210,5 +210,53 @@
     "git_diff_check": "pass",
     "native_rarity_search": "pass",
     "generated_import_sql": "pass"
+  },
+  "rarity_layout_followup": {
+    "checked_at": "2026-11-09",
+    "common_labels": [
+      "C",
+      "UC",
+      "R",
+      "VR",
+      "SR"
+    ],
+    "other_rarities": "collapsible multi-select with selected count",
+    "uc_search_code": "U",
+    "browser": [
+      {
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "status": "pass",
+        "checks": "auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "pass",
+        "checks": "auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "status": "pass",
+        "checks": "auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+        "pageErrors": []
+      }
+    ],
+    "typecheck": "pass",
+    "deck_tests": {
+      "pass": 52,
+      "fail": 0
+    },
+    "production_changes": false,
+    "build": "pass"
   }
 }

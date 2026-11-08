@@ -21,7 +21,7 @@ try {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('button',{name:'絞り込みを閉じる'})).toHaveCount(0);
     await expect(dialog.getByText('コストなしを含める')).toHaveCount(0);
-    await expect(dialog.locator('details')).not.toHaveAttribute('open','');
+    await expect(dialog.locator('.deck-filter-details')).not.toHaveAttribute('open','');
     for(const name of ['最小パワー','最大パワー','カードテキスト'])await expect(dialog.getByRole('textbox',{name})).toBeVisible();
     const civil=await dialog.locator('.deck-civilization-buttons button').evaluateAll(els=>els.map(el=>({top:el.getBoundingClientRect().top,height:el.getBoundingClientRect().height})));
     expect(new Set(civil.map(x=>x.top)).size).toBe(1);expect(civil.every(x=>x.height>=42)).toBe(true);
@@ -48,17 +48,31 @@ try {
     await dialog.getByRole('button',{name:'種族を選択'}).click();
     const race=page.getByRole('dialog',{name:'種族の選択'});await race.getByRole('button',{name:'ドラゴン',exact:true}).click();await applied('p_race_tokens',['ドラゴン']);await race.getByRole('button',{name:'閉じる',exact:true}).click();
     await dialog.getByRole('textbox',{name:'カードテキスト'}).fill('革命');await applied('p_card_text_query','革命');
-    await dialog.locator('summary').click();await dialog.getByRole('button',{name:'すべて',exact:true}).first().click();
+    await dialog.locator('.deck-filter-details > summary').click();await dialog.getByRole('button',{name:'すべて',exact:true}).first().click();
     const product=page.getByRole('dialog',{name:'収録商品の選択'});await product.getByRole('button',{name:'商品A',exact:true}).click();await applied('p_product_name','商品A');await product.getByRole('button',{name:'閉じる',exact:true}).click();
-    const rarities=dialog.locator('.deck-rarity-options');await rarities.getByRole('button',{name:'C',exact:true}).click();await rarities.getByRole('button',{name:'SR',exact:true}).click();await applied('p_rarities',['C','SR']);
+    const rarities=dialog.locator('.deck-rarity-options');
+    const common=rarities.locator('.deck-rarity-common button');
+    expect(await common.allTextContents()).toEqual(['C','UC','R','VR','SR']);
+    const positions=await common.evaluateAll(els=>els.map(el=>el.getBoundingClientRect().top));
+    expect(new Set(positions).size).toBe(1);
+    await rarities.getByRole('button',{name:'UC',exact:true}).click();await applied('p_rarities',['U']);
+    await rarities.getByRole('button',{name:'UC',exact:true}).click();await applied('p_rarities',[]);
+    await rarities.getByRole('button',{name:'C',exact:true}).click();await rarities.getByRole('button',{name:'SR',exact:true}).click();await applied('p_rarities',['C','SR']);
+    const other=rarities.locator('.deck-rarity-other');await expect(other).not.toHaveAttribute('open','');
+    await expect(other.getByRole('button',{name:'KGM',exact:true})).not.toBeVisible();
+    await other.locator('summary').click();
+    await other.getByRole('button',{name:'KGM',exact:true}).click();await other.getByRole('button',{name:'OR',exact:true}).click();await applied('p_rarities',['C','SR','KGM','OR']);
+    await page.screenshot({path:`.local/rarity/browser/${viewport.width}-other-dropdown.png`});
+    await other.locator('summary').click();await expect(other.locator('summary')).toContainText('2件選択');
+    await expect(other.getByRole('button',{name:'KGM',exact:true})).not.toBeVisible();
     await dialog.getByRole('textbox',{name:'カード番号',exact:true}).fill('DM-01');await applied('p_card_number','DM-01');
     await footerVisible();await page.screenshot({path:`.local/rarity/browser/${viewport.width}-expanded.png`});
-    await dialog.locator('summary').click();await expect(dialog.locator('summary')).toContainText('条件あり');
+    await dialog.locator('.deck-filter-details > summary').click();await expect(dialog.locator('.deck-filter-details > summary')).toContainText('条件あり');
     await dialog.getByRole('button',{name:'閉じる',exact:true}).click();await expect(dialog).toHaveCount(0);
-    await page.getByRole('button',{name:'絞り込み',exact:true}).click();await expect(dialog.locator('summary')).toContainText('条件あり');
-    await dialog.locator('summary').click();await expect(rarities.getByRole('button',{name:'SR',exact:true})).toHaveAttribute('aria-pressed','true');
+    await page.getByRole('button',{name:'絞り込み',exact:true}).click();await expect(dialog.locator('.deck-filter-details > summary')).toContainText('条件あり');
+    await dialog.locator('.deck-filter-details > summary').click();await expect(rarities.getByRole('button',{name:'SR',exact:true})).toHaveAttribute('aria-pressed','true');await expect(other.locator('summary')).toContainText('2件選択');
     await dialog.getByRole('button',{name:'条件クリア'}).click();await applied('p_rarities',[]);await applied('p_product_name',null);await applied('p_card_number',null);await applied('p_race_tokens',[]);await applied('p_card_text_query',null);await expect(dialog).toBeVisible();
-    await expect(dialog.locator('summary')).not.toContainText('条件あり');
+    await expect(dialog.locator('.deck-filter-details > summary')).not.toContainText('条件あり');await expect(other.locator('summary')).not.toContainText('件選択');
     if(viewport.width<500) {await page.setViewportSize({width:viewport.width,height:420});await footerVisible();await page.screenshot({path:`.local/rarity/browser/${viewport.width}-keyboard-height.png`});await page.setViewportSize(viewport);}
     await dialog.getByRole('button',{name:'閉じる',exact:true}).click();
     const input=page.getByPlaceholder('カード名で検索');await input.fill('ヘブンズゲート');await applied('p_query','ヘブンズゲート');await input.fill('ヘブンズ ゲート');await applied('p_query','ヘブンズ ゲート');
@@ -73,7 +87,7 @@ try {
     await input.fill('old-response');await expect.poll(()=>oldStarted).toBe(true);await input.fill('ゲート');await applied('p_query','ゲート');
     await expect(page.locator('.deck-result-strip')).toContainText('ヘブンズ・ゲート');
     await page.waitForTimeout(1100);await expect(page.locator('.deck-result-strip')).not.toContainText('STALE RESPONSE');
-    expect(errors).toEqual([]);report.push({viewport,status:'pass',checks:'auto apply all fields, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row',pageErrors:errors});
+    expect(errors).toEqual([]);report.push({viewport,status:'pass',checks:'auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row',pageErrors:errors});
     await context.close();
   }
   await writeFile('.local/rarity/browser/results.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

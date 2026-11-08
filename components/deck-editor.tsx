@@ -25,6 +25,7 @@ type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
 type SearchStatus = "idle" | "searching" | "success" | "empty" | "error";
 export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; editorSortKey?: EditorSortKey; editorSortDirection?: SortDirection; cards: SelectedCard[] };
 const SEARCH_PAGE_SIZE = 24;
+const COMMON_RARITIES = [["C", "C"], ["U", "UC"], ["R", "R"], ["VR", "VR"], ["SR", "SR"]] as const;
 const QUICK_RACE_TOKENS = ["コマンド", "ドラゴン"] as const;
 
 function getRaceTokens(value: string) {
@@ -121,6 +122,9 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
     const aPriority = priority(a), bPriority = priority(b);
     return (aPriority < 0 ? cardTypePriority.length : aPriority) - (bPriority < 0 ? cardTypePriority.length : bPriority) || a.localeCompare(b, "ja");
   });
+  const commonRarityCodes: readonly string[] = COMMON_RARITIES.map(([code]) => code);
+  const otherRarities = allRarities.filter(code => !commonRarityCodes.includes(code));
+  const selectedOtherRarities = rarityFilter.filter(code => !commonRarityCodes.includes(code)).length;
   const costOptions = allCosts;
   const visibleResults = results;
   const searchQuery = query.trim();
@@ -650,7 +654,12 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
             <summary>詳細（収録商品・レアリティ・カード番号）{productFilter || rarityFilter.length || cardNumberFilter.trim() ? <span className="deck-filter-active">条件あり</span> : null}</summary>
             <div className="deck-filter-detail-fields">
           <div className="deck-filter-field"><strong>収録商品</strong><button aria-expanded={productListOpen} className="deck-race-picker-trigger" onClick={() => { productSearchInput.commitSelection(""); setProductListOpen(true); }} type="button">{productFilter || "すべて"}</button></div>
-          <div className="deck-filter-field"><strong>レアリティ</strong><div aria-label="レアリティ" className="deck-filter-buttons deck-rarity-options"><button aria-pressed={rarityFilter.length === 0} onClick={() => setRarityFilter([])} type="button">すべて</button>{allRarities.map((rarity) => <button aria-pressed={rarityFilter.includes(rarity)} key={rarity} onClick={() => setRarityFilter(current => current.includes(rarity) ? current.filter(item => item !== rarity) : [...current, rarity])} type="button">{rarity === "NONE" ? "レアリティなし" : rarity}</button>)}{allRarities.length === 0 ? <span>確認済みの区分がありません</span> : null}</div></div>
+          <div className="deck-filter-field"><strong>レアリティ</strong><div aria-label="レアリティ" className="deck-rarity-options">
+            <div aria-label="主要レアリティ" className="deck-filter-buttons deck-rarity-common">{COMMON_RARITIES.map(([code, label]) => <button aria-pressed={rarityFilter.includes(code)} disabled={!allRarities.includes(code)} key={code} onClick={() => setRarityFilter(current => current.includes(code) ? current.filter(item => item !== code) : [...current, code])} type="button">{label}</button>)}</div>
+            <div className="deck-rarity-secondary"><button aria-pressed={rarityFilter.length === 0} className="deck-rarity-all" onClick={() => setRarityFilter([])} type="button">すべて</button>
+              <details className="deck-rarity-other"><summary>その他{selectedOtherRarities ? `（${selectedOtherRarities}件選択）` : ""}</summary><div aria-label="その他のレアリティ" className="deck-filter-buttons">{otherRarities.map(code => <button aria-pressed={rarityFilter.includes(code)} key={code} onClick={() => setRarityFilter(current => current.includes(code) ? current.filter(item => item !== code) : [...current, code])} type="button">{code === "NONE" ? "レアリティなし" : code}</button>)}{otherRarities.length === 0 ? <span>確認済みの区分がありません</span> : null}</div></details>
+            </div>
+          </div></div>
           <label className="deck-filter-field"><strong>カード番号</strong><input aria-label="カード番号" placeholder="例：DM24-RP1" value={cardNumberFilter} onChange={cardNumberSearchInput.onChange} onCompositionStart={cardNumberSearchInput.onCompositionStart} onCompositionEnd={cardNumberSearchInput.onCompositionEnd} onKeyDown={(event) => { if (isImeCompositionEnter(event, cardNumberSearchInput.isComposing())) event.preventDefault(); }} /></label>
             </div>
           </details>

@@ -2024,7 +2024,16 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
 .deck-filter-details summary{cursor:pointer;padding:12px 10px;font-size:12px;font-weight:700;line-height:1.5}
 .deck-filter-active{background:#ecc100;border-radius:4px;color:#20232d;display:inline-block;margin-left:6px;padding:0 4px;font-size:11px}
 .deck-filter-detail-fields{display:grid;gap:8px;padding:4px 10px 10px}
-.deck-rarity-options{gap:5px}
+.deck-rarity-options{display:grid;gap:6px;min-width:0}
+.deck-rarity-common{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.deck-filter-fields .deck-rarity-common button:not(.deck-filter-civilization){min-width:0;padding:7px 0;white-space:nowrap}
+.deck-rarity-secondary{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:6px}
+.deck-rarity-all,.deck-rarity-other summary{background:#374158;border:1px solid #627091;border-radius:6px;box-sizing:border-box;color:#f5f6fa;cursor:pointer;font:700 13px inherit;min-height:42px;padding:10px 9px}
+.deck-rarity-all[aria-pressed=true]{background:#ecc100;color:#20232d}
+.deck-rarity-other{min-width:0}
+.deck-rarity-other summary{font-size:12px;line-height:20px}
+.deck-rarity-other>.deck-filter-buttons{border:1px solid #627091;border-radius:6px;max-height:180px;overflow-y:auto;overscroll-behavior:contain;padding:6px;margin-top:5px;gap:5px}
+.deck-rarity-common button:disabled{cursor:default;opacity:.45}
 .deck-filter-footer{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none;border-top:1px solid #7188a4;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:inherit}
 .deck-filter-footer button,.deck-filter-footer .deck-filter-clear{background:#495e83;border:1px solid #8995b1;border-radius:7px;color:#fff;cursor:pointer;font:700 15px inherit;min-height:46px;width:100%;padding:10px;text-decoration:none;margin:0;justify-self:stretch}
 @media(max-width:380px){.deck-filter-fields{padding:10px;gap:7px}.deck-filter-fields .deck-filter-field,.deck-filter-fields .deck-filter-type-race .deck-filter-field{grid-template-columns:76px minmax(0,1fr);gap:5px}.deck-filter-fields .deck-filter-text-field{grid-template-columns:76px minmax(0,1fr)!important}.deck-filter-fields .deck-filter-color-options label{font-size:11px}.deck-filter-detail-fields .deck-filter-field{grid-template-columns:minmax(0,1fr)}.deck-filter-popover .deck-popover-heading{padding:12px 10px}}
