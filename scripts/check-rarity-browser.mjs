@@ -73,6 +73,26 @@ try {
     await dialog.locator('.deck-filter-details > summary').click();await expect(rarities.getByRole('button',{name:'SR',exact:true})).toHaveAttribute('aria-pressed','true');await expect(other.locator('summary')).toContainText('2件選択');
     await dialog.getByRole('button',{name:'条件クリア'}).click();await applied('p_rarities',[]);await applied('p_product_name',null);await applied('p_card_number',null);await applied('p_race_tokens',[]);await applied('p_card_text_query',null);await expect(dialog).toBeVisible();
     await expect(dialog.locator('.deck-filter-details > summary')).not.toContainText('条件あり');await expect(other.locator('summary')).not.toContainText('件選択');
+    const openRace=async()=>{await dialog.locator('.deck-filter-type-race .deck-race-picker-trigger').click();return page.getByRole('dialog',{name:'種族の選択'});};
+    for(const closeMethod of ['footer','header','backdrop']) {
+      const manual=await openRace();await manual.getByRole('textbox',{name:'種族を検索'}).fill('テスト');
+      if(closeMethod==='footer')await manual.getByRole('button',{name:'閉じる',exact:true}).click();
+      else if(closeMethod==='header')await manual.getByRole('button',{name:'種族選択を閉じる'}).click();
+      else await page.locator('.deck-race-picker-backdrop').click({position:{x:2,y:2}});
+      await applied('p_race_tokens',['テスト']);
+      await expect(dialog.locator('.deck-filter-type-race .deck-race-picker-trigger')).toHaveText('テスト');
+      await expect(page.locator('.deck-result-strip')).toContainText('テストゲート後半');
+      await expect(page.locator('.deck-result-strip')).not.toContainText('ヘブンズ・ゲート');
+      const unchanged=await openRace();await unchanged.getByRole('button',{name:'閉じる',exact:true}).click();await applied('p_race_tokens',['テスト']);
+      await dialog.getByRole('button',{name:'条件クリア'}).click();await applied('p_race_tokens',[]);
+    }
+    let manual=await openRace();await manual.getByRole('textbox',{name:'種族を検索'}).fill('未登録の自由入力');await manual.getByRole('button',{name:'閉じる',exact:true}).click();await applied('p_race_tokens',['未登録の自由入力']);
+    manual=await openRace();await manual.getByRole('textbox',{name:'種族を検索'}).fill('テ');await manual.getByRole('button',{name:'テスト種族',exact:true}).click();await manual.getByRole('button',{name:'閉じる',exact:true}).click();await applied('p_race_tokens',['未登録の自由入力','テスト種族']);
+    manual=await openRace();await manual.getByRole('textbox',{name:'種族を検索'}).fill('消す');await manual.getByRole('textbox',{name:'種族を検索'}).fill('');await manual.getByRole('button',{name:'閉じる',exact:true}).click();await applied('p_race_tokens',[]);
+    manual=await openRace();const raceInput=manual.getByRole('textbox',{name:'種族を検索'});await raceInput.fill('ドラ');await manual.getByRole('button',{name:'ドラゴン',exact:true}).click();await manual.getByRole('button',{name:'閉じる',exact:true}).click();await applied('p_race_tokens',['ドラゴン']);
+    manual=await openRace();const ime=manual.getByRole('textbox',{name:'種族を検索'});await ime.focus();await ime.dispatchEvent('compositionstart');await ime.fill('テスト');await ime.press('Enter');await expect(manual).toBeVisible();await ime.dispatchEvent('compositionend',{data:'テスト'});await manual.getByRole('button',{name:'閉じる',exact:true}).click();await applied('p_race_tokens',['テスト']);
+    await page.screenshot({path:`.local/rarity/browser/${viewport.width}-manual-race-applied.png`});
+    await dialog.getByRole('button',{name:'条件クリア'}).click();await applied('p_race_tokens',[]);
     if(viewport.width<500) {await page.setViewportSize({width:viewport.width,height:420});await footerVisible();await page.screenshot({path:`.local/rarity/browser/${viewport.width}-keyboard-height.png`});await page.setViewportSize(viewport);}
     await dialog.getByRole('button',{name:'閉じる',exact:true}).click();
     const input=page.getByPlaceholder('カード名で検索');await input.fill('ヘブンズゲート');await applied('p_query','ヘブンズゲート');await input.fill('ヘブンズ ゲート');await applied('p_query','ヘブンズ ゲート');
@@ -87,7 +107,7 @@ try {
     await input.fill('old-response');await expect.poll(()=>oldStarted).toBe(true);await input.fill('ゲート');await applied('p_query','ゲート');
     await expect(page.locator('.deck-result-strip')).toContainText('ヘブンズ・ゲート');
     await page.waitForTimeout(1100);await expect(page.locator('.deck-result-strip')).not.toContainText('STALE RESPONSE');
-    expect(errors).toEqual([]);report.push({viewport,status:'pass',checks:'auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row',pageErrors:errors});
+    expect(errors).toEqual([]);report.push({viewport,status:'pass',checks:'manual race close via footer/header/backdrop, no-edit preservation, candidate/quick-button priority, arbitrary text/empty/IME input, auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row',pageErrors:errors});
     await context.close();
   }
   await writeFile('.local/rarity/browser/results.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

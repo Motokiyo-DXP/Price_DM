@@ -258,5 +258,50 @@
     },
     "production_changes": false,
     "build": "pass"
+  },
+  "manual_race_followup": {
+    "checked_at": "2026-11-09",
+    "reproduced_before_fix": true,
+    "behavior": "Apply edited manual race query on footer/header/backdrop close; retain existing selection when unedited; candidate selection wins over typed prefix",
+    "browser": [
+      {
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "status": "pass",
+        "checks": "manual race close via footer/header/backdrop, no-edit preservation, candidate/quick-button priority, arbitrary text/empty/IME input, auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "pass",
+        "checks": "manual race close via footer/header/backdrop, no-edit preservation, candidate/quick-button priority, arbitrary text/empty/IME input, auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "status": "pass",
+        "checks": "manual race close via footer/header/backdrop, no-edit preservation, candidate/quick-button priority, arbitrary text/empty/IME input, auto apply all fields, common rarity row/UC alias/other dropdown/multi-select persistence, rarity OR, details indicator/persistence, clear/close, cost boundary UI, raw whitespace AND, stale response, footer/scroll/viewport resize, civilization row",
+        "pageErrors": []
+      }
+    ],
+    "typecheck": "pass",
+    "deck_tests": {
+      "pass": 52,
+      "fail": 0
+    },
+    "search_tests": {
+      "pass": 34,
+      "fail": 0
+    },
+    "production_changes": false,
+    "build": "pass"
   }
 }
