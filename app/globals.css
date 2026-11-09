@@ -2037,3 +2037,8 @@ body:has(.deck-editor-page)>main{flex:1;min-height:0;padding-bottom:0;width:100%
 .deck-filter-footer{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none;border-top:1px solid #7188a4;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:inherit}
 .deck-filter-footer button,.deck-filter-footer .deck-filter-clear{background:#495e83;border:1px solid #8995b1;border-radius:7px;color:#fff;cursor:pointer;font:700 15px inherit;min-height:46px;width:100%;padding:10px;text-decoration:none;margin:0;justify-self:stretch}
 @media(max-width:380px){.deck-filter-fields{padding:10px;gap:7px}.deck-filter-fields .deck-filter-field,.deck-filter-fields .deck-filter-type-race .deck-filter-field{grid-template-columns:76px minmax(0,1fr);gap:5px}.deck-filter-fields .deck-filter-text-field{grid-template-columns:76px minmax(0,1fr)!important}.deck-filter-fields .deck-filter-color-options label{font-size:11px}.deck-filter-detail-fields .deck-filter-field{grid-template-columns:minmax(0,1fr)}.deck-filter-popover .deck-popover-heading{padding:12px 10px}}
+
+/* Filter labels, controls and supplementary options share their own text sizes. */
+.deck-filter-fields .deck-filter-field>strong,.deck-filter-fields .deck-filter-type-race .deck-filter-field>strong{font-family:inherit;font-size:14px}
+.deck-filter-fields :is(.deck-filter-field button,.deck-filter-field input:not([type=radio]):not([type=checkbox]),.deck-filter-field select){font-family:inherit;font-size:14px}
+.deck-filter-popover :is(.deck-filter-color-options label,.deck-filter-no-cost,.deck-filter-details summary){font-family:inherit;font-size:13px}
