@@ -1,3 +1,9 @@
+-- Serialize this schema release with other Price_DM production operations.
+do $$ begin
+  if not pg_try_advisory_xact_lock(hashtextextended('price-dm-production-release',0)) then
+    raise exception 'Another Price_DM production release holds the lock';
+  end if;
+end $$;
 -- Rarity is print metadata, independent of finish, secret numbering or canonical name.
 -- NULL means unverified; NONE means the official catalog explicitly says no rarity.
 alter table public.card_prints add column if not exists rarity_codes text[],
