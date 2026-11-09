@@ -6,6 +6,7 @@ import {
   normalizeDuelMastersRaceName,
   resolveDuelMastersRulesCanonicalName,
 } from "./dm-canonical-equivalents.mjs";
+import { normalizeRarity } from "./dm-rarity.mjs";
 import { parseOfficialCardPowerValue } from "./import-dm-cards-sample.mjs";
 
 const CARD_PATH = ".local/dm-cards-full.jsonl";
@@ -73,6 +74,9 @@ function validateCard(card, index) {
   }
   if (card.races !== undefined && (!Array.isArray(card.races) || card.races.some((value) => typeof value !== "string" || !value.trim()))) {
     throw new Error(`Card ${index + 1} has invalid races.`);
+  }
+  if (card.rarity_codes != null && (!Array.isArray(card.rarity_codes) || !card.rarity_codes.length || card.rarity_codes.some(value => !normalizeRarity(value)))) {
+    throw new Error(`Card ${index + 1} has invalid print rarity codes.`);
   }
   if (card.card_texts !== undefined && (!Array.isArray(card.card_texts) || card.card_texts.length === 0 || card.card_texts.some((value) => typeof value !== "string"))) {
     throw new Error(`Card ${index + 1} has invalid card texts.`);
@@ -171,6 +175,7 @@ export function mergeCardMetadata(cards, metadata) {
       ...card,
       ...(metadataRecord ?? {}),
       official_url: card.official_url ?? metadataRecord?.official_url,
+      rarity_codes: card.rarity_codes ?? null,
     };
   });
 }
@@ -226,7 +231,8 @@ function sourceValues(cards) {
       ${sqlText(officialCardId(card))},
       ${sqlText(card.card_number?.trim() || null)},
       ${sqlText(card.product_name?.trim() || null)},
-      ${sqlText(card.official_url)}
+      ${sqlText(card.official_url)},
+      ${Array.isArray(card.rarity_codes) && card.rarity_codes.length ? sqlTextArray([...new Set(card.rarity_codes.map(normalizeRarity).filter(Boolean))].sort()) : "null"}
     )`,
     )
     .join(",\n    ");
@@ -260,13 +266,14 @@ create temporary table dm_card_import_source (
   official_card_id text not null primary key,
   card_number text,
   product_name text,
-  official_url text not null
+  official_url text not null,
+  rarity_codes text[]
 ) on commit drop;
 
 insert into dm_card_import_source(
   name, generated_reading, cost, cost_is_infinite, civilizations, card_types,
   races, races_complete, card_texts, card_texts_complete, power_text, power_value,
-  official_card_id, card_number, product_name, official_url
+  official_card_id, card_number, product_name, official_url, rarity_codes
 )
 values
     ${values};
@@ -432,6 +439,8 @@ insert into public.card_prints(
   product_name,
   official_url,
   card_texts,
+  rarity_codes,
+  rarity_provenance,
   source_checked_at
 )
 select
@@ -441,6 +450,8 @@ select
   source.product_name,
   source.official_url,
   coalesce(source.card_texts, '{}'::text[]),
+  source.rarity_codes,
+  case when source.rarity_codes is not null then jsonb_build_object('source', 'official_detail', 'url', source.official_url, 'official_card_id', source.official_card_id) end,
   pg_catalog.now()
 from dm_card_import_source as source
 join public.tcg_games as game
@@ -464,6 +475,8 @@ set canonical_card_id = excluded.canonical_card_id,
       ) then excluded.card_texts
       else public.card_prints.card_texts
     end,
+    rarity_codes = coalesce(public.card_prints.rarity_codes, excluded.rarity_codes),
+    rarity_provenance = case when public.card_prints.rarity_codes is null then excluded.rarity_provenance else public.card_prints.rarity_provenance end,
     source_checked_at = excluded.source_checked_at,
     updated_at = pg_catalog.now()
 where not public.card_prints.manually_locked;

@@ -440,6 +440,8 @@ export type Database = {
         Row: {
           canonical_card_id: number
           card_texts: string[]
+          rarity_codes: string[] | null
+          rarity_provenance: Json | null
           card_number: string | null
           created_at: string
           deleted_at: string | null
@@ -461,6 +463,8 @@ export type Database = {
         Insert: {
           canonical_card_id: number
           card_texts?: string[]
+          rarity_codes?: string[] | null
+          rarity_provenance?: Json | null
           card_number?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -482,6 +486,8 @@ export type Database = {
         Update: {
           canonical_card_id?: number
           card_texts?: string[]
+          rarity_codes?: string[] | null
+          rarity_provenance?: Json | null
           card_number?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -1280,6 +1286,7 @@ export type Database = {
       }
       search_deck_cards_filtered: {
         Args: {
+          p_rarities?: string[]
           p_query?: string
           p_limit?: number
           p_offset?: number

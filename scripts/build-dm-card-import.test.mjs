@@ -241,3 +241,13 @@ test("DMART-10の別名カードをゲーム上の正式カードへ収録版と
   assert.match(sql, /切札勝太&カツキング ー熱血の物語ー/);
   assert.doesNotMatch(sql, /バンブルビー/);
 });
+
+
+test("print rarity never comes from same-name canonical metadata and import preserves existing values", () => {
+  const cards = [{ ...CARD, rarity_codes: ["C"] }, { ...CARD, rarity_codes: null, official_url: "https://dm.takaratomy.co.jp/card/detail/?id=test-2" }];
+  assert.deepEqual(mergeCardMetadata(cards, [{name:CARD.name,rarity_codes:["SR"]}]).map(c=>c.rarity_codes), [["C"],null]);
+  const sql=buildCanonicalImportSql(cards);
+  assert.match(sql,/rarity_codes = coalesce\(public.card_prints.rarity_codes, excluded.rarity_codes\)/);
+  assert.match(sql,/where not public.card_prints.manually_locked/);
+  assert.match(sql,/rarity_provenance/);
+});

@@ -1,0 +1,21 @@
+{
+  "scope": "Native PostgreSQL 17; full production card_prints backup, no hosted mutation",
+  "database": "rarity_exact_release_43844",
+  "restored_prints": 23751,
+  "counts": {
+    "total": 23751,
+    "registered": 23746,
+    "unverified": 5
+  },
+  "checks": {
+    "fullBackupRestore": "pass",
+    "exactMigration": "pass",
+    "exactApply": "pass",
+    "repeat": "pass",
+    "rollback": "pass",
+    "manualLockConflict": "pass",
+    "realFunctionRestore": "pass",
+    "protectedPrintsHash": "pass",
+    "reapply": "pass"
+  }
+}

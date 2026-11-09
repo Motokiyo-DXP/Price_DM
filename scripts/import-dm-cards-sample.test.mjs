@@ -84,6 +84,7 @@ test("parseCardDetail extracts existing index fields and one-face races/rules te
       "https://dm.takaratomy.co.jp/card/detail/?id=dm26ex2-MC001",
     ),
     {
+      rarity_codes: null,
       card_number: "DM26EX2 MC1/30",
       card_texts: ["能力１。\n能力２。"],
       card_types: ["クリーチャー"],

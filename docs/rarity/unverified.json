@@ -1,0 +1,67 @@
+{
+  "snapshot_at": "2026-11-08T13:27:22.717Z",
+  "total": 23751,
+  "verified": 23746,
+  "unverified": 5,
+  "reasons": {
+    "missing_official_id": 4,
+    "official_number_mismatch": 1
+  },
+  "rows": [
+    {
+      "id": 48157,
+      "card_number": "DM26RP3 DM超㊙1/DM1",
+      "product_name": "DM26-RP3 逆札篇 第3弾 勝敵！逆転おこせ鬼の∞ディスペクター!!",
+      "manually_locked": false,
+      "official_card_id": null,
+      "canonical_card_id": 43725,
+      "rarity_codes": null,
+      "reason": "missing_official_id",
+      "evidence": null
+    },
+    {
+      "id": 48165,
+      "card_number": "DM26RP3 DM1㊙/DM1",
+      "product_name": "DM26-RP3 デュエル・マスターズTCG 逆札篇 第3弾 勝敵！逆転おこせ鬼の∞ディスペクター!!",
+      "manually_locked": false,
+      "official_card_id": "dm26rp3-dm001sec",
+      "canonical_card_id": 43725,
+      "rarity_codes": null,
+      "reason": "official_number_mismatch",
+      "evidence": null
+    },
+    {
+      "id": 48403,
+      "card_number": "DM26EX4 超G9/超G12",
+      "product_name": "DM26-EX4 デュエル・マスターズTCG 切札不滅!! デュエキング FOREVER 2026",
+      "manually_locked": false,
+      "official_card_id": null,
+      "canonical_card_id": 908,
+      "rarity_codes": null,
+      "reason": "missing_official_id",
+      "evidence": null
+    },
+    {
+      "id": 48509,
+      "card_number": "DM26EX4 16b/99",
+      "product_name": "DM26-EX4 デュエル・マスターズTCG 切札不滅!! デュエキング FOREVER 2026",
+      "manually_locked": false,
+      "official_card_id": null,
+      "canonical_card_id": 44027,
+      "rarity_codes": null,
+      "reason": "missing_official_id",
+      "evidence": null
+    },
+    {
+      "id": 48543,
+      "card_number": "DM26EX4 ㊙10b/㊙25",
+      "product_name": "DM26-EX4 デュエル・マスターズTCG 切札不滅!! デュエキング FOREVER 2026",
+      "manually_locked": false,
+      "official_card_id": null,
+      "canonical_card_id": 44027,
+      "rarity_codes": null,
+      "reason": "missing_official_id",
+      "evidence": null
+    }
+  ]
+}

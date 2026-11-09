@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import { load } from "cheerio";
+import { parseOfficialRarities } from "./dm-rarity.mjs";
 import { normalizeDuelMastersRaceName } from "./dm-canonical-equivalents.mjs";
 
 const BASE_URL = "https://dm.takaratomy.co.jp";
@@ -310,6 +311,7 @@ export function parseCardDetail(html, officialUrl) {
   const cardTexts = faceRules.map((face) => face.cardText);
 
   return {
+    rarity_codes: parseOfficialRarities(html),
     card_number: cardNumber || null,
     card_texts: cardTexts,
     card_types: cardTypes,
