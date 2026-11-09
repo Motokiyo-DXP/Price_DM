@@ -62,7 +62,7 @@ test("anonymous initial HTML, separate images, rename, privacy and legacy viewin
   assert.notEqual(missingCard.hash, fallback.hash);
   for (const id of [token(3), token(9), "invalid", token(1) + "/other"]) {
     const deck = await metadata(encodeURIComponent(id));
-    assert.equal(deck.title, "デッキ検索 | TCG 相場チェッカー");
+    assert.equal(deck.title, "デッキ | TCG 相場チェッカー");
     assert.equal((await image(`https://example.test/api/shared-decks/${encodeURIComponent(id)}/og-image`)).hash, fallback.hash);
   }
   for (const suffix of [1, 2, 3]) {
@@ -73,7 +73,7 @@ test("anonymous initial HTML, separate images, rename, privacy and legacy viewin
   const renamed = await metadata(token(1));
   assert.equal(renamed.title, "改名後デッキA"); assert.notEqual(renamed.image, a.image);
   await fetch(fixture + "/private-a", { method: "POST" });
-  assert.equal((await metadata(token(1))).title, "デッキ検索 | TCG 相場チェッカー");
+  assert.equal((await metadata(token(1))).title, "デッキ | TCG 相場チェッカー");
   // Previously issued image URLs must also recheck visibility.
   assert.equal((await image(a.image)).hash, fallback.hash);
   await fetch(fixture + "/broken-images", { method: "POST" });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { createDeckAction, updateDeckAction } from "@/app/decks/actions";
 import { initialDeckActionState } from "@/app/decks/action-state";
@@ -25,6 +26,7 @@ type DeckSearchSortKey = "relevance" | "name" | "release_date" | "usage";
 type SearchStatus = "idle" | "searching" | "success" | "empty" | "error";
 export type DeckEditorInitialData = { id: string; name: string; format: "original" | "advanced" | "duel_party"; visibility: "private" | "unlisted" | "public"; description: string; editorSortKey?: EditorSortKey; editorSortDirection?: SortDirection; cards: SelectedCard[] };
 const SEARCH_PAGE_SIZE = 24;
+const EMPTY_FALLBACK_COSTS: Record<string, number> = {};
 const COMMON_RARITIES = [["C", "C"], ["U", "UC"], ["R", "R"], ["VR", "VR"], ["SR", "SR"]] as const;
 const QUICK_RACE_TOKENS = ["コマンド", "ドラゴン"] as const;
 
@@ -32,7 +34,7 @@ function getRaceTokens(value: string) {
   return value.split(/[・･·、/\s]+/u).map((token) => token.trim()).filter(Boolean);
 }
 
-export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: DeckEditorInitialData; fallbackCosts?: Record<string, number> }) {
+export function DeckEditor({ initialDeck, fallbackCosts = EMPTY_FALLBACK_COSTS, searchOnly = false }: { initialDeck?: DeckEditorInitialData; fallbackCosts?: Record<string, number>; searchOnly?: boolean }) {
   const submitAction = useMemo(() => initialDeck ? updateDeckAction.bind(null, initialDeck.id) : createDeckAction, [initialDeck]);
   const [state, formAction, pending] = useActionState(submitAction, initialDeckActionState);
   const cardSearchInput = useImeRealtimeInput();
@@ -339,7 +341,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
 
   function handleResultScroll(event: React.UIEvent<HTMLDivElement>) {
     const target = event.currentTarget;
-    const remainingScroll = window.matchMedia("(min-width: 761px)").matches
+    const remainingScroll = searchOnly || window.matchMedia("(min-width: 761px)").matches
       ? target.scrollHeight - target.scrollTop - target.clientHeight
       : target.scrollWidth - target.scrollLeft - target.clientWidth;
     if (resultsSearchKey === currentSearchKey && currentSearchStatus === "success" && hasMoreResults && !searchInFlightRef.current && remainingScroll < 240) {
@@ -543,74 +545,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
       : card));
   }
 
-  return (
-    <form action={formAction} className="deck-maker-form" onSubmit={() => { if (initialDeck) invalidateDeckPreviewCache(initialDeck.id); }}>
-      <header className="deck-maker-toolbar">
-        <label className="deck-maker-name"><span className="deck-maker-name-label">デッキ名</span><span className="deck-maker-name-input"><input defaultValue={initialDeck?.name} maxLength={60} name="name" placeholder="デッキ名を入力" required /><span aria-hidden="true" className="deck-maker-name-edit-icon">✎</span></span></label>
-        <div className="deck-maker-actions">
-          <button onClick={() => setSettingsOpen((open) => !open)} type="button"><span aria-hidden="true" className="deck-action-icon">⚙</span><span className="deck-action-label">設定</span></button>
-          <button onClick={clearDeck} type="button"><span aria-hidden="true" className="deck-action-icon"><span className="ui-icon ui-icon-trash" /></span><span className="deck-action-label">全解除</span></button>
-          <button aria-haspopup="dialog" className="deck-analysis-button" onClick={() => setAnalysisOpen(true)} type="button"><img alt="" className="deck-action-icon" src="/icons/analysis_icon.svg" /><span className="deck-action-label">分析</span></button>
-          <button className="deck-save-button" disabled={pending} type="submit"><span aria-hidden="true" className="deck-action-icon">▣</span><span className="deck-action-label">{pending ? "保存中" : "保存"}</span></button>
-        </div>
-      </header>
-      {analysisOpen ? <DeckAnalysis cards={cards} onClose={() => setAnalysisOpen(false)} /> : null}
-
-      <section className="deck-maker-settings" hidden={!settingsOpen}>
-        <label>フォーマット<select name="format" onChange={(event) => setFormat(event.target.value as DeckEditorInitialData["format"])} value={format}><option value="original">オリジナル</option><option value="advanced">アドバンス</option><option value="duel_party">デュエパーティ</option></select></label>
-        <label>公開範囲<select name="visibility" defaultValue={initialDeck?.visibility ?? "public"}><option value="private">非公開</option><option value="unlisted">URL限定</option><option value="public">公開</option></select></label>
-        <label className="deck-description-field">説明<textarea defaultValue={initialDeck?.description} maxLength={1000} name="description" placeholder="デッキのメモ（任意）" rows={2} /></label>
-      </section>
-
-      <div className="deck-maker-layout" ref={layoutRef} style={deckLayoutStyle}>
-        <section className="deck-maker-deck-panel" ref={deckPaneRef}>
-          <nav aria-label="デッキのカード種別" className="deck-maker-tabs">
-            <button aria-selected={activeTab === "main"} onClick={() => setActiveTab("main")} role="tab" type="button">メイン <strong>{total}</strong></button>
-            <button aria-selected={activeTab === "gr"} onClick={() => setActiveTab("gr")} role="tab" type="button">GR / 超次元 <strong>0</strong></button>
-            <button aria-selected={activeTab === "special"} onClick={() => setActiveTab("special")} role="tab" type="button">特殊</button>
-            <div className="deck-preview-sort-controls">
-              <span className="deck-preview-sort-label">デッキ順</span>
-              <select aria-label="デッキの並び順" onChange={(event) => {
-                const [sort, direction] = event.target.value.split(":") as [DeckSortKey | "saved", SortDirection];
-                setDeckSort(sort === "saved" ? null : sort);
-                setDeckSortDirection(direction);
-              }} value={`${deckSort ?? "saved"}:${deckSortDirection}`}>
-                <option value="saved:asc">登録順</option>
-                <option value="cost:asc">コスト（昇順）</option>
-                <option value="cost:desc">コスト（降順）</option>
-                <option value="added:asc">追加順（昇順）</option>
-                <option value="added:desc">追加順（降順）</option>
-                <option value="name:asc">カード名（昇順）</option>
-                <option value="name:desc">カード名（降順）</option>
-                <option value="quantity:asc">枚数（昇順）</option>
-                <option value="quantity:desc">枚数（降順）</option>
-              </select>
-              <button aria-label="デッキの昇順と降順を切り替える" onClick={() => {
-                setDeckSort((current) => current ?? "cost");
-                setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc");
-              }} type="button">{deckSortDirection === "asc" ? "↑" : "↓"}</button>
-            </div>
-            <button aria-expanded={sortOpen} className="deck-preview-mobile-sort-button" onClick={() => { setSortOpen((open) => !open); setFilterOpen(false); }} type="button"><span aria-hidden="true">↕</span> 並べ替え</button>
-            <div className="deck-maker-count"><strong className={total === deckLimit ? "complete" : total > deckLimit ? "over" : ""}>{total}<small>/{deckLimit}</small></strong></div>
-          </nav>
-
-          <section className="deck-maker-canvas">
-        {activeTab === "main" ? <>
-          {expandedCards.length === 0 ? <div className="deck-maker-empty"><strong>カードがまだありません</strong><span>下の検索欄からカードを追加してください</span></div> :
-            <div className="deck-maker-grid">{expandedCards.map((card) => (
-              <button aria-label={`${card.name}の詳細を開く`} className="deck-maker-card" key={`${card.canonicalCardId}-${card.copyIndex}`} onClick={() => openDeckCard(card)} title={`${card.name}の詳細を開く`} type="button">
-                <CardArtwork eager imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 600px) 20vw, 120px" />
-              </button>
-            ))}</div>}
-        </> : <div className="deck-maker-empty"><strong>{activeTab === "gr" ? "GR / 超次元ゾーン" : "特殊ゾーン"}</strong><span>このゾーンのカード登録は次の実装で対応します</span></div>}
-          </section>
-        </section>
-
-        <div aria-label="デッキプレビューと右側領域の幅を変更" aria-orientation="vertical" aria-valuenow={Math.round(deckPanePercent)} className="deck-pane-splitter deck-pane-splitter-vertical" onKeyDown={(event) => handlePaneResizeKeyDown("deck", event)} onLostPointerCapture={() => { paneResizeRef.current = null; }} onPointerCancel={endPaneResize} onPointerDown={(event) => beginPaneResize("deck", event)} onPointerMove={movePaneResize} onPointerUp={endPaneResize} role="separator" tabIndex={0} />
-
-        <aside className={`deck-maker-desktop-side${searchOverlap > 0 ? " is-search-overlay" : ""}`} ref={desktopSideRef}>
-          <div className="deck-analysis-pane"><DeckAnalysis cards={cards} inline /></div>
-          <div aria-label="分析グラフとカード検索の高さを変更" aria-orientation="horizontal" aria-valuenow={Math.round(analysisPanePercent)} className="deck-pane-splitter deck-pane-splitter-horizontal" onKeyDown={(event) => handlePaneResizeKeyDown("analysis", event)} onLostPointerCapture={() => { paneResizeRef.current = null; }} onPointerCancel={endPaneResize} onPointerDown={(event) => beginPaneResize("analysis", event)} onPointerMove={movePaneResize} onPointerUp={endPaneResize} ref={analysisSplitterRef} role="separator" tabIndex={0} />
+  const searchShelf = (
           <section className="deck-search-shelf">
         <div aria-busy={currentSearchStatus === "searching"} className="deck-result-strip" aria-live="polite" onScroll={handleResultScroll} ref={resultStripRef}>
           {currentSearchStatus === "searching" ? <p role="status">{visibleResults.length > 0 && !resultsAreCurrent ? "検索中… 前の結果は操作できません" : "検索中…"}</p> : null}
@@ -625,11 +560,11 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
                   <CardArtwork eager={index === 0} imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 760px) 84px, 180px" />
                   {quantity > 0 ? <strong className="deck-result-card-quantity">{quantity}</strong> : null}
                 </button>
-                <div className="deck-result-card-actions" aria-label={`${card.name}をデッキで増減`} role="group">
+                {!searchOnly ? <div className="deck-result-card-actions" aria-label={`${card.name}をデッキで増減`} role="group">
                   <button aria-label={`${card.name}を1枚減らす`} disabled={quantity === 0} onClick={() => removeCard(card.id)} type="button">−</button>
                   <span aria-label={`${quantity}枚`}>{quantity}</span>
                   <button aria-label={`${card.name}を1枚増やす`} disabled={!resultsAreCurrent || cannotAdd} onClick={() => addCard(card)} type="button">＋</button>
-                </div>
+                </div> : null}
               </div>
               <span className="deck-result-card-name" title={card.name}>{card.name}</span>
             </article>;
@@ -706,14 +641,12 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
         </>, document.body) : null}
         {sortOpen ? <section className="deck-sort-modal-backdrop" onClick={() => setSortOpen(false)} role="presentation"><div aria-label="並べ替え方法選択" aria-modal="true" className="deck-sort-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-popover-heading"><strong>並べ替え方法選択</strong><button aria-label="並べ替えを閉じる" onClick={() => setSortOpen(false)} type="button">×</button></div>
-          <div className="deck-sort-section-heading"><h3>デッキ並べ替え</h3><button aria-label="デッキの昇順と降順を切り替える" className="deck-sort-direction" onClick={() => { setDeckSort((current) => current ?? "cost"); setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc"); }} type="button">{deckSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options"><button className={deckSort === "cost" ? "active" : ""} onClick={() => setDeckSort("cost")} type="button">コスト順</button><button className={deckSort === "added" ? "active" : ""} onClick={() => setDeckSort("added")} type="button">追加順</button><button className={deckSort === "name" ? "active" : ""} onClick={() => setDeckSort("name")} type="button">カード名順</button><button className={deckSort === "quantity" ? "active" : ""} onClick={() => setDeckSort("quantity")} type="button">枚数順</button></div>
+          {!searchOnly ? <><div className="deck-sort-section-heading"><h3>デッキ並べ替え</h3><button aria-label="デッキの昇順と降順を切り替える" className="deck-sort-direction" onClick={() => { setDeckSort((current) => current ?? "cost"); setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc"); }} type="button">{deckSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options"><button className={deckSort === "cost" ? "active" : ""} onClick={() => setDeckSort("cost")} type="button">コスト順</button><button className={deckSort === "added" ? "active" : ""} onClick={() => setDeckSort("added")} type="button">追加順</button><button className={deckSort === "name" ? "active" : ""} onClick={() => setDeckSort("name")} type="button">カード名順</button><button className={deckSort === "quantity" ? "active" : ""} onClick={() => setDeckSort("quantity")} type="button">枚数順</button></div></> : null}
           <div className="deck-sort-section-heading"><h3>検索結果並べ替え</h3><button aria-label="検索結果の昇順と降順を切り替える" className="deck-sort-direction" onClick={() => setSearchSortDirection((direction) => direction === "asc" ? "desc" : "asc")} type="button">{searchSortDirection === "asc" ? "↑ 昇順" : "↓ 降順"}</button></div><div className="deck-sort-options search"><button className={searchSort === "relevance" ? "active" : ""} onClick={() => { setSearchSort("relevance"); setSearchSortDirection("asc"); }} type="button">検索順</button><button className={searchSort === "name" ? "active" : ""} onClick={() => setSearchSort("name")} type="button">カード名順</button><button className={searchSort === "release_date" ? "active" : ""} onClick={() => { setSearchSort("release_date"); setSearchSortDirection("desc"); }} type="button">発売日順</button><button className={searchSort === "usage" ? "active" : ""} onClick={() => { setSearchSort("usage"); setSearchSortDirection("desc"); }} type="button">使用数順</button></div>
         </div></section> : null}
           </section>
-        </aside>
-      </div>
-
-      {selectedCard && typeof document !== "undefined" ? createPortal(<div className="deck-card-modal-backdrop" onClick={closeCard} role="presentation">
+  );
+  const cardDetails = (selectedCard && typeof document !== "undefined" ? createPortal(<div className="deck-card-modal-backdrop" onClick={closeCard} role="presentation">
         <section aria-label={`${selectedCard.name}のカード詳細`} aria-modal="true" className="deck-card-modal" onClick={(event) => event.stopPropagation()} role="dialog">
           <div className="deck-card-modal-main">
             <CardArtwork className="deck-card-modal-art" eager imageUrl={selectedImageUrl} name={selectedCard.name} sizes="(max-width: 600px) 88vw, 430px" />
@@ -726,7 +659,7 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
             </div>
             <button className="deck-card-modal-close deck-card-modal-close-variants" onClick={closeCard} type="button"><span aria-hidden="true">×</span>閉じる</button>
           </div>
-          <div className="deck-card-modal-controls">
+          {searchOnly ? <div className="card-search-detail-actions"><Link href={`/cards/${selectedCard.id}`}>カード詳細・相場を見る</Link></div> : <div className="deck-card-modal-controls">
             <button className="deck-card-modal-unify" disabled={!cards.some((item) => item.canonicalCardId === selectedCard.id) || !selectedImageUrl} onClick={unifyIllustration} type="button"><span aria-hidden="true">▣</span>イラストを統一</button>
             <button className="deck-card-modal-add-four" disabled={total >= deckLimit || (cards.find((item) => item.canonicalCardId === selectedCard.id)?.quantity ?? 0) >= MAX_COPIES_PER_CARD || !selectedImageUrl} onClick={() => addCard(selectedCard, selectedImageUrl, 4)} type="button"><span aria-hidden="true">＋</span>カードを4枚追加</button>
             <div><small>デッキ内</small><span>
@@ -735,9 +668,85 @@ export function DeckEditor({ initialDeck, fallbackCosts = {} }: { initialDeck?: 
               <button aria-label="1枚増やす" disabled={total >= deckLimit || (cards.find((item) => item.canonicalCardId === selectedCard.id)?.quantity ?? 0) >= MAX_COPIES_PER_CARD} onClick={() => addCard(selectedCard, selectedImageUrl)} type="button">＋</button>
             </span></div>
             <button className="deck-card-modal-close" onClick={closeCard} type="button"><span aria-hidden="true">×</span>閉じる</button>
-          </div>
+          </div>}
         </section>
-      </div>, document.body) : null}
+      </div>, document.body) : null);
+
+  if (searchOnly) return <div className="card-search-browser">{searchShelf}{cardDetails}</div>;
+
+  return (
+    <form action={formAction} className="deck-maker-form" onSubmit={() => { if (initialDeck) invalidateDeckPreviewCache(initialDeck.id); }}>
+      <header className="deck-maker-toolbar">
+        <label className="deck-maker-name"><span className="deck-maker-name-label">デッキ名</span><span className="deck-maker-name-input"><input defaultValue={initialDeck?.name} maxLength={60} name="name" placeholder="デッキ名を入力" required /><span aria-hidden="true" className="deck-maker-name-edit-icon">✎</span></span></label>
+        <div className="deck-maker-actions">
+          <button onClick={() => setSettingsOpen((open) => !open)} type="button"><span aria-hidden="true" className="deck-action-icon">⚙</span><span className="deck-action-label">設定</span></button>
+          <button onClick={clearDeck} type="button"><span aria-hidden="true" className="deck-action-icon"><span className="ui-icon ui-icon-trash" /></span><span className="deck-action-label">全解除</span></button>
+          <button aria-haspopup="dialog" className="deck-analysis-button" onClick={() => setAnalysisOpen(true)} type="button"><img alt="" className="deck-action-icon" src="/icons/analysis_icon.svg" /><span className="deck-action-label">分析</span></button>
+          <button className="deck-save-button" disabled={pending} type="submit"><span aria-hidden="true" className="deck-action-icon">▣</span><span className="deck-action-label">{pending ? "保存中" : "保存"}</span></button>
+        </div>
+      </header>
+      {analysisOpen ? <DeckAnalysis cards={cards} onClose={() => setAnalysisOpen(false)} /> : null}
+
+      <section className="deck-maker-settings" hidden={!settingsOpen}>
+        <label>フォーマット<select name="format" onChange={(event) => setFormat(event.target.value as DeckEditorInitialData["format"])} value={format}><option value="original">オリジナル</option><option value="advanced">アドバンス</option><option value="duel_party">デュエパーティ</option></select></label>
+        <label>公開範囲<select name="visibility" defaultValue={initialDeck?.visibility ?? "public"}><option value="private">非公開</option><option value="unlisted">URL限定</option><option value="public">公開</option></select></label>
+        <label className="deck-description-field">説明<textarea defaultValue={initialDeck?.description} maxLength={1000} name="description" placeholder="デッキのメモ（任意）" rows={2} /></label>
+      </section>
+
+      <div className="deck-maker-layout" ref={layoutRef} style={deckLayoutStyle}>
+        <section className="deck-maker-deck-panel" ref={deckPaneRef}>
+          <nav aria-label="デッキのカード種別" className="deck-maker-tabs">
+            <button aria-selected={activeTab === "main"} onClick={() => setActiveTab("main")} role="tab" type="button">メイン <strong>{total}</strong></button>
+            <button aria-selected={activeTab === "gr"} onClick={() => setActiveTab("gr")} role="tab" type="button">GR / 超次元 <strong>0</strong></button>
+            <button aria-selected={activeTab === "special"} onClick={() => setActiveTab("special")} role="tab" type="button">特殊</button>
+            <div className="deck-preview-sort-controls">
+              <span className="deck-preview-sort-label">デッキ順</span>
+              <select aria-label="デッキの並び順" onChange={(event) => {
+                const [sort, direction] = event.target.value.split(":") as [DeckSortKey | "saved", SortDirection];
+                setDeckSort(sort === "saved" ? null : sort);
+                setDeckSortDirection(direction);
+              }} value={`${deckSort ?? "saved"}:${deckSortDirection}`}>
+                <option value="saved:asc">登録順</option>
+                <option value="cost:asc">コスト（昇順）</option>
+                <option value="cost:desc">コスト（降順）</option>
+                <option value="added:asc">追加順（昇順）</option>
+                <option value="added:desc">追加順（降順）</option>
+                <option value="name:asc">カード名（昇順）</option>
+                <option value="name:desc">カード名（降順）</option>
+                <option value="quantity:asc">枚数（昇順）</option>
+                <option value="quantity:desc">枚数（降順）</option>
+              </select>
+              <button aria-label="デッキの昇順と降順を切り替える" onClick={() => {
+                setDeckSort((current) => current ?? "cost");
+                setDeckSortDirection((direction) => direction === "asc" ? "desc" : "asc");
+              }} type="button">{deckSortDirection === "asc" ? "↑" : "↓"}</button>
+            </div>
+            <button aria-expanded={sortOpen} className="deck-preview-mobile-sort-button" onClick={() => { setSortOpen((open) => !open); setFilterOpen(false); }} type="button"><span aria-hidden="true">↕</span> 並べ替え</button>
+            <div className="deck-maker-count"><strong className={total === deckLimit ? "complete" : total > deckLimit ? "over" : ""}>{total}<small>/{deckLimit}</small></strong></div>
+          </nav>
+
+          <section className="deck-maker-canvas">
+        {activeTab === "main" ? <>
+          {expandedCards.length === 0 ? <div className="deck-maker-empty"><strong>カードがまだありません</strong><span>下の検索欄からカードを追加してください</span></div> :
+            <div className="deck-maker-grid">{expandedCards.map((card) => (
+              <button aria-label={`${card.name}の詳細を開く`} className="deck-maker-card" key={`${card.canonicalCardId}-${card.copyIndex}`} onClick={() => openDeckCard(card)} title={`${card.name}の詳細を開く`} type="button">
+                <CardArtwork eager imageUrl={card.imageUrl} name={card.name} sizes="(max-width: 600px) 20vw, 120px" />
+              </button>
+            ))}</div>}
+        </> : <div className="deck-maker-empty"><strong>{activeTab === "gr" ? "GR / 超次元ゾーン" : "特殊ゾーン"}</strong><span>このゾーンのカード登録は次の実装で対応します</span></div>}
+          </section>
+        </section>
+
+        <div aria-label="デッキプレビューと右側領域の幅を変更" aria-orientation="vertical" aria-valuenow={Math.round(deckPanePercent)} className="deck-pane-splitter deck-pane-splitter-vertical" onKeyDown={(event) => handlePaneResizeKeyDown("deck", event)} onLostPointerCapture={() => { paneResizeRef.current = null; }} onPointerCancel={endPaneResize} onPointerDown={(event) => beginPaneResize("deck", event)} onPointerMove={movePaneResize} onPointerUp={endPaneResize} role="separator" tabIndex={0} />
+
+        <aside className={`deck-maker-desktop-side${searchOverlap > 0 ? " is-search-overlay" : ""}`} ref={desktopSideRef}>
+          <div className="deck-analysis-pane"><DeckAnalysis cards={cards} inline /></div>
+          <div aria-label="分析グラフとカード検索の高さを変更" aria-orientation="horizontal" aria-valuenow={Math.round(analysisPanePercent)} className="deck-pane-splitter deck-pane-splitter-horizontal" onKeyDown={(event) => handlePaneResizeKeyDown("analysis", event)} onLostPointerCapture={() => { paneResizeRef.current = null; }} onPointerCancel={endPaneResize} onPointerDown={(event) => beginPaneResize("analysis", event)} onPointerMove={movePaneResize} onPointerUp={endPaneResize} ref={analysisSplitterRef} role="separator" tabIndex={0} />
+          {searchShelf}
+        </aside>
+      </div>
+
+      {cardDetails}
 
       <input name="editorSortKey" type="hidden" value={deckSort ?? "saved"} />
       <input name="editorSortDirection" type="hidden" value={deckSortDirection} />

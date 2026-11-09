@@ -1,0 +1,11 @@
+.deck-directory-tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:18px;border-bottom:1px solid #727c98}
+.deck-directory-tabs button{background:transparent;border:0;border-bottom:3px solid transparent;color:#f5f6fa;cursor:pointer;font:800 16px system-ui;padding:14px 8px}
+.deck-directory-tabs button[aria-selected=true]{border-bottom-color:#ecc100;color:#ecc100}
+.deck-directory-tabs button:focus-visible{outline:2px solid #ecc100;outline-offset:-4px}
+.my-decks-page [role=tabpanel][hidden]{display:none}
+.public-directory-filters>select:last-child{min-width:0;width:126px;font-size:12px}
+.public-directory-action{align-self:center;display:flex;justify-content:center;background:transparent;border:0;box-shadow:none;margin:0;padding:0;min-width:0}
+.public-directory-author{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:620px){.public-directory-filters>select:last-child{width:100%}.public-directory-group .deck-folder-toggle{min-height:44px}.public-directory-filters>select{min-height:44px}}
+
+.public-directory-preview-meta{padding:0 18px;font-size:12px;color:#c8ccd8;overflow-wrap:anywhere}
