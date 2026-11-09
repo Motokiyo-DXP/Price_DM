@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { importPublicDeckAction, importSharedDeckAction } from "@/app/decks/actions";
 import { CardArtwork } from "@/components/card-artwork";
+import { formatJapaneseDate } from "@/lib/japanese-date";
 import { ExpandedCardArtwork } from "@/components/expanded-card-artwork";
 import { getDeckPreview, hasDeckPreview, setDeckPreview, type PreviewCard, type DeckPreview } from "@/lib/deck-preview-cache";
-import { formatJapaneseDate } from "@/lib/japanese-date";
 import { useImeRealtimeInput } from "@/lib/use-ime-realtime-input";
 
 function zoneName(zone: string) {
@@ -34,7 +34,8 @@ function formatName(format: string) {
   return "オリジナル";
 }
 
-export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[]; shareToken: string | null }) {
+export function PublicDeckSearch({ decks }: { decks: PublicDeckItem[] }) {
+  const shareToken = useSearchParams().get("share");
   const router = useRouter();
   const deckSearchInput = useImeRealtimeInput();
   const query = deckSearchInput.value;
@@ -48,7 +49,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
   const selectedId = useRef<string | null>(null);
   const [sharedOpen, setSharedOpen] = useState(false);
   useEffect(() => {
-    if (!shareToken) return;
+    if (!shareToken) { if (sharedOpen) { setSharedOpen(false); setSelected(null); selectedId.current = null; } return; }
     let active = true;
     selectedId.current = shareToken;
     setSharedOpen(true);
@@ -66,7 +67,7 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
     selectedId.current = null;
     setSelected(null);
     setExpandedImage(null);
-    if (sharedOpen) { setSharedOpen(false); router.replace("/deck-search"); }
+    if (sharedOpen) { setSharedOpen(false); const next = new URL(window.location.href); next.searchParams.delete("share"); window.history.replaceState(null, "", next); }
   }
   const otherZones = useMemo(() => [...new Set(preview?.cards.filter((card) => card.zone !== "main").map((card) => card.zone) ?? [])], [preview]);
   const mainCards = preview?.cards.filter((card) => card.zone === "main").slice(0, 60) ?? [];
@@ -100,47 +101,37 @@ export function PublicDeckSearch({ decks, shareToken }: { decks: PublicDeckItem[
 
   return (
     <div className="public-deck-search">
-      <div className="public-deck-controls">
-        <label className="public-deck-query"><span aria-hidden="true">⌕</span><input aria-label="公開デッキを検索" onChange={deckSearchInput.onChange} onCompositionStart={deckSearchInput.onCompositionStart} onCompositionEnd={deckSearchInput.onCompositionEnd} placeholder="デッキ名・収録カードを入力" value={query} /></label>
-        <select aria-label="フォーマット" onChange={(event) => setFormat(event.target.value)} value={format}>
-          <option value="all">すべてのフォーマット</option>
-          <option value="original">オリジナル</option>
-          <option value="advanced">アドバンス</option>
-          <option value="duel_party">デュエパーティ</option>
-        </select>
+      <div className="my-decks-filters public-directory-filters">
+        <label><span aria-hidden="true">⌕</span><input aria-label="公開デッキを検索" onChange={deckSearchInput.onChange} onCompositionStart={deckSearchInput.onCompositionStart} onCompositionEnd={deckSearchInput.onCompositionEnd} placeholder="デッキ名・収録カードを入力" value={query} /></label>
+        <select aria-label="公開デッキの並び順" onChange={(event) => setSort(event.target.value as typeof sort)} value={sort}><option value="popular">人気順</option><option value="updated">更新順</option></select>
+        <select aria-label="フォーマット" onChange={(event) => setFormat(event.target.value)} value={format}><option value="all">すべてのフォーマット</option><option value="original">オリジナル</option><option value="advanced">アドバンス</option><option value="duel_party">デュエパーティ</option></select>
       </div>
-      <div className="public-deck-summary">
-        <button aria-label={`${sort === "popular" ? "更新順" : "人気順"}に切り替え`} onClick={() => setSort((current) => current === "popular" ? "updated" : "popular")} type="button">{sort === "popular" ? "人気順" : "更新順"}<span aria-hidden="true">↕</span></button>
-        <p>{shown.length}件<span>の公開デッキ</span></p>
-      </div>
-      <div className="public-deck-list">
+      <p className="deck-reorder-help">{shown.length}件の公開デッキ</p>
+      <div className="deck-folder-group public-directory-group">
+        <div className="deck-folder-heading"><span className="deck-folder-toggle"><strong>公開デッキ</strong></span></div>
+        <div className="my-decks-list">
         {shown.map((deck) => (
-          <article key={deck.id}>
-            <div className="public-deck-thumbnail" onClick={() => openPreview(deck)}><CardArtwork className="public-deck-artwork" imageUrl={deck.imageUrl} name={deck.name} sizes="(max-width: 560px) 108px, (max-width: 980px) 27vw, 264px" /></div>
-            <div className="public-deck-information" onClick={() => openPreview(deck)}>
-              <header><strong>{deck.name}</strong><em>{formatName(deck.format)}</em></header>
-              <small>作成者：{deck.ownerName}</small>
-              {deck.description ? <p>{deck.description}</p> : <p>公開デッキの構成を確認できます。</p>}
-              <div className="public-deck-cards">{deck.cardNames.slice(0, 3).map((name) => <span key={name}>{name}</span>)}</div>
-              <footer><span>メイン {deck.cardCount}枚</span><span>・</span><time dateTime={deck.updatedAt}>{formatJapaneseDate(deck.updatedAt)}</time></footer>
-            </div>
-            <div className="public-deck-actions">
-              <form action={importPublicDeckAction}>
-                <input name="deckId" type="hidden" value={deck.id} />
-                <input name="destination" type="hidden" value="edit" />
-                <button aria-label={`${deck.name}をマイデッキに保存して編集`} type="submit"><span aria-hidden="true" className="ui-icon ui-icon-edit" />編集</button>
-              </form>
-              <form onSubmit={(event) => { event.preventDefault(); router.push(`/playtest/${deck.id}/opponent?source=public`); }}>
-                <button aria-label={`${deck.name}でひとり回し`} type="submit"><span aria-hidden="true" className="ui-icon ui-icon-my-decks" />ひとり回し</button>
-              </form>
-            </div>
+          <article aria-label={`${deck.name}を確認`} className="my-deck-row" key={deck.id}>
+            <button aria-label={`${deck.name}を確認`} className="my-deck-icon-button" onClick={() => openPreview(deck)} type="button"><CardArtwork className="my-deck-thumbnail" fit="cover" imageUrl={deck.imageUrl} name={deck.name} sizes="110px" /></button>
+            <button aria-label={`${deck.name}の詳細を開く`} className="my-deck-details-button" onClick={() => openPreview(deck)} type="button">
+              <span className="my-deck-info"><strong>{deck.name}</strong><span className="my-deck-badges"><em>{formatName(deck.format)}</em><em>{deck.cardCount}枚</em></span><span className="my-deck-counts public-directory-author" title={`作成者：${deck.ownerName}`}>作成者：{deck.ownerName}</span></span>
+            </button>
+            <form action={importPublicDeckAction} className="public-directory-action">
+              <input name="deckId" type="hidden" value={deck.id} /><input name="destination" type="hidden" value="edit" />
+              <button aria-label={`${deck.name}をマイデッキに保存して編集`} className="my-deck-edit" title="マイデッキに保存して編集" type="submit"><span aria-hidden="true" className="ui-icon ui-icon-edit" /></button>
+            </form>
+            <form className="public-directory-action" onSubmit={(event) => { event.preventDefault(); router.push(`/playtest/${deck.id}/opponent?source=public`); }}>
+              <button aria-label={`${deck.name}でひとり回し`} className="my-deck-more" title="ひとり回し" type="submit"><span aria-hidden="true" className="ui-icon ui-icon-my-decks" /></button>
+            </form>
           </article>
         ))}
+        </div>
       </div>
       {!shown.length ? <div className="history-empty"><strong>該当する公開デッキがありません</strong><p>デッキ名、カード名またはフォーマットを変えて検索してください。</p></div> : null}
       {selected ? <div className="public-deck-preview-backdrop" onClick={(event) => { if (event.target === event.currentTarget) closePreview(); }}>
         <section aria-label={`${selected.name}のデッキ確認`} aria-modal="true" className="public-deck-preview" role="dialog">
           <header><h2>{preview?.name ?? selected.name}</h2><button aria-label="閉じる" onClick={closePreview} type="button">×</button></header>
+          {!sharedOpen ? <div className="public-directory-preview-meta"><p>作成者：{selected.ownerName} ・ メイン {selected.cardCount}枚 ・ <time dateTime={selected.updatedAt}>{formatJapaneseDate(selected.updatedAt)}</time></p>{selected.description ? <p>{selected.description}</p> : null}<p>{selected.cardNames.slice(0, 3).join(" / ")}</p></div> : null}
           {previewError ? <p role="alert">{previewError}</p> : null}
           {!preview && !previewError ? <p role="status">読み込み中…</p> : null}
           {preview ? <>

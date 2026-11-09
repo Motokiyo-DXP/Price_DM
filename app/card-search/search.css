@@ -1,0 +1,18 @@
+html:has(.card-search-page){overflow:hidden}
+body:has(.card-search-page){background:#2f3240;display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100dvh;overflow:hidden}
+body:has(.card-search-page)>.site-header{grid-row:1}
+body:has(.card-search-page)>.primary-navigation{grid-row:3;position:static}
+body:has(.card-search-page)>main{display:flex;flex-direction:column;grid-row:2;margin:0 auto;max-width:1200px;min-height:0;overflow:hidden;padding-bottom:12px;width:100%}
+.card-search-page{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.card-search-page>.primary-page-title{flex:none}
+.card-search-browser{display:flex;flex:1;flex-direction:column;min-height:0;min-width:0}
+.card-search-browser .deck-search-shelf{display:flex;flex-direction:column;flex:1;position:static;height:auto;min-height:0;overflow:visible;margin:0}
+.card-search-browser .deck-search-bar{order:0;flex:none;position:static}
+.card-search-browser .deck-result-strip{order:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));align-content:start;gap:12px;flex:1; height:auto;block-size:auto;min-height:0;overflow:auto;padding:12px;overscroll-behavior:contain}
+.card-search-browser .deck-result-card{width:auto;min-width:0}
+.card-search-browser .deck-result-card-media{width:100%}
+.card-search-browser .deck-result-card-art{width:100%}
+.card-search-browser .deck-result-card-art .card-artwork{width:100%}
+.card-search-detail-actions{padding:12px;text-align:center}
+.card-search-detail-actions a{display:inline-flex;background:#ecc100;border-radius:8px;color:#20232d;font-weight:800;padding:12px;text-decoration:none}
+@media(max-width:760px){.card-search-browser .deck-result-strip{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}.card-search-browser .deck-result-card{flex:none}.card-search-browser .deck-search-input-row{min-width:0}}
